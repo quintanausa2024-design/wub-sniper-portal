@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://quintanausa2024-design.github.io/wub-sniper-portal/sitemap.xml
