@@ -904,7 +904,7 @@ function productsPage(){
   const toggle=`<div class="view-toggle">
     <button class="${PROD_VIEW==='cards'?'on':''}" onclick="setProdView('cards')" title="Tarjetas">${sv(I.grid,15)}</button>
     <button class="${PROD_VIEW==='list'?'on':''}" onclick="setProdView('list')" title="Lista">${sv(I.list,15)}</button></div>`;
-  return `<div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+  return `<div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;padding-right:52px">
       <div><h1>${t('prod_h')}</h1><p>${t('prod_sub')}</p></div>${toggle}</div>
     ${PROD_VIEW==='list'?`<div class="prod-list">${cards}</div>`:`<div class="grid">${cards}</div>`}`;
 }
