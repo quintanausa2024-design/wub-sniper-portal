@@ -114,7 +114,21 @@
   @keyframes sweep{0%{top:-60px}100%{top:100%}}
 
   /* LOGIN */
-  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
+  .sniper-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+  .sniper-left,.sniper-right{position:absolute;bottom:6%;width:160px;height:150px;opacity:.5}
+  .sniper-left{left:3%;animation:sniperBreath 4s ease-in-out infinite}
+  .sniper-right{right:3%;transform:scaleX(-1);animation:sniperBreath 4.6s ease-in-out infinite}
+  @keyframes sniperBreath{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  .sniper-right{animation-name:sniperBreathR}
+  @keyframes sniperBreathR{0%,100%{transform:scaleX(-1) translateY(0)}50%{transform:scaleX(-1) translateY(-4px)}}
+  .sniper-bg::before,.sniper-bg::after{content:"";position:absolute;bottom:22%;width:34%;height:1px;
+    background:linear-gradient(90deg,rgba(255,42,42,0),rgba(255,42,42,.55));transform-origin:left center;pointer-events:none}
+  .sniper-bg::before{left:13%;transform:rotate(-18deg);animation:laserPulse 2s ease-in-out infinite}
+  .sniper-bg::after{right:13%;transform:rotate(18deg) scaleX(-1);animation:laserPulse 2s ease-in-out infinite .5s}
+  @keyframes laserPulse{0%,100%{opacity:.2}50%{opacity:.7}}
+  @media(max-width:720px){.sniper-left,.sniper-right{width:100px;height:95px;opacity:.28}.sniper-bg::before,.sniper-bg::after{display:none}}
+  .login-col{position:relative;z-index:1}
   .login-card{width:100%;max-width:430px;background:linear-gradient(160deg,var(--surface),#0D1420);
     border:1px solid var(--line);border-radius:20px;padding:44px 36px;position:relative;overflow:hidden;
     box-shadow:0 40px 90px -30px rgba(0,0,0,.85);animation:rise .6s cubic-bezier(.2,.8,.2,1)}
@@ -705,7 +719,21 @@ function loginView(){
   const langToggle=`<div class="lang-toggle">
     <button class="${LANG==='es'?'on':''}" onclick="setLang('es')">ES</button>
     <button class="${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>`;
-  return `<div class="login-wrap"><div class="login-col">${langToggle}${card}${footerHTML()}</div></div>`;
+  return `<div class="login-wrap">${sniperBG()}<div class="login-col">${langToggle}${card}${footerHTML()}</div></div>`;
+}
+function sniperBG(){
+  const sniper = `<g class="sniper-fig">
+      <ellipse cx="45" cy="118" rx="58" ry="9" fill="#000" opacity="0.45"/>
+      <path d="M10 118 Q14 96 40 98 L92 104 Q104 106 108 96 L120 74 Q124 68 130 72 Q134 76 130 82 L118 108 Q112 120 96 118 L44 118 Z" fill="#080808" stroke="#FF6B2C" stroke-width="1.4"/>
+      <circle cx="34" cy="92" r="12" fill="#080808" stroke="#FF6B2C" stroke-width="1.4"/>
+      <path d="M22 90 Q18 84 24 82 L34 82" fill="none" stroke="#FF6B2C" stroke-width="1.4"/>
+      <rect x="60" y="70" width="66" height="6" rx="3" fill="#080808" stroke="#FF6B2C" stroke-width="1.1" transform="rotate(-12 60 73)"/>
+      <circle cx="52" cy="80" r="4.5" fill="none" stroke="#FF6B2C" stroke-width="1.1"/>
+    </g>`;
+  return `<div class="sniper-bg" aria-hidden="true">
+    <svg class="sniper-left" viewBox="0 0 140 130" xmlns="http://www.w3.org/2000/svg">${sniper}</svg>
+    <svg class="sniper-right" viewBox="0 0 140 130" xmlns="http://www.w3.org/2000/svg">${sniper}</svg>
+  </div>`;
 }
 function goAuth(t){tab=t;authMsg='';render()}
 
