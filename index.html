@@ -157,6 +157,10 @@
   .eye:hover{color:var(--text)}
   .forgot{text-align:right;margin-top:-8px;margin-bottom:16px}
   .forgot a{font-size:12px;color:var(--cyan)}
+  .remember-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-4px 0 16px;flex-wrap:wrap}
+  .remember{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);cursor:pointer;user-select:none}
+  .remember input{width:16px;height:16px;accent-color:var(--fire);cursor:pointer}
+  .remember-row a{font-size:12px;color:var(--cyan)}
 
   /* SHELL */
   .shell{display:flex;min-height:100vh}
@@ -579,6 +583,8 @@ const LICENSE_APIS = [
 ];
 
 let view='login',tab='auth_login',authMsg='',profileMsg='',profileErr='';
+let REMEMBER={email:'',pass:'',on:false};
+try{const _r=JSON.parse(localStorage.getItem('sp_remember')||'null');if(_r&&_r.email){REMEMBER={email:_r.email,pass:atob(_r.pass||''),on:true};}}catch(e){}
 let LANG='es';
 try{const sl=localStorage.getItem('sp_lang');if(sl==='en'||sl==='es')LANG=sl;}catch(e){}
 function setLang(l){LANG=l;try{localStorage.setItem('sp_lang',l);}catch(e){}render();}
@@ -704,11 +710,14 @@ function loginView(){
     <p class="login-p">${t('login_h_sub')}</p>
     ${err}
     <div class="field"><label>${t('correo')}</label>
-      <input type="email" id="lemail" placeholder="tucorreo@gmail.com" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
+      <input type="email" id="lemail" placeholder="tucorreo@gmail.com" value="${REMEMBER.on?(REMEMBER.email||'').replace(/"/g,'&quot;'):''}" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false"></div>
     <div class="field"><label>${t('contrasena')}</label><div class="pass-wrap">
-      <input type="password" id="lpass" placeholder="${t('tu_contrasena')}" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+      <input type="password" id="lpass" placeholder="${t('tu_contrasena')}" value="${REMEMBER.on?(REMEMBER.pass||'').replace(/"/g,'&quot;'):''}" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
       <span class="eye" onclick="toggleEye('lpass',this)">${EYE}</span></div></div>
-    <div class="forgot"><a href="#" onclick="goAuth('auth_reset');return false">${t('olvidaste')}</a></div>
+    <div class="remember-row">
+      <label class="remember"><input type="checkbox" id="lremember" ${REMEMBER.on?'checked':''}> ${LANG==='en'?'Remember my password':'Recordar mi contraseña'}</label>
+      <a href="#" onclick="goAuth('auth_reset');return false">${t('olvidaste')}</a>
+    </div>
     <button class="btn-primary" id="lbtn" onclick="doLogin()">${t('entrar')}</button>
     <div class="login-note">${t('no_cuenta')} <a href="#" onclick="goAuth('auth_signup');return false">${t('crear_cuenta')}</a></div>
   </div>`;
@@ -760,7 +769,12 @@ async function apiCall(params){
 async function doLogin(){
   const email=(document.getElementById('lemail').value||'').trim().toLowerCase();
   const pass=document.getElementById('lpass').value||'';
+  const remember=document.getElementById('lremember')?document.getElementById('lremember').checked:false;
   if(!email||!pass){authMsg='Escribe tu correo y contraseña.';return render();}
+  try{
+    if(remember){ localStorage.setItem('sp_remember',JSON.stringify({email,pass:btoa(pass)})); REMEMBER={email,pass,on:true}; }
+    else{ localStorage.removeItem('sp_remember'); REMEMBER={email:'',pass:'',on:false}; }
+  }catch(e){}
   if(!API_URL){ setView(email.includes('admin')?'admin':'client'); return; }
   const btn=document.getElementById('lbtn');btn.textContent='Entrando...';
   try{
