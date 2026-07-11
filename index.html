@@ -284,6 +284,9 @@
   .stat::after{content:"";position:absolute;top:-30px;right:-30px;width:80px;height:80px;border-radius:50%;
     background:radial-gradient(circle,rgba(255,107,44,.10),transparent 70%)}
   .stat .v{font-family:var(--display);font-size:30px;font-weight:600;line-height:1}
+  .statbtn{cursor:pointer;text-align:left;font-family:inherit;transition:.15s}
+  .statbtn:hover{border-color:var(--amber,#F5A623);transform:translateY(-2px)}
+  .statbtn.on{border-color:var(--amber,#F5A623);box-shadow:0 0 0 1px var(--amber,#F5A623) inset}
   .stat .l{font-size:12px;color:var(--text-dim);margin-top:8px}
   .stat .v.fire{color:var(--fire-soft)}.stat .v.green{color:var(--green)}.stat .v.amber{color:var(--amber)}.stat .v.cyan{color:var(--cyan)}
   .table{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line-soft);border-radius:15px;overflow:hidden}
@@ -547,6 +550,7 @@ const I={user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="
   chev:'<path d="M6 9l6 6 6-6"/>',
   ext:'<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><path d="M15 3h6v6"/><path d="M10 14L21 3"/>',
   grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  check:'<path d="M20 6L9 17l-5-5"/>',
   list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
   box:'<path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/>',news:'<path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/>',phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 0 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9V9a1.7 1.7 0 0 0 1.5 1h.1a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',play:'<path d="M5 3l14 9-14 9z"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',edit:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/>',plus:'<path d="M12 5v14M5 12h14"/>',mail:'<path d="M4 4h16v16H4zM22 6l-10 7L2 6"/>',trash:'<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',refresh:'<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>'};
 const sv=(p,sz=18)=>`<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -646,7 +650,7 @@ let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS
 let PROD_VIEW='cards';
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;LICS=null;ALL_TOTALS=null;MYNEWS=null;MKTNEWS=null;ADMIN_NEWS=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;ADMIN_NEWS=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1418,44 +1422,37 @@ function delNews(id){
 }
 
 // ════════ ADMIN: LICENCIAS DE PRODUCTOS (HWID) ════════
-let LIC_SEL=0, LICS=null, LICS_LOADING=false, ALL_TOTALS=null, ALL_TOTALS_LOADING=false;
-async function loadAllTotals(){
-  if(ALL_TOTALS_LOADING)return; ALL_TOTALS_LOADING=true;
-  let tot=0,apr=0,pend=0,conn=0;
-  for(const api of LICENSE_APIS){
-    if(!api.url||api.url.startsWith('PEGA_AQUI'))continue;
-    try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      if(r.ok){conn++;tot+=r.licencias.length;apr+=r.licencias.filter(l=>l.aprobado).length;pend+=r.licencias.filter(l=>!l.aprobado).length;}
-    }catch(e){}
-  }
-  ALL_TOTALS={tot,apr,pend,conn}; ALL_TOTALS_LOADING=false; render();
-}
+let LIC_SEL=0, LIC_MODE='pending', ALL_LICS=null, ALL_LICS_LOADING=false;
 async function licCall(url,params){
   const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
   const res=await fetch(url+'?'+qs); return await res.json();
 }
-async function loadLics(){
-  if(LICS_LOADING)return; LICS_LOADING=true;
-  const api=LICENSE_APIS[LIC_SEL];
-  try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-    LICS = r.ok ? r.licencias : {error:r.error||'ERR'}; }
-  catch(e){ LICS={error:'CONN'}; }
-  LICS_LOADING=false; render();
+async function loadAllData(){
+  if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
+  const results=await Promise.all(LICENSE_APIS.map(async(api)=>{
+    if(!api.url||api.url.startsWith('PEGA_AQUI'))return {skip:true};
+    try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
+      return r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ return {error:'CONN'}; }
+  }));
+  ALL_LICS=results; ALL_LICS_LOADING=false; render();
 }
-function selLic(i){LIC_SEL=parseInt(i);LICS=null;render();}
-async function setLic(hwid,valor,maxpcs){
-  const api=LICENSE_APIS[LIC_SEL];
+function calcTotals(){
+  let tot=0,apr=0,pend=0,conn=0;
+  (ALL_LICS||[]).forEach(d=>{ if(d&&d.licencias){conn++;tot+=d.licencias.length;apr+=d.licencias.filter(l=>l.aprobado).length;pend+=d.licencias.filter(l=>!l.aprobado).length;} });
+  return {tot,apr,pend,conn};
+}
+async function setLic(pi,hwid,valor,maxpcs){
+  const api=LICENSE_APIS[pi];
   const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
   if(maxpcs)params.maxpcs=maxpcs;
-  try{ await licCall(api.url,params); LICS=null; ALL_TOTALS=null; render(); }catch(e){}
+  try{ await licCall(api.url,params); ALL_LICS=null; render(); }catch(e){}
 }
-function approveLic(hwid){
-  const api=LICENSE_APIS[LIC_SEL];
-  if(api.pcs){
-    openPcs(hwid);
-  } else setLic(hwid,'SI');
+function approveLic(pi,hwid){
+  const api=LICENSE_APIS[pi];
+  if(api.pcs){ openPcs(pi,hwid); } else setLic(pi,hwid,'SI');
 }
-function openPcs(hwid){
+function openPcs(pi,hwid){
   document.getElementById('pcsBody').innerHTML=`
     <p style="font-size:13.5px;color:var(--text-dim);margin-bottom:16px">¿Para cuántas PCs apruebas esta licencia?</p>
     <div class="pcs-pick">
@@ -1463,7 +1460,8 @@ function openPcs(hwid){
     </div>
     <div class="mfield" style="margin-top:14px"><label>O escribe otra cantidad</label>
       <input id="pcsNum" type="number" min="1" value="1" inputmode="numeric"></div>
-    <input type="hidden" id="pcsHwid" value="${hwid}">`;
+    <input type="hidden" id="pcsHwid" value="${hwid}">
+    <input type="hidden" id="pcsPi" value="${pi}">`;
   document.getElementById('pcsModal').classList.add('show');
 }
 function pcsSel(n,el){document.getElementById('pcsNum').value=n;
@@ -1471,58 +1469,85 @@ function pcsSel(n,el){document.getElementById('pcsNum').value=n;
 function confirmPcs(){
   const num=parseInt(document.getElementById('pcsNum').value);
   const hwid=document.getElementById('pcsHwid').value;
+  const pi=parseInt(document.getElementById('pcsPi').value);
   if(!num||num<1)return;
-  closeModal('pcsModal'); setLic(hwid,'SI',num);
+  closeModal('pcsModal'); setLic(pi,hwid,'SI',num);
 }
-function delLic(hwid){
+function delLic(pi,hwid){
   confirmAction('Borrar licencia','¿Borrar esta licencia por completo? El cliente tendría que volver a solicitar.','Borrar',async()=>{
-    const api=LICENSE_APIS[LIC_SEL];
-    try{ await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid}); LICS=null; ALL_TOTALS=null; render(); }catch(e){}
+    const api=LICENSE_APIS[pi];
+    try{ await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid}); ALL_LICS=null; render(); }catch(e){}
   });
 }
+function licRow(l,pi,cols){
+  const hwid=(l.hwid||'').replace(/'/g,'');
+  const init=(l.nombre||l.correo||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+  const apiCur=LICENSE_APIS[pi];
+  const badge=l.aprobado?'<span class="dot g"></span>Aprobada':'<span class="dot a"></span>Pendiente';
+  const pcsTxt=(l.maxpcs!==undefined && l.maxpcs>0)?`${l.pcs||0} / ${l.maxpcs}`:(l.pcs!==undefined?`${l.pcs}`:'—');
+  const delBtn=apiCur.del?`<button class="ibtn danger" title="Borrar licencia" onclick="delLic(${pi},'${hwid}')">${sv(I.trash,15)}</button>`:'';
+  const act=l.aprobado
+    ? `<button class="btn-ghost" style="padding:6px 12px" onclick="setLic(${pi},'${hwid}','NO')">Quitar</button>${delBtn}`
+    : `<button class="btn-add" style="padding:7px 13px" onclick="approveLic(${pi},'${hwid}')">✓ Aprobar</button>${delBtn}`;
+  return {hwid,init,badge,pcsTxt,act};
+}
 function adminLicensesPage(){
+  if(ALL_LICS===null){ loadAllData();
+    return `<div class="page-head"><h1>Licencias</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando licencias...</div>`; }
+  const T=calcTotals();
+  const totals=`<div class="stat-row">
+    <div class="stat"><div class="v fire">${T.tot}</div><div class="l">Total · todos los productos</div></div>
+    <div class="stat"><div class="v green">${T.apr}</div><div class="l">Aprobadas (total)</div></div>
+    <button class="stat statbtn ${LIC_MODE==='pending'?'on':''}" onclick="LIC_MODE='pending';render()"><div class="v amber">${T.pend}</div><div class="l">Pendientes (total) · toca para ver</div></button>
+    <div class="stat"><div class="v cyan">${T.conn}</div><div class="l">Productos conectados</div></div></div>`;
+  const modeToggle=`<div style="display:flex;gap:8px">
+    <button class="seg-btn ${LIC_MODE==='pending'?'on':''}" onclick="LIC_MODE='pending';render()">Pendientes</button>
+    <button class="seg-btn ${LIC_MODE==='product'?'on':''}" onclick="LIC_MODE='product';render()">Por producto</button></div>`;
+  const head=`<div class="page-head"><h1>Licencias</h1><p>Aprueba o quita licencias sin abrir la hoja.</p></div>${totals}`;
+
+  // ── MODO PENDIENTES (todas juntas) ──
+  if(LIC_MODE==='pending'){
+    let pend=[];
+    ALL_LICS.forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
+    const toolbar=`<div class="admin-toolbar">${modeToggle}<button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
+    if(!pend.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>No hay pendientes 🎉</h3><p>Todas las licencias están al día. Nada por aprobar.</p></div>`;
+    const rows=pend.map(({l,pi})=>{
+      const r=licRow(l,pi);
+      return `<div class="trow" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
+        <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${r.init}</div>
+          <div style="min-width:0"><div class="n">${l.nombre||'—'}</div><div class="cust-email">${l.correo||'—'}</div></div></div>
+        <div class="cust-email col-hide">${l.correo||'—'}</div>
+        <div class="col-hide"><span class="pill pending" style="font-size:10.5px">${LICENSE_APIS[pi].name}</span></div>
+        <div class="row-act">${r.act}</div></div>`;
+    }).join('');
+    return head+toolbar+`<div class="table"><div class="trow head" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
+      <div>Cliente</div><div class="col-hide">Correo</div><div class="col-hide">Producto</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
+  }
+
+  // ── MODO POR PRODUCTO ──
   const apis=LICENSE_APIS;
-  const sel = `<select onchange="selLic(this.value)" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:var(--text);font-size:13.5px;font-family:var(--body)">
+  const sel=`<select onchange="LIC_SEL=parseInt(this.value);render()" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:var(--text);font-size:13.5px;font-family:var(--body)">
     ${apis.map((a,i)=>`<option value="${i}" ${i===LIC_SEL?'selected':''}>${a.name}</option>`).join('')}</select>`;
-  const api=apis[LIC_SEL];
-  const totals = ALL_TOTALS===null
-    ? (loadAllTotals(), `<div class="stat-row"><div class="stat"><div class="v fire">…</div><div class="l">Total de licencias (todos los productos)</div></div></div>`)
-    : `<div class="stat-row">
-        <div class="stat"><div class="v fire">${ALL_TOTALS.tot}</div><div class="l">Total licencias · todos los productos</div></div>
-        <div class="stat"><div class="v green">${ALL_TOTALS.apr}</div><div class="l">Aprobadas (total)</div></div>
-        <div class="stat"><div class="v amber">${ALL_TOTALS.pend}</div><div class="l">Pendientes (total)</div></div>
-        <div class="stat"><div class="v cyan">${ALL_TOTALS.conn}</div><div class="l">Productos conectados</div></div></div>`;
-  const head=`<div class="page-head"><h1>Licencias</h1><p>Aprueba o quita licencias de cada producto (las de HWID), sin abrir la hoja.</p></div>
-    ${totals}
-    <div class="admin-toolbar"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:12px;color:var(--text-faint)">Producto:</span>${sel}</div>
-      <button class="btn-ghost" onclick="LICS=null;ALL_TOTALS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
-  if(!api.url || api.url.startsWith('PEGA_AQUI'))
-    return head+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>Falta conectar este producto</h3><p>Pega la URL del Apps Script de "${api.name}" en el portal (variable LICENSE_APIS) y vuelve a subir.</p></div>`;
-  if(LICS===null){ loadLics(); return head+`<div style="color:var(--text-dim);padding:50px;text-align:center">Cargando licencias...</div>`; }
-  if(LICS.error)
-    return head+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>${LICS.error==='NO_ADMIN'?'Acceso no válido':'No se pudo conectar'}</h3><p>${LICS.error==='NO_ADMIN'?'Revisa que pusiste tu correo y contraseña del portal en el script de licencias (PORTAL_ADMIN_PASS).':'Verifica la URL y que el deploy esté como "Cualquiera".'}</p></div>`;
-  const lics=LICS;
+  const toolbar=`<div class="admin-toolbar"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${modeToggle}<span style="font-size:12px;color:var(--text-faint)">Producto:</span>${sel}</div>
+    <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
+  const api=apis[LIC_SEL], d=ALL_LICS[LIC_SEL];
+  if(!api.url||api.url.startsWith('PEGA_AQUI'))
+    return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>Falta conectar este producto</h3><p>Pega la URL del Apps Script de "${api.name}".</p></div>`;
+  if(!d||d.error)
+    return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>${d&&d.error==='NO_ADMIN'?'Acceso no válido':'No se pudo conectar'}</h3><p>${d&&d.error==='NO_ADMIN'?'Revisa la contraseña del portal en el script (PORTAL_ADMIN_PASS).':'Verifica la URL y que el deploy esté como "Cualquiera".'}</p></div>`;
+  const lics=d.licencias;
   const aprob=lics.filter(l=>l.aprobado).length, pend=lics.length-aprob;
-  const apiCur=LICENSE_APIS[LIC_SEL];
-  const rows = lics.length ? lics.map(l=>{
-    const hwid=(l.hwid||'').replace(/'/g,'');
-    const init=(l.nombre||l.correo||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
-    const badge=l.aprobado?'<span class="dot g"></span>Aprobada':'<span class="dot a"></span>Pendiente';
-    const pcsTxt = (l.maxpcs!==undefined && l.maxpcs>0) ? `${l.pcs||0} / ${l.maxpcs}` : (l.pcs!==undefined?`${l.pcs}`:'—');
-    const delBtn = apiCur.del ? `<button class="ibtn danger" title="Borrar licencia" onclick="delLic('${hwid}')">${sv(I.trash,15)}</button>` : '';
-    const act = l.aprobado
-      ? `<button class="btn-ghost" style="padding:6px 12px" onclick="setLic('${hwid}','NO')">Quitar</button>${delBtn}`
-      : `<button class="btn-add" style="padding:7px 13px" onclick="approveLic('${hwid}')">✓ Aprobar</button>${delBtn}`;
+  const rows=lics.length?lics.map(l=>{
+    const r=licRow(l,LIC_SEL);
     return `<div class="trow" style="grid-template-columns:1.4fr 1.3fr 0.7fr 0.9fr auto">
-      <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${init}</div>
-        <div style="min-width:0"><div class="n">${l.nombre||'—'}</div>
-          <div class="cust-email">${l.correo||'—'}</div></div></div>
+      <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${r.init}</div>
+        <div style="min-width:0"><div class="n">${l.nombre||'—'}</div><div class="cust-email">${l.correo||'—'}</div></div></div>
       <div class="cust-email col-hide">${l.correo||'—'}</div>
-      <div class="col-hide" title="PCs/Usuarios"><span class="mono" style="font-size:12px">${pcsTxt}</span></div>
-      <div class="col-hide">${badge}</div>
-      <div class="row-act">${act}</div></div>`;
-  }).join('') : `<div style="padding:40px;text-align:center;color:var(--text-faint)">Aún no hay solicitudes para este producto.</div>`;
-  return head+`<div class="stat-row">
+      <div class="col-hide" title="PCs/Usuarios"><span class="mono" style="font-size:12px">${r.pcsTxt}</span></div>
+      <div class="col-hide">${r.badge}</div>
+      <div class="row-act">${r.act}</div></div>`;
+  }).join(''):`<div style="padding:40px;text-align:center;color:var(--text-faint)">Aún no hay solicitudes para este producto.</div>`;
+  return head+toolbar+`<div class="stat-row">
       <div class="stat"><div class="v fire">${lics.length}</div><div class="l">Solicitudes</div></div>
       <div class="stat"><div class="v green">${aprob}</div><div class="l">Aprobadas</div></div>
       <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
