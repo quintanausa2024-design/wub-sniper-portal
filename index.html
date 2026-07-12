@@ -432,6 +432,22 @@
   .disc-go{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--fire);color:#0a0a0a;
     border-radius:10px;padding:11px;font-size:13.5px;font-weight:700;text-decoration:none;transition:.13s}
   .disc-go:hover{background:var(--fire-soft)}
+  /* economic calendar */
+  .cal-list{display:flex;flex-direction:column;gap:2px}
+  .cal-day{font-family:var(--display);font-size:12px;font-weight:700;color:var(--fire-soft);text-transform:uppercase;
+    letter-spacing:.05em;margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line-soft)}
+  .cal-day:first-child{margin-top:0}
+  .cal-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-radius:8px;transition:.12s}
+  .cal-row:hover{background:var(--surface)}
+  .cal-time{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);width:64px;flex-shrink:0;text-align:right}
+  .cal-imp{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .cal-imp.high{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.5)}
+  .cal-imp.med{background:#f59e0b}
+  .cal-imp.low{background:#6b7280}
+  .cal-imp.hol{background:#8b5cf6}
+  .cal-main{flex:1;min-width:0;font-size:12.5px;color:var(--text);line-height:1.35}
+  .cal-flag{margin-right:3px}
+  .cal-meta{font-size:10.5px;color:var(--text-faint);margin-top:2px}
   /* product detail page */
   .prod-click{cursor:pointer}
   .card-thumb{height:150px;border-radius:12px;background-size:cover;background-position:center;margin-bottom:14px;border:1px solid var(--line-soft)}
@@ -712,8 +728,8 @@ let SESS={email:'',pass:''}, ADMIN_USERS=null, ADMIN_LOADING=false, contactDone=
 let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='';
 let PROD_VIEW='cards', PROD_OPEN=null, PROD_PHOTO=0;
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
-let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1034,6 +1050,7 @@ async function loadNews(){
   if(NEWS_LOADING)return; NEWS_LOADING=true;
   try{ const r=await apiCall({action:'listnews'}); MYNEWS = r.ok ? r.news : []; }catch(e){ MYNEWS=[]; }
   try{ const r2=await apiCall({action:'marketnews'}); MKTNEWS = r2.ok ? r2.news : []; }catch(e){ MKTNEWS=[]; }
+  try{ const r3=await apiCall({action:'marketcal'}); MKTCAL = r3.ok ? r3.eventos : []; }catch(e){ MKTCAL=[]; }
   NEWS_LOADING=false; render();
 }
 function mktDate(s){
@@ -1060,15 +1077,38 @@ function newsPage(){
       <div class="mkt-dot"></div><div style="flex:1"><div class="mkt-title">${n.titulo}</div>
       <div class="mkt-date">${n.fuente?n.fuente+' · ':''}${mktDate(n.fecha)}</div></div>${sv(I.ext,15)}</a>`).join('')
     : `<div style="color:var(--text-faint);font-size:13px;padding:6px 0">${t('mkt_err')}</div>`;
+  const isEn=LANG==='en';
+  const flag=c=>({USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',NZD:'🇳🇿',CHF:'🇨🇭',CNY:'🇨🇳'}[c]||'🌐');
+  let calHTML='';
+  if(MKTCAL===null){ calHTML=`<div style="color:var(--text-faint);font-size:13px;padding:6px 0">${isEn?'Loading...':'Cargando...'}</div>`; }
+  else if(!MKTCAL.length){ calHTML=`<div style="color:var(--text-faint);font-size:13px;padding:6px 0">${isEn?'Calendar not available right now.':'Calendario no disponible ahora mismo.'}</div>`; }
+  else {
+    let curDay='';
+    calHTML=MKTCAL.map(ev=>{
+      const imp=(ev.impacto||'').toLowerCase();
+      const impCls=imp.indexOf('high')>=0?'high':imp.indexOf('medium')>=0?'med':imp.indexOf('holiday')>=0?'hol':'low';
+      let dayHdr='';
+      if(ev.dia&&ev.dia!==curDay){ curDay=ev.dia; dayHdr=`<div class="cal-day">${ev.dia}</div>`; }
+      return `${dayHdr}<div class="cal-row">
+        <div class="cal-time">${ev.hora||'—'}</div>
+        <div class="cal-imp ${impCls}"></div>
+        <div class="cal-main"><span class="cal-flag">${flag(ev.pais)}</span> ${ev.titulo||''}
+          ${(ev.forecast||ev.previo)?`<div class="cal-meta">${ev.forecast?`Prev.: ${ev.forecast}`:''}${ev.forecast&&ev.previo?' · ':''}${ev.previo?`Ant.: ${ev.previo}`:''}</div>`:''}</div>
+      </div>`;
+    }).join('');
+  }
   return `<div class="page-head"><h1>${t('noticias_h')}</h1><p>${t('noticias_sub')}</p></div>
     <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start">
-      <div style="flex:1;min-width:300px;max-width:560px">
+      <div style="flex:1;min-width:300px;max-width:520px">
         <h3 style="font-family:var(--display);font-size:15px;margin:0 0 14px;color:var(--text-dim)">${t('novedades')}</h3>
-        <div class="news-list">${mine}</div></div>
-      <div style="flex:1;min-width:300px;max-width:480px">
-        <h3 style="font-family:var(--display);font-size:15px;margin:0 0 14px;color:var(--text-dim)">${t('mercado')}</h3>
+        <div class="news-list">${mine}</div>
+        <h3 style="font-family:var(--display);font-size:15px;margin:26px 0 14px;color:var(--text-dim)">${t('mercado')}</h3>
         <div class="mkt-list">${mkt}</div>
         <div style="font-size:10.5px;color:var(--text-faint);margin-top:10px;line-height:1.5">${t('mkt_disc')}</div></div>
+      <div style="flex:1;min-width:300px;max-width:460px">
+        <h3 style="font-family:var(--display);font-size:15px;margin:0 0 14px;color:var(--text-dim)">📅 ${isEn?'Economic Calendar (ET)':'Calendario Económico (ET)'}</h3>
+        <div class="cal-list">${calHTML}</div>
+        <div style="font-size:10.5px;color:var(--text-faint);margin-top:10px;line-height:1.5">${isEn?'Times in New York (ET). High-impact events move the market. Not financial advice.':'Horas en Nueva York (ET). Los eventos de alto impacto mueven el mercado. No es asesoría financiera.'}</div></div>
     </div>`;
 }
 
