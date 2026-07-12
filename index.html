@@ -412,6 +412,33 @@
   .view-toggle{display:flex;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:fit-content}
   .view-toggle button{padding:8px 12px;background:transparent;border:none;color:var(--text-dim);cursor:pointer;display:grid;place-items:center;transition:.13s}
   .view-toggle button.on{background:var(--fire);color:#0a0a0a}
+  /* product detail page */
+  .prod-click{cursor:pointer}
+  .card-thumb{height:150px;border-radius:12px;background-size:cover;background-position:center;margin-bottom:14px;border:1px solid var(--line-soft)}
+  .prod-row-thumb{width:58px;height:58px;border-radius:10px;background-size:cover;background-position:center;flex-shrink:0;border:1px solid var(--line-soft)}
+  .back-btn{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text);border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:20px;transition:.13s}
+  .back-btn:hover{border-color:var(--fire);color:var(--fire-soft)}
+  .back-btn svg{transform:rotate(90deg)}
+  .pd-wrap{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+  .pd-left{flex:1;min-width:300px;max-width:560px}
+  .pd-right{flex:1;min-width:280px}
+  .pd-gallery{display:flex;flex-direction:column;gap:12px}
+  .pd-main{width:100%;aspect-ratio:16/10;border-radius:16px;background-size:cover;background-position:center;
+    border:1px solid var(--line);cursor:zoom-in;background-color:var(--surface)}
+  .pd-noimg{display:grid;place-items:center;color:var(--text-faint);cursor:default}
+  .pd-thumbs{display:flex;gap:10px;flex-wrap:wrap}
+  .pd-thumb{width:70px;height:56px;border-radius:10px;background-size:cover;background-position:center;
+    border:2px solid transparent;cursor:pointer;opacity:.65;transition:.13s}
+  .pd-thumb:hover{opacity:1}
+  .pd-thumb.on{border-color:var(--fire);opacity:1}
+  .pd-cat{font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .pd-name{font-family:var(--display);font-size:28px;font-weight:700;margin:6px 0 0;line-height:1.15}
+  .pd-price{font-family:var(--display);font-size:26px;font-weight:700;color:var(--cyan);margin:0 0 14px}
+  .pd-desc{font-size:14.5px;color:var(--text-dim);line-height:1.7;margin-bottom:24px}
+  .pd-actions{display:flex;gap:12px;flex-wrap:wrap}
+  .pd-actions .btn-primary{width:auto;padding:13px 24px}
+  @media(max-width:640px){.pd-name{font-size:23px}}
   /* product list rows */
   .prod-list{display:flex;flex-direction:column;gap:10px}
   .prod-row{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);
@@ -653,7 +680,7 @@ const TR={
 };
 let SESS={email:'',pass:''}, ADMIN_USERS=null, ADMIN_LOADING=false, contactDone='';
 let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='';
-let PROD_VIEW='cards';
+let PROD_VIEW='cards', PROD_OPEN=null, PROD_PHOTO=0;
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
 function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;ADMIN_NEWS=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
@@ -664,7 +691,7 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';render()}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';render()}
 function navBtn(id,icon,label){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -886,6 +913,7 @@ function productsPage(){
   if(!API_URL) return `<div class="page-head"><h1>Mis Productos</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver tus productos.</div>`;
   if(CLIENT_PRODS===null){ loadClientProds();
     return `<div class="page-head"><h1>Mis Productos</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando productos...</div>`; }
+  if(PROD_OPEN){ const p=CLIENT_PRODS.find(x=>x.id===PROD_OPEN); if(p)return productDetailPage(p); PROD_OPEN=null; }
   if(!CLIENT_PRODS.length)
     return `<div class="page-head"><h1>Mis Productos</h1></div><div class="empty-state"><div class="empty-ic">${sv(I.box,28)}</div><h3>Aún no hay productos</h3><p>Pronto verás aquí las herramientas disponibles.</p></div>`;
   const cards=CLIENT_PRODS.map(p=>{
@@ -896,24 +924,27 @@ function productsPage(){
       : can ? `<span class="pill active"><span class="pdot"></span>${t('disponible')}</span>`
       : `<span class="pill pending"><span class="pdot"></span>${priv?t('privado'):t('bloqueado')}</span>`;
     const dl = soon
-      ? `<button class="btn-dl disabled" style="cursor:default">${t('muy_pronto')}</button>`
+      ? `<button class="btn-dl disabled" style="cursor:default" onclick="event.stopPropagation()">${t('muy_pronto')}</button>`
       : can
-        ? `<button class="btn-dl" onclick="window.open('${p.download}','_blank')">${sv(I.dl,16)} ${t('descargar')}</button>`
+        ? `<button class="btn-dl" onclick="event.stopPropagation();window.open('${p.download}','_blank')">${sv(I.dl,16)} ${t('descargar')}</button>`
         : priv
-          ? `<button class="btn-dl" style="background:linear-gradient(135deg,var(--cyan),#1E86E0)" onclick='openPay(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${sv(I.lock,15)} ${p.precio?(t('comprar')+' · $'+p.precio):t('comprar')}</button>`
-          : `<button class="btn-dl disabled">${sv(I.lock,15)} ${t('no_disponible')}</button>`;
+          ? `<button class="btn-dl" style="background:linear-gradient(135deg,var(--cyan),#1E86E0)" onclick='event.stopPropagation();openPay(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${sv(I.lock,15)} ${p.precio?(t('comprar')+' · $'+p.precio):t('comprar')}</button>`
+          : `<button class="btn-dl disabled" onclick="event.stopPropagation()">${sv(I.lock,15)} ${t('no_disponible')}</button>`;
     const vid = (p.video && !soon)
-      ? `<button class="btn-vid" onclick='openVid(${JSON.stringify({n:p.nombre,v:p.video}).replace(/'/g,"&#39;")})'>${sv(I.play,15)} ${t('ver_video')}</button>`
+      ? `<button class="btn-vid" onclick='event.stopPropagation();openVid(${JSON.stringify({n:p.nombre,v:p.video}).replace(/'/g,"&#39;")})'>${sv(I.play,15)} ${t('ver_video')}</button>`
       : '';
     const cat = soon?t('proximamente'):priv?t('privado'):(LANG==='en'?'Public':'Público');
+    const foto1=(p.fotos||'').split('|').map(x=>x.trim()).filter(x=>x)[0]||'';
+    const thumb=foto1?`<div class="card-thumb" style="background-image:url('${foto1}')"></div>`:'';
     if(PROD_VIEW==='list'){
-      return `<div class="prod-row"${soon?' style="opacity:.85"':''}>
+      return `<div class="prod-row prod-click"${soon?' style="opacity:.85"':''} onclick="openProdDetail('${p.id}')">
+        ${foto1?`<div class="prod-row-thumb" style="background-image:url('${foto1}')"></div>`:''}
         <div class="prod-row-main"><div class="prod-row-name">${p.nombre}</div>
           <div class="prod-row-desc">${p.descripcion||''}</div></div>
         <div class="prod-row-pill">${pill}</div>
         <div class="prod-row-actions">${dl}${vid}</div></div>`;
     }
-    return `<div class="card"${soon?' style="opacity:.85"':''}><div class="card-top"><div class="card-row">
+    return `<div class="card prod-click"${soon?' style="opacity:.85"':''} onclick="openProdDetail('${p.id}')">${thumb}<div class="card-top"><div class="card-row">
       <div><div class="card-name">${p.nombre}</div><div class="card-cat">${cat}</div></div>${pill}</div></div>
       <div class="card-desc">${p.descripcion||''}</div>
       <div style="flex:1"></div>
@@ -925,6 +956,46 @@ function productsPage(){
   return `<div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;padding-right:52px">
       <div><h1>${t('prod_h')}</h1><p>${t('prod_sub')}</p></div>${toggle}</div>
     ${PROD_VIEW==='list'?`<div class="prod-list">${cards}</div>`:`<div class="grid">${cards}</div>`}`;
+}
+function openProdDetail(id){PROD_OPEN=id;PROD_PHOTO=0;render();window.scrollTo(0,0);}
+function closeProdDetail(){PROD_OPEN=null;render();}
+function setProdPhoto(i){PROD_PHOTO=i;render();}
+function productDetailPage(p){
+  const soon=p.tipo==='PROXIMO', priv=p.tipo==='PRIVADO', can=p.canDownload;
+  const fotos=(p.fotos||'').split('|').map(x=>x.trim()).filter(x=>x).slice(0,5);
+  const main=fotos.length?fotos[Math.min(PROD_PHOTO,fotos.length-1)]:'';
+  const gallery = fotos.length
+    ? `<div class="pd-gallery">
+        <div class="pd-main" style="background-image:url('${main}')" onclick="window.open('${main}','_blank')"></div>
+        ${fotos.length>1?`<div class="pd-thumbs">${fotos.map((f,i)=>`<div class="pd-thumb ${i===Math.min(PROD_PHOTO,fotos.length-1)?'on':''}" style="background-image:url('${f}')" onclick="setProdPhoto(${i})"></div>`).join('')}</div>`:''}
+      </div>`
+    : `<div class="pd-gallery"><div class="pd-main pd-noimg">${sv(I.box,40)}</div></div>`;
+  const pill = soon ? `<span class="pill" style="background:rgba(52,179,255,.12);color:var(--cyan);border:1px solid rgba(52,179,255,.28)"><span class="pdot" style="background:var(--cyan)"></span>${t('proximamente')}</span>`
+    : can ? `<span class="pill active"><span class="pdot"></span>${t('disponible')}</span>`
+    : `<span class="pill pending"><span class="pdot"></span>${priv?t('privado'):t('bloqueado')}</span>`;
+  const dl = soon
+    ? `<button class="btn-primary" style="cursor:default;opacity:.7">${t('muy_pronto')}</button>`
+    : can
+      ? `<button class="btn-primary" onclick="window.open('${p.download}','_blank')">${sv(I.dl,17)} ${t('descargar')}</button>`
+      : priv
+        ? `<button class="btn-primary" style="background:linear-gradient(135deg,var(--cyan),#1E86E0)" onclick='openPay(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${sv(I.lock,16)} ${p.precio?(t('comprar')+' · $'+p.precio):t('comprar')}</button>`
+        : `<button class="btn-primary" style="opacity:.6;cursor:default">${sv(I.lock,16)} ${t('no_disponible')}</button>`;
+  const vid = (p.video && !soon)
+    ? `<button class="btn-vid" style="padding:13px 18px" onclick='openVid(${JSON.stringify({n:p.nombre,v:p.video}).replace(/'/g,"&#39;")})'>${sv(I.play,16)} ${t('ver_video')}</button>`
+    : '';
+  const cat = soon?t('proximamente'):priv?t('privado'):(LANG==='en'?'Public':'Público');
+  return `<button class="back-btn" onclick="closeProdDetail()">${sv(I.chev,16)} ${LANG==='en'?'Back':'Volver'}</button>
+    <div class="pd-wrap">
+      <div class="pd-left">${gallery}</div>
+      <div class="pd-right">
+        <div class="pd-cat">${cat}</div>
+        <h1 class="pd-name">${p.nombre}</h1>
+        <div style="margin:10px 0 16px">${pill}</div>
+        ${p.precio&&priv?`<div class="pd-price">$${p.precio}</div>`:''}
+        <div class="pd-desc">${(p.descripcion||(LANG==='en'?'No description available.':'Sin descripción disponible.')).replace(/\n/g,'<br>')}</div>
+        <div class="pd-actions">${dl}${vid}</div>
+      </div>
+    </div>`;
 }
 function setProdView(v){PROD_VIEW=v;try{localStorage.setItem('sp_prodview',v);}catch(e){}render();}
 
@@ -1215,7 +1286,8 @@ function adminProductsPage(){
 }
 
 function openProd(p){
-  const e=p||{id:'',nombre:'',desc:'',video:'',download:'',tipo:'PUBLICO',precio:''};
+  const e=p||{id:'',nombre:'',desc:'',video:'',download:'',tipo:'PUBLICO',precio:'',fotos:''};
+  const fotosArr=(e.fotos||'').split('|').map(x=>x.trim());
   document.getElementById('prodTitle').textContent = p?'Editar producto':'Añadir producto';
   document.getElementById('prodBody').innerHTML = `
     <input type="hidden" id="pid" value="${e.id}">
@@ -1223,6 +1295,10 @@ function openProd(p){
     <div class="mfield"><label>Descripción</label><textarea id="pdesc" placeholder="Qué hace el producto...">${e.desc||''}</textarea></div>
     <div class="mfield"><label>Link del video (YouTube o Drive)</label><input id="pvideo" value="${(e.video||'').replace(/"/g,'&quot;')}" placeholder="https://youtu.be/..."></div>
     <div class="mfield"><label>Link de descarga (GitHub/Drive)</label><input id="pdownload" value="${(e.download||'').replace(/"/g,'&quot;')}" placeholder="https://..."></div>
+    <div class="mfield"><label>Fotos del producto (hasta 5 links)</label>
+      ${[0,1,2,3,4].map(i=>`<input id="pfoto${i}" value="${(fotosArr[i]||'').replace(/"/g,'&quot;')}" placeholder="Link de foto ${i+1} (https://...)" style="margin-bottom:8px">`).join('')}
+      <div style="font-size:11px;color:var(--text-faint);line-height:1.5">Pega el link directo de cada imagen (que termine en .jpg o .png). La 1ª foto sale en la tarjeta.</div>
+    </div>
     <div class="mfield"><label>Acceso</label>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button type="button" id="btnPub" class="seg-btn ${e.tipo!=='PRIVADO'&&e.tipo!=='PROXIMO'?'on':''}" onclick="setTipo('PUBLICO')">Público</button>
@@ -1242,13 +1318,14 @@ function setTipo(t){document.getElementById('ptipo').value=t;
 async function saveProd(){
   const nombre=(document.getElementById('pnombre').value||'').trim();
   if(!nombre){document.getElementById('prodMsg').innerHTML='<div class="login-err show">Ponle nombre al producto.</div>';return;}
+  const fotos=[0,1,2,3,4].map(i=>{const el=document.getElementById('pfoto'+i);return el?(el.value||'').trim():'';}).filter(x=>x).join('|');
   const data={action:document.getElementById('pid').value?'editproduct':'addproduct',
     email:SESS.email,pass:SESS.pass,pid:document.getElementById('pid').value,
     nombre, desc:document.getElementById('pdesc').value||'', video:document.getElementById('pvideo').value||'',
     download:document.getElementById('pdownload').value||'', tipo:document.getElementById('ptipo').value,
-    precio:document.getElementById('pprecio')?document.getElementById('pprecio').value||'':''};
+    precio:document.getElementById('pprecio')?document.getElementById('pprecio').value||'':'', fotos};
   try{ const r=await apiCall(data);
-    if(r.ok){ closeModal('prodModal'); ADMIN_PRODS=null; render(); }
+    if(r.ok){ closeModal('prodModal'); ADMIN_PRODS=null; CLIENT_PRODS=null; render(); }
     else document.getElementById('prodMsg').innerHTML='<div class="login-err show">No se pudo guardar.</div>';
   }catch(e){document.getElementById('prodMsg').innerHTML='<div class="login-err show">Error de conexión.</div>';}
 }
