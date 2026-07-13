@@ -1081,7 +1081,7 @@ function newsPage(){
   const flag=c=>({USD:'🇺🇸',EUR:'🇪🇺',GBP:'🇬🇧',JPY:'🇯🇵',CAD:'🇨🇦',AUD:'🇦🇺',NZD:'🇳🇿',CHF:'🇨🇭',CNY:'🇨🇳'}[c]||'🌐');
   let calHTML='';
   if(MKTCAL===null){ calHTML=`<div style="color:var(--text-faint);font-size:13px;padding:6px 0">${isEn?'Loading...':'Cargando...'}</div>`; }
-  else if(!MKTCAL.length){ calHTML=`<div style="color:var(--text-faint);font-size:13px;padding:6px 0">${isEn?'Calendar not available right now.':'Calendario no disponible ahora mismo.'}</div>`; }
+  else if(!MKTCAL.length){ calHTML=`<div style="color:var(--text-faint);font-size:12.5px;padding:8px 0;line-height:1.6">${isEn?'Full economic calendar available in the SNIPEROCKET HISTORIAL app.':'Calendario económico completo disponible en la app SNIPEROCKET HISTORIAL.'}</div>`; }
   else {
     let curDay='';
     calHTML=MKTCAL.map(ev=>{
