@@ -468,6 +468,48 @@
     border-radius:15px;padding:18px 20px;max-width:760px;margin-top:26px}
   .help-cta-t{font-family:var(--display);font-size:15.5px;font-weight:600;color:var(--text)}
   .help-cta-s{font-size:12.5px;color:var(--text-dim);margin-top:3px}
+  /* encabezado de sección */
+  .sec-h{font-family:var(--display);font-size:15px;font-weight:600;color:var(--text);margin:0 0 14px;
+    padding-bottom:8px;border-bottom:1px solid var(--line-soft);display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .sec-h span{font-size:11.5px;color:var(--text-faint);font-weight:400}
+  /* estrellas */
+  .stars{display:inline-flex;gap:1px;vertical-align:middle}
+  .star{color:var(--line-strong);line-height:1}
+  .star.on{color:#F5A623}
+  .pd-rate{display:inline-flex;align-items:center;gap:6px;margin-left:10px;font-size:12.5px;color:var(--text-dim);vertical-align:middle}
+  .pd-rate b{color:var(--text)}
+  .pd-rate span{color:var(--text-faint)}
+  .card-rate{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:11px;color:var(--text-dim)}
+  .card-rate span{color:var(--text-faint)}
+  /* reseñas cliente */
+  .rev-wrap{margin-top:38px;padding-top:26px;border-top:1px solid var(--line-soft)}
+  .rev-list{display:flex;flex-direction:column;gap:12px}
+  .rev-item{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
+  .rev-head{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .rev-name{font-size:13.5px;font-weight:600;color:var(--text)}
+  .rev-date{font-size:11px;color:var(--text-faint);margin-top:1px}
+  .rev-text{font-size:13px;color:var(--text-dim);line-height:1.6}
+  .rev-empty{color:var(--text-faint);font-size:13px;padding:18px 0}
+  .rev-form{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line);border-radius:15px;padding:20px}
+  .rev-form-t{font-family:var(--display);font-size:14.5px;font-weight:600;margin-bottom:12px}
+  .rev-pick{display:flex;align-items:center;gap:3px;margin-bottom:12px}
+  .rev-star{background:none;border:none;font-size:26px;line-height:1;color:var(--line-strong);cursor:pointer;padding:0 2px;transition:.1s}
+  .rev-star:hover{transform:scale(1.15)}
+  .rev-star.on{color:#F5A623}
+  .rev-pick-l{font-size:11.5px;color:var(--text-faint);margin-left:9px}
+  .rev-form textarea{width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:12px 13px;
+    color:var(--text);font-size:13.5px;min-height:110px;resize:vertical;font-family:var(--body);margin-bottom:12px}
+  .rev-note{font-size:11px;color:var(--text-faint);margin-top:9px}
+  .rev-locked{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px dashed var(--line-strong);
+    border-radius:13px;padding:18px;font-size:12.5px;color:var(--text-faint);height:fit-content}
+  /* reseñas admin */
+  .arev-list{display:flex;flex-direction:column;gap:14px;max-width:820px}
+  .arev{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .arev-top{display:flex;align-items:center;gap:11px;margin-bottom:11px;flex-wrap:wrap}
+  .arev-name{font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .arev-meta{font-size:11px;color:var(--text-faint);margin-top:2px;word-break:break-all}
+  .arev-text{font-size:13px;color:var(--text-dim);line-height:1.6;background:var(--bg-2);border-radius:10px;padding:12px 14px}
+  .arev-act{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
   /* referral */
   .ref-stat{text-align:center;padding:14px 0 18px}
   .ref-num{font-family:var(--display);font-size:44px;font-weight:800;color:var(--fire);line-height:1}
@@ -713,6 +755,7 @@ const I={user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="
   tag:'<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
   copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+  star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
   list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
   box:'<path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/>',news:'<path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/>',phone:'<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.4-1.2a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>',users:'<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/>',cog:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 0 1-4 0v-.1A1.7 1.7 0 0 0 6 19.4l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9V9a1.7 1.7 0 0 0 1.5 1h.1a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',play:'<path d="M5 3l14 9-14 9z"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',edit:'<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7M18.5 2.5a2.1 2.1 0 0 1 3 3L12 15l-4 1 1-4z"/>',plus:'<path d="M12 5v14M5 12h14"/>',mail:'<path d="M4 4h16v16H4zM22 6l-10 7L2 6"/>',trash:'<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',refresh:'<path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.5 9a9 9 0 0 1 14.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0 0 20.5 15"/>'};
 const sv=(p,sz=18)=>`<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
@@ -815,9 +858,15 @@ const TR={
 let SESS={email:'',pass:''}, ADMIN_USERS=null, ADMIN_LOADING=false, contactDone='';
 let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='';
 let PROD_VIEW='cards', PROD_OPEN=null, PROD_PHOTO=0;
+let REVIEWS=null, REVIEWS_LOADING=false, REV_STARS=0, REV_TXT='', REV_MSG='', REV_ERR='';
+async function loadReviews(){
+  if(REVIEWS_LOADING)return; REVIEWS_LOADING=true;
+  try{ const r=await apiCall({action:'listreviews'}); REVIEWS=r.ok?r.reviews:[]; }catch(e){ REVIEWS=[]; }
+  REVIEWS_LOADING=false; render();
+}
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1049,6 +1098,7 @@ function productsPage(){
   if(CLIENT_PRODS===null){ loadClientProds();
     return `<div class="page-head"><h1>Mis Productos</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando productos...</div>`; }
   if(PROD_OPEN){ const p=CLIENT_PRODS.find(x=>x.id===PROD_OPEN); if(p)return productDetailPage(p); PROD_OPEN=null; }
+  if(REVIEWS===null) loadReviews();
   if(!CLIENT_PRODS.length)
     return `<div class="page-head"><h1>Mis Productos</h1></div><div class="empty-state"><div class="empty-ic">${sv(I.box,28)}</div><h3>Aún no hay productos</h3><p>Pronto verás aquí las herramientas disponibles.</p></div>`;
   const cards=CLIENT_PRODS.map(p=>{
@@ -1070,17 +1120,18 @@ function productsPage(){
       : '';
     const cat = soon?t('proximamente'):priv?t('privado'):(LANG==='en'?'Public':'Público');
     const foto1=(p.fotos||'').split('|').map(x=>x.trim()).filter(x=>x)[0]||'';
+    const rate=cardRate(p.id);
     const thumb=foto1?`<div class="card-thumb" style="background-image:url('${foto1}')"></div>`:'';
     if(PROD_VIEW==='list'){
       return `<div class="prod-row prod-click"${soon?' style="opacity:.85"':''} onclick="openProdDetail('${p.id}')">
         ${foto1?`<div class="prod-row-thumb" style="background-image:url('${foto1}')"></div>`:''}
-        <div class="prod-row-main"><div class="prod-row-name">${p.nombre}</div>
+        <div class="prod-row-main"><div class="prod-row-name">${p.nombre}${rate}</div>
           <div class="prod-row-desc">${p.descripcion||''}</div></div>
         <div class="prod-row-pill">${pill}</div>
         <div class="prod-row-actions">${dl}${vid}</div></div>`;
     }
     return `<div class="card prod-click"${soon?' style="opacity:.85"':''} onclick="openProdDetail('${p.id}')">${thumb}<div class="card-top"><div class="card-row">
-      <div><div class="card-name">${p.nombre}</div><div class="card-cat">${cat}</div></div>${pill}</div></div>
+      <div><div class="card-name">${p.nombre}</div><div class="card-cat">${cat}${rate}</div></div>${pill}</div></div>
       <div class="card-desc">${p.descripcion||''}</div>
       <div style="flex:1"></div>
       <div class="card-actions">${dl}${vid}</div></div>`;
@@ -1092,7 +1143,7 @@ function productsPage(){
       <div><h1>${t('prod_h')}</h1><p>${t('prod_sub')}</p></div>${toggle}</div>
     ${PROD_VIEW==='list'?`<div class="prod-list">${cards}</div>`:`<div class="grid">${cards}</div>`}`;
 }
-function openProdDetail(id){PROD_OPEN=id;PROD_PHOTO=0;render();window.scrollTo(0,0);}
+function openProdDetail(id){PROD_OPEN=id;PROD_PHOTO=0;REV_STARS=0;REV_TXT='';REV_MSG='';REV_ERR='';render();window.scrollTo(0,0);}
 function closeProdDetail(){PROD_OPEN=null;render();}
 function setProdPhoto(i){PROD_PHOTO=i;render();}
 function productDetailPage(p){
@@ -1119,18 +1170,92 @@ function productDetailPage(p){
     ? `<button class="btn-vid" style="padding:13px 18px" onclick='openVid(${JSON.stringify({n:p.nombre,v:p.video}).replace(/'/g,"&#39;")})'>${sv(I.play,16)} ${t('ver_video')}</button>`
     : '';
   const cat = soon?t('proximamente'):priv?t('privado'):(LANG==='en'?'Public':'Público');
-  return `<button class="back-btn" onclick="closeProdDetail()">${sv(I.chev,16)} ${LANG==='en'?'Back':'Volver'}</button>
+  const isEn=LANG==='en';
+  return `<button class="back-btn" onclick="closeProdDetail()">${sv(I.chev,16)} ${isEn?'Back':'Volver'}</button>
     <div class="pd-wrap">
       <div class="pd-left">${gallery}</div>
       <div class="pd-right">
         <div class="pd-cat">${cat}</div>
         <h1 class="pd-name">${p.nombre}</h1>
-        <div style="margin:10px 0 16px">${pill}</div>
+        <div style="margin:10px 0 16px">${pill}${starsSummary(p.id)}</div>
         ${p.precio&&priv?`<div class="pd-price">$${p.precio}</div>`:''}
-        <div class="pd-desc">${(p.descripcion||(LANG==='en'?'No description available.':'Sin descripción disponible.')).replace(/\n/g,'<br>')}</div>
+        <div class="pd-desc">${(p.descripcion||(isEn?'No description available.':'Sin descripción disponible.')).replace(/\n/g,'<br>')}</div>
         <div class="pd-actions">${dl}${vid}</div>
       </div>
-    </div>`;
+    </div>
+    ${reviewsBlock(p)}`;
+}
+// ── RESEÑAS ──
+function starsHTML(n,size){
+  n=Math.round(n||0);
+  let s='';
+  for(let i=1;i<=5;i++) s+=`<span class="star ${i<=n?'on':''}" style="font-size:${size||14}px">★</span>`;
+  return `<span class="stars">${s}</span>`;
+}
+function revAvg(pid){
+  if(!REVIEWS) return null;
+  const rs=REVIEWS.filter(r=>r.pid===pid);
+  if(!rs.length) return null;
+  return {avg:rs.reduce((s,r)=>s+(r.estrellas||0),0)/rs.length, n:rs.length};
+}
+function starsSummary(pid){
+  const a=revAvg(pid);
+  if(!a) return '';
+  return `<span class="pd-rate">${starsHTML(a.avg,15)} <b>${a.avg.toFixed(1)}</b> <span>(${a.n})</span></span>`;
+}
+function cardRate(pid){
+  const a=revAvg(pid);
+  if(!a) return '';
+  return `<span class="card-rate">${starsHTML(a.avg,11)} ${a.avg.toFixed(1)} <span>(${a.n})</span></span>`;
+}
+function reviewsBlock(p){
+  const isEn=LANG==='en';
+  if(REVIEWS===null){ loadReviews();
+    return `<div class="rev-wrap"><div class="sec-h">${isEn?'Reviews':'Reseñas'}</div>
+      <div style="color:var(--text-dim);font-size:13px">${isEn?'Loading...':'Cargando...'}</div></div>`; }
+  const rs=REVIEWS.filter(r=>r.pid===p.id);
+  const canReview = p.canDownload && p.tipo!=='PROXIMO';
+  const list = rs.length
+    ? `<div class="rev-list">${rs.map(r=>`<div class="rev-item">
+        <div class="rev-head"><div class="avatar" style="width:30px;height:30px;font-size:11px">${(r.nombre||'?').charAt(0).toUpperCase()}</div>
+          <div style="min-width:0;flex:1"><div class="rev-name">${r.nombre||'—'}</div>
+            <div class="rev-date">${(r.fecha||'').split(' ')[0]}</div></div>
+          ${starsHTML(r.estrellas,13)}</div>
+        <div class="rev-text">${(r.texto||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div></div>`).join('')}</div>`
+    : `<div class="rev-empty">${isEn?'No reviews yet. Be the first to leave one.':'Aún no hay reseñas. Sé el primero en dejar una.'}</div>`;
+  const form = canReview
+    ? `<div class="rev-form">
+        <div class="rev-form-t">${isEn?'Leave your review':'Deja tu reseña'}</div>
+        ${REV_MSG?`<div class="login-err show" style="color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)">${REV_MSG}</div>`:''}
+        ${REV_ERR?`<div class="login-err show">${REV_ERR}</div>`:''}
+        <div class="rev-pick">${[1,2,3,4,5].map(n=>`<button type="button" class="rev-star ${n<=REV_STARS?'on':''}" onclick="setRevStars(${n})">★</button>`).join('')}
+          <span class="rev-pick-l">${REV_STARS?REV_STARS+'/5':(isEn?'Pick a rating':'Elige una puntuación')}</span></div>
+        <textarea id="revtxt" maxlength="600" placeholder="${isEn?'How has it worked for you? Be honest, it helps others.':'¿Cómo te ha funcionado? Sé honesto, ayuda a los demás.'}">${REV_TXT}</textarea>
+        <button class="btn-add" id="revbtn" onclick="sendReview('${p.id}')">${isEn?'Send review':'Enviar reseña'}</button>
+        <div class="rev-note">${isEn?'I review it before publishing.':'La reviso antes de publicarla.'}</div>
+      </div>`
+    : `<div class="rev-locked">${sv(I.lock,15)} ${isEn?'Only clients who have this product can leave a review.':'Solo los clientes que tienen este producto pueden dejar reseña.'}</div>`;
+  return `<div class="rev-wrap">
+    <div class="sec-h">${isEn?'Reviews':'Reseñas'} ${rs.length?`<span style="color:var(--text-faint);font-weight:400">· ${rs.length}</span>`:''}</div>
+    <div class="two-col">${list}${form}</div></div>`;
+}
+function setRevStars(n){REV_STARS=n;REV_TXT=(document.getElementById('revtxt')||{}).value||REV_TXT;render();}
+async function sendReview(pid){
+  const el=document.getElementById('revtxt');
+  const txt=(el?el.value:'').trim();
+  REV_TXT=txt; REV_MSG=''; REV_ERR='';
+  const isEn=LANG==='en';
+  if(!REV_STARS){REV_ERR=isEn?'Pick a rating first.':'Elige una puntuación primero.';return render();}
+  if(txt.length<10){REV_ERR=isEn?'Write a bit more (10 characters min).':'Escribe un poco más (mínimo 10 caracteres).';return render();}
+  const btn=document.getElementById('revbtn'); if(btn)btn.textContent=isEn?'Sending...':'Enviando...';
+  try{
+    const r=await apiCall({action:'addreview',email:SESS.email,pass:SESS.pass,pid,estrellas:REV_STARS,texto:txt});
+    if(r.ok){ REV_MSG=isEn?'Thanks! Your review is under review and will be published soon.':'¡Gracias! Tu reseña está en revisión y se publicará pronto.';
+      REV_TXT=''; REV_STARS=0; REVIEWS=null; }
+    else if(r.error==='NO_TIENE') REV_ERR=isEn?'You can only review products you own.':'Solo puedes reseñar productos que tienes.';
+    else REV_ERR=isEn?'Could not send. Try again.':'No se pudo enviar. Intenta de nuevo.';
+  }catch(e){ REV_ERR=isEn?'Connection error.':'Error de conexión.'; }
+  render();
 }
 function setProdView(v){PROD_VIEW=v;try{localStorage.setItem('sp_prodview',v);}catch(e){}render();}
 
@@ -1218,31 +1343,39 @@ function copyCode(code,btn){
   try{ navigator.clipboard.writeText(code); }catch(e){}
   if(btn){const o=btn.innerHTML;btn.innerHTML='✓ '+(LANG==='en'?'Copied':'Copiado');setTimeout(()=>{try{btn.innerHTML=o;}catch(e){}},1500);}
 }
+function discCard(d,isEn){
+  const init=(d.empresa||'?').trim().charAt(0).toUpperCase();
+  return `<div class="disc-card">
+    <div class="disc-top">
+      <div class="disc-logo">${init}</div>
+      <div style="flex:1;min-width:0"><div class="disc-empresa">${d.empresa||''}</div>
+        ${d.nota?`<div class="disc-nota">${d.nota}</div>`:''}</div>
+      ${d.descuento?`<div class="disc-off">${d.descuento}</div>`:''}
+    </div>
+    ${d.codigo?`<div class="disc-code-row"><span class="disc-code">${d.codigo}</span>
+      <button class="disc-copy" onclick="copyCode('${(d.codigo||'').replace(/'/g,'')}',this)">${sv(I.copy,14)} ${isEn?'Copy':'Copiar'}</button></div>`:''}
+    ${d.link?`<a class="disc-go" href="${d.link}" target="_blank" rel="noopener">${d.tipo==='FONDEO'?(isEn?'Open account':'Abrir cuenta'):(isEn?'Go to site':'Ir al sitio')} ${sv(I.ext,14)}</a>`:''}
+  </div>`;
+}
 function discountsPage(){
   const isEn=LANG==='en';
   if(!API_URL) return `<div class="page-head"><h1>${isEn?'Discounts':'Descuentos'}</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet.</div>`;
   if(DISCOUNTS===null){ loadDiscounts();
     return `<div class="page-head"><h1>${isEn?'Discounts':'Descuentos'}</h1><p>${isEn?'Loading...':'Cargando...'}</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">${isEn?'Loading...':'Cargando descuentos...'}</div>`; }
-  const head=`<div class="page-head"><h1>${isEn?'Funded Account Discounts':'Descuentos en Cuentas de Fondeo'}</h1>
-    <p>${isEn?'Exclusive discount codes for prop firms. Tap to copy the code.':'Códigos de descuento exclusivos para prop firms. Toca para copiar el código.'}</p></div>`;
+  const head=`<div class="page-head"><h1>${isEn?'Funded Accounts & Discounts':'Cuentas de Fondeo y Descuentos'}</h1>
+    <p>${isEn?'Prop firms I work with and exclusive discount codes. Tap to copy the code.':'Prop firms con las que trabajo y códigos de descuento exclusivos. Toca para copiar el código.'}</p></div>`;
   if(!DISCOUNTS.length)
-    return head+`<div class="empty-state"><div class="empty-ic">${sv(I.tag,28)}</div><h3>${isEn?'No discounts yet':'Aún no hay descuentos'}</h3><p>${isEn?'Check back soon for exclusive codes.':'Pronto verás aquí códigos exclusivos.'}</p></div>`;
-  const cards=DISCOUNTS.map(d=>{
-    const init=(d.empresa||'?').trim().charAt(0).toUpperCase();
-    return `<div class="disc-card">
-      <div class="disc-top">
-        <div class="disc-logo">${init}</div>
-        <div style="flex:1;min-width:0"><div class="disc-empresa">${d.empresa||''}</div>
-          ${d.nota?`<div class="disc-nota">${d.nota}</div>`:''}</div>
-        ${d.descuento?`<div class="disc-off">${d.descuento}</div>`:''}
-      </div>
-      ${d.codigo?`<div class="disc-code-row"><span class="disc-code">${d.codigo}</span>
-        <button class="disc-copy" onclick="copyCode('${(d.codigo||'').replace(/'/g,'')}',this)">${sv(I.copy,14)} ${isEn?'Copy':'Copiar'}</button></div>`:''}
-      ${d.link?`<a class="disc-go" href="${d.link}" target="_blank" rel="noopener">${isEn?'Go to site':'Ir al sitio'} ${sv(I.ext,14)}</a>`:''}
-    </div>`;
-  }).join('');
-  return head+`<div class="disc-grid">${cards}</div>
-    <div style="font-size:11px;color:var(--text-faint);margin-top:20px;line-height:1.6;max-width:640px">${isEn?'Discount codes for third-party prop firms. Availability and terms depend on each firm. Trading futures involves high risk.':'Códigos de descuento de prop firms de terceros. La disponibilidad y condiciones dependen de cada empresa. El trading de futuros implica alto riesgo.'}</div>`;
+    return head+`<div class="empty-state"><div class="empty-ic">${sv(I.tag,28)}</div><h3>${isEn?'Nothing here yet':'Aún no hay nada aquí'}</h3><p>${isEn?'Check back soon.':'Pronto verás aquí cuentas de fondeo y códigos exclusivos.'}</p></div>`;
+  const fondeo=DISCOUNTS.filter(d=>d.tipo==='FONDEO');
+  const descs =DISCOUNTS.filter(d=>d.tipo!=='FONDEO');
+  let out=head;
+  if(fondeo.length) out+=`<div class="sec-h">🎯 ${isEn?'Funded accounts (prop firms)':'Cuentas de fondeo (prop firms)'}
+      <span>${isEn?'Direct access to open your account':'Acceso directo para abrir tu cuenta'}</span></div>
+    <div class="disc-grid">${fondeo.map(d=>discCard(d,isEn)).join('')}</div>`;
+  if(descs.length) out+=`<div class="sec-h" style="margin-top:${fondeo.length?'30px':'0'}">🏷️ ${isEn?'Discount codes':'Códigos de descuento'}
+      <span>${isEn?'Use them at checkout':'Úsalos al momento de pagar'}</span></div>
+    <div class="disc-grid">${descs.map(d=>discCard(d,isEn)).join('')}</div>`;
+  return out+`<div style="font-size:11px;color:var(--text-faint);margin-top:22px;line-height:1.6;max-width:640px">${isEn?'Third-party prop firms. Availability, rules and terms depend on each company. Trading futures involves high risk.':'Prop firms de terceros. La disponibilidad, reglas y condiciones dependen de cada empresa. El trading de futuros implica alto riesgo.'}</div>`;
 }
 let FAQ_CAT='';
 const FAQ_ICONS={'Cuenta':'👤','Licencias':'🔑','Productos':'📦','Fondeo':'🎯','Problemas':'🛠️','Riesgo':'⚠️'};
@@ -1447,11 +1580,12 @@ function openInfo(){
   document.getElementById('infoModal').classList.add('show');
 }
 
-function adminView(){const nav=navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes')+navBtn('aprofile',I.user,'Mi Perfil');
+function adminView(){const nav=navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes')+navBtn('aprofile',I.user,'Mi Perfil');
   let content;
   if(tab==='clients')content=clientsPage();
   else if(tab==='aprod')content=adminProductsPage();
   else if(tab==='alic')content=adminLicensesPage();
+  else if(tab==='arev')content=adminReviewsPage();
   else if(tab==='aref')content=adminReferidosPage();
   else if(tab==='adisc')content=adminDiscountsPage();
   else if(tab==='aguides')content=adminGuidesPage();
@@ -1819,6 +1953,61 @@ function adminReferidosPage(){
   return head+blocks;
 }
 
+// ════════ ADMIN: RESEÑAS ════════
+let ADMIN_REV=null, ADMIN_REV_LOADING=false, REV_MODE='pending';
+async function loadAdminRev(){
+  if(ADMIN_REV_LOADING)return; ADMIN_REV_LOADING=true;
+  try{ const r=await apiCall({action:'listreviewsadmin',email:SESS.email,pass:SESS.pass});
+    ADMIN_REV = r.ok ? r.reviews : []; }catch(e){ ADMIN_REV=[]; }
+  ADMIN_REV_LOADING=false; render();
+}
+async function setRev(rid,valor){
+  try{ await apiCall({action:'setreview',email:SESS.email,pass:SESS.pass,rid,valor}); ADMIN_REV=null; REVIEWS=null; render(); }catch(e){}
+}
+function delRev(rid){
+  confirmAction('Borrar reseña','¿Borrar esta reseña por completo?','Borrar',async()=>{
+    try{ await apiCall({action:'deletereview',email:SESS.email,pass:SESS.pass,rid}); ADMIN_REV=null; REVIEWS=null; render(); }catch(e){}
+  });
+}
+function adminReviewsPage(){
+  if(!API_URL) return `<div class="page-head"><h1>Reseñas</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet.</div>`;
+  if(ADMIN_REV===null){ loadAdminRev();
+    return `<div class="page-head"><h1>Reseñas</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando...</div>`; }
+  const pend=ADMIN_REV.filter(r=>!r.aprobado), apr=ADMIN_REV.filter(r=>r.aprobado);
+  const avg=ADMIN_REV.length?(ADMIN_REV.reduce((s,r)=>s+(r.estrellas||0),0)/ADMIN_REV.length):0;
+  const head=`<div class="page-head"><h1>Reseñas</h1><p>Las reseñas solo se publican cuando tú las apruebas. El cliente las ve dentro de cada producto.</p></div>
+    <div class="stat-row">
+      <button class="stat statbtn ${REV_MODE==='pending'?'on':''}" onclick="REV_MODE='pending';render()"><div class="v amber">${pend.length}</div><div class="l">Por aprobar · toca para ver</div></button>
+      <div class="stat"><div class="v green">${apr.length}</div><div class="l">Publicadas</div></div>
+      <div class="stat"><div class="v fire">${avg?avg.toFixed(1):'—'}</div><div class="l">Promedio de estrellas</div></div></div>
+    <div class="admin-toolbar">
+      <div style="display:flex;gap:8px">
+        <button class="seg-btn ${REV_MODE==='pending'?'on':''}" onclick="REV_MODE='pending';render()">Por aprobar</button>
+        <button class="seg-btn ${REV_MODE==='all'?'on':''}" onclick="REV_MODE='all';render()">Todas</button>
+      </div>
+      <button class="btn-ghost" onclick="ADMIN_REV=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
+  const list=REV_MODE==='pending'?pend:ADMIN_REV;
+  if(!list.length)
+    return head+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>${REV_MODE==='pending'?'No hay reseñas por aprobar 🎉':'Aún no hay reseñas'}</h3>
+      <p>${REV_MODE==='pending'?'Todo al día. Nada pendiente de revisar.':'Cuando un cliente deje una reseña, aparecerá aquí para que la apruebes.'}</p></div>`;
+  const cards=list.map(r=>`<div class="arev">
+      <div class="arev-top">
+        <div class="avatar" style="width:34px;height:34px;font-size:12px">${(r.nombre||'?').charAt(0).toUpperCase()}</div>
+        <div style="flex:1;min-width:0">
+          <div class="arev-name">${r.nombre||'—'} ${starsHTML(r.estrellas,13)}</div>
+          <div class="arev-meta">${r.email} · ${r.producto||r.pid} · ${r.fecha||''}</div></div>
+        ${r.aprobado?'<span class="pill active" style="font-size:10.5px"><span class="pdot"></span>Publicada</span>':'<span class="pill pending" style="font-size:10.5px"><span class="pdot"></span>Por aprobar</span>'}
+      </div>
+      <div class="arev-text">${(r.texto||'').replace(/</g,'&lt;').replace(/\n/g,'<br>')}</div>
+      <div class="arev-act">
+        ${r.aprobado
+          ? `<button class="btn-ghost" style="padding:6px 12px" onclick="setRev('${r.id}','NO')">Ocultar</button>`
+          : `<button class="btn-add" style="padding:7px 13px" onclick="setRev('${r.id}','SI')">✓ Publicar</button>`}
+        <button class="ibtn danger" onclick="delRev('${r.id}')">${sv(I.trash,15)}</button>
+      </div></div>`).join('');
+  return head+`<div class="arev-list">${cards}</div>`;
+}
+
 // ════════ ADMIN: DESCUENTOS ════════
 let ADMIN_DISC=null, ADMIN_DISC_LOADING=false;
 async function loadAdminDisc(){
@@ -1830,32 +2019,46 @@ function adminDiscountsPage(){
   if(!API_URL) return `<div class="page-head"><h1>Descuentos</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet.</div>`;
   if(ADMIN_DISC===null){ loadAdminDisc();
     return `<div class="page-head"><h1>Descuentos</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando...</div>`; }
-  const rows=ADMIN_DISC.length?ADMIN_DISC.map(d=>`<div class="trow" style="grid-template-columns:1.2fr 0.7fr 1fr auto">
+  const rows=ADMIN_DISC.length?ADMIN_DISC.map(d=>`<div class="trow" style="grid-template-columns:1.2fr 0.8fr 0.7fr 1fr auto">
       <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:12px">${(d.empresa||'?').charAt(0).toUpperCase()}</div>
         <div style="min-width:0"><div class="n">${d.empresa||'—'}</div>${d.nota?`<div class="cust-email">${d.nota}</div>`:''}</div></div>
+      <div class="col-hide">${d.tipo==='FONDEO'?'<span class="pill" style="background:rgba(52,179,255,.12);color:var(--cyan);border:1px solid rgba(52,179,255,.28);font-size:10.5px">🎯 Fondeo</span>':'<span class="pill pending" style="font-size:10.5px">🏷️ Descuento</span>'}</div>
       <div class="col-hide"><span class="pill active" style="font-size:11px">${d.descuento||'—'}</span></div>
       <div class="col-hide"><span class="mono" style="font-size:12px;color:var(--fire-soft)">${d.codigo||'—'}</span></div>
       <div class="row-act"><button class="ibtn" onclick='openDisc(${JSON.stringify(d).replace(/'/g,"&#39;")})'>${sv(I.edit,15)}</button>
         <button class="ibtn danger" onclick="delDisc('${d.id}')">${sv(I.trash,15)}</button></div></div>`).join('')
     :`<div style="padding:40px;text-align:center;color:var(--text-faint)">Aún no has agregado descuentos.</div>`;
-  return `<div class="page-head"><h1>Descuentos</h1><p>Agrega los códigos de descuento de prop firms (usa TUS códigos de afiliado para ganar comisión). Le salen al cliente.</p></div>
+  return `<div class="page-head"><h1>Cuentas de Fondeo y Descuentos</h1><p>Agrega prop firms y códigos (usa TUS links de afiliado para ganar comisión). Le salen al cliente en su sección de Descuentos.</p></div>
     <div class="admin-toolbar"><button class="btn-ghost" onclick="ADMIN_DISC=null;render()">${sv(I.refresh,15)} Actualizar</button>
-      <button class="btn-add" onclick="openDisc(null)">${sv(I.plus,15)} Agregar descuento</button></div>
-    <div class="table"><div class="trow head" style="grid-template-columns:1.2fr 0.7fr 1fr auto">
-      <div>Empresa</div><div class="col-hide">Descuento</div><div class="col-hide">Código</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
+      <button class="btn-add" onclick="openDisc(null)">${sv(I.plus,15)} Agregar</button></div>
+    <div class="table"><div class="trow head" style="grid-template-columns:1.2fr 0.8fr 0.7fr 1fr auto">
+      <div>Empresa</div><div class="col-hide">Tipo</div><div class="col-hide">Descuento</div><div class="col-hide">Código</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
 }
 function openDisc(d){
-  const e=d||{id:'',empresa:'',descuento:'',codigo:'',link:'',nota:''};
-  document.getElementById('discTitle').textContent=d?'Editar descuento':'Agregar descuento';
+  const e=d||{id:'',empresa:'',descuento:'',codigo:'',link:'',nota:'',tipo:'DESCUENTO'};
+  const tp=(e.tipo||'DESCUENTO').toUpperCase();
+  document.getElementById('discTitle').textContent=d?'Editar':'Agregar';
   document.getElementById('discBody').innerHTML=`
     <input type="hidden" id="did" value="${e.id}">
+    <div class="mfield"><label>¿Qué es?</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button type="button" id="btnFon" class="seg-btn ${tp==='FONDEO'?'on':''}" onclick="setDiscTipo('FONDEO')">🎯 Cuenta de fondeo</button>
+        <button type="button" id="btnDes" class="seg-btn ${tp!=='FONDEO'?'on':''}" onclick="setDiscTipo('DESCUENTO')">🏷️ Código de descuento</button>
+      </div>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:7px;line-height:1.5">Las cuentas de fondeo salen arriba para que el cliente entre fácil. Los descuentos salen abajo.</div></div>
+    <input type="hidden" id="dtipo" value="${tp}">
     <div class="mfield"><label>Empresa / Prop firm</label><input id="dempresa" value="${(e.empresa||'').replace(/"/g,'&quot;')}" placeholder="Ej: Apex Trader Funding"></div>
-    <div class="mfield"><label>Descuento</label><input id="ddescuento" value="${(e.descuento||'').replace(/"/g,'&quot;')}" placeholder="Ej: 90% OFF"></div>
-    <div class="mfield"><label>Código</label><input id="dcodigo" value="${(e.codigo||'').replace(/"/g,'&quot;')}" placeholder="Ej: SNIPER20"></div>
     <div class="mfield"><label>Link (tu link de afiliado)</label><input id="dlink" value="${(e.link||'').replace(/"/g,'&quot;')}" placeholder="https://..."></div>
-    <div class="mfield"><label>Nota (opcional)</label><input id="dnota" value="${(e.nota||'').replace(/"/g,'&quot;')}" placeholder="Ej: Todos los planes · Lifetime"></div>
+    <div class="mfield"><label>Descuento <span style="color:var(--text-faint);font-weight:400">(opcional)</span></label><input id="ddescuento" value="${(e.descuento||'').replace(/"/g,'&quot;')}" placeholder="Ej: 90% OFF"></div>
+    <div class="mfield"><label>Código <span style="color:var(--text-faint);font-weight:400">(opcional)</span></label><input id="dcodigo" value="${(e.codigo||'').replace(/"/g,'&quot;')}" placeholder="Ej: SNIPER20"></div>
+    <div class="mfield"><label>Nota <span style="color:var(--text-faint);font-weight:400">(opcional)</span></label><input id="dnota" value="${(e.nota||'').replace(/"/g,'&quot;')}" placeholder="Ej: Evaluación 50K · sin límite de tiempo"></div>
     <div id="discMsg"></div>`;
   document.getElementById('discModal').classList.add('show');
+}
+function setDiscTipo(v){
+  document.getElementById('dtipo').value=v;
+  document.getElementById('btnFon').classList.toggle('on',v==='FONDEO');
+  document.getElementById('btnDes').classList.toggle('on',v!=='FONDEO');
 }
 async function saveDisc(){
   const empresa=(document.getElementById('dempresa').value||'').trim();
@@ -1863,7 +2066,8 @@ async function saveDisc(){
   const data={action:document.getElementById('did').value?'editdiscount':'adddiscount',
     email:SESS.email,pass:SESS.pass,did:document.getElementById('did').value,
     empresa, descuento:document.getElementById('ddescuento').value||'', codigo:document.getElementById('dcodigo').value||'',
-    link:document.getElementById('dlink').value||'', nota:document.getElementById('dnota').value||''};
+    link:document.getElementById('dlink').value||'', nota:document.getElementById('dnota').value||'',
+    tipo:document.getElementById('dtipo').value||'DESCUENTO'};
   try{ const r=await apiCall(data);
     if(r.ok){ closeModal('discModal'); ADMIN_DISC=null; DISCOUNTS=null; render(); }
     else document.getElementById('discMsg').innerHTML='<div class="login-err show">No se pudo guardar.</div>';
