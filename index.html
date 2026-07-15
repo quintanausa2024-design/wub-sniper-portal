@@ -432,6 +432,42 @@
   .disc-go{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--fire);color:#0a0a0a;
     border-radius:10px;padding:11px;font-size:13.5px;font-weight:700;text-decoration:none;transition:.13s}
   .disc-go:hover{background:var(--fire-soft)}
+  /* layout 2 columnas equilibrado */
+  .two-col{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start;max-width:1000px}
+  .col-stack{display:flex;flex-direction:column;gap:18px}
+  .contact-side{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
+  .contact-side .contact-card:last-child{grid-column:1 / -1}
+  @media(max-width:900px){.two-col{grid-template-columns:1fr}.contact-side{grid-template-columns:1fr}}
+  .ref-share{display:flex;gap:8px;margin-top:12px}
+  .ref-sh{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;text-decoration:none;transition:.13s}
+  .ref-sh.wa{background:rgba(37,211,102,.12);color:#25D366;border:1px solid rgba(37,211,102,.3)}
+  .ref-sh.wa:hover{background:rgba(37,211,102,.2)}
+  .ref-sh.tg{background:rgba(52,179,255,.12);color:var(--cyan);border:1px solid rgba(52,179,255,.3)}
+  .ref-sh.tg:hover{background:rgba(52,179,255,.2)}
+  /* centro de ayuda */
+  .help-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;max-width:860px;margin-bottom:22px}
+  .hq{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
+    border-radius:13px;padding:14px 15px;cursor:pointer;transition:.14s;color:var(--fire)}
+  .hq:hover{border-color:var(--fire);transform:translateY(-2px)}
+  .hq div{display:flex;flex-direction:column;min-width:0}
+  .hq b{font-size:13.5px;color:var(--text);font-weight:600}
+  .hq span{font-size:11px;color:var(--text-faint);margin-top:1px}
+  .faq-cats{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .faq-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text-dim);border-radius:20px;padding:7px 13px;font-size:12.5px;font-weight:600;cursor:pointer;
+    font-family:var(--body);transition:.13s}
+  .faq-chip:hover{border-color:var(--line-strong);color:var(--text)}
+  .faq-chip.on{background:var(--fire);border-color:var(--fire);color:#0a0a0a}
+  .faq-count{background:rgba(255,255,255,.1);border-radius:9px;padding:1px 6px;font-size:10.5px}
+  .faq-chip.on .faq-count{background:rgba(0,0,0,.18)}
+  .faq-sec{font-family:var(--display);font-size:12px;font-weight:700;color:var(--fire-soft);text-transform:uppercase;
+    letter-spacing:.07em;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line-soft)}
+  .faq-sec:first-child{margin-top:0}
+  .help-cta{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(255,107,44,.09),rgba(52,179,255,.05));border:1px solid var(--line);
+    border-radius:15px;padding:18px 20px;max-width:760px;margin-top:26px}
+  .help-cta-t{font-family:var(--display);font-size:15.5px;font-weight:600;color:var(--text)}
+  .help-cta-s{font-size:12.5px;color:var(--text-dim);margin-top:3px}
   /* referral */
   .ref-stat{text-align:center;padding:14px 0 18px}
   .ref-num{font-family:var(--display);font-size:44px;font-weight:800;color:var(--fire);line-height:1}
@@ -614,12 +650,53 @@
 <script>
 const CLIENT={name:'',email:''};
 const FAQ=[
-  {q:'¿Cómo activo mi licencia?',a:'Tu correo es tu licencia. Abre el producto, ingresa el mismo correo con el que entras al portal y se activa solo. Si queda pendiente, te llega aviso y lo confirmo.'},
-  {q:'¿Cómo descargo un producto?',a:'En "Mis Productos" toca "Descargar" en el producto que tengas disponible. Si es privado, primero debes comprarlo y que te lo libere.'},
-  {q:'¿Por qué no puedo descargar un producto?',a:'Si dice "Privado", necesitas comprarlo. Toca el botón de comprar, realiza el pago y te lo libero. Mientras, puedes ver su video.'},
-  {q:'¿Cómo compro un producto privado?',a:'Toca "Comprar" en el producto, te muestra el precio y un botón para pagar por WhatsApp. En cuanto confirme el pago, te lo libero y ya podrás descargarlo.'},
-  {q:'¿Olvidé mi contraseña, qué hago?',a:'En la pantalla de inicio toca "¿Olvidaste tu contraseña?", pon tu correo y te llega una nueva al instante. Luego puedes cambiarla en Mi Perfil.'},
-  {q:'¿Puedo probar antes de operar en real?',a:'Siempre. Prueba primero en cuenta de simulación (SIM) antes de usarlo en cuenta real o fondeada.'}
+  // ── CUENTA Y PORTAL ──
+  {c:'Cuenta',q:'¿Cómo entro al portal?',a:'Con el correo y la contraseña que registraste. Si tu cuenta aún está pendiente de aprobación, te aviso en cuanto la libere. Puedes marcar "Recordar mi contraseña" para no escribirla cada vez.'},
+  {c:'Cuenta',q:'Me registré y no puedo entrar todavía',a:'Cada cuenta la apruebo manualmente para mantener el portal solo para clientes. Normalmente es rápido. Si llevas más de un día esperando, escríbeme por WhatsApp y lo reviso al momento.'},
+  {c:'Cuenta',q:'Olvidé mi contraseña, ¿qué hago?',a:'En la pantalla de inicio toca "¿Olvidaste tu contraseña?", pon tu correo y te llega una nueva al instante. Luego cámbiala en Mi Perfil por una que recuerdes.'},
+  {c:'Cuenta',q:'¿Cómo cambio mi contraseña?',a:'Entra a Mi Perfil, escribe la nueva contraseña dos veces y toca Guardar. El cambio es inmediato.'},
+  {c:'Cuenta',q:'No me llegó el correo de bienvenida o el de recuperación',a:'Revisa la carpeta de Spam o Promociones y marca el correo como "No es spam" para que los próximos lleguen bien. Si aun así no aparece, escríbeme y lo reenvío.'},
+  {c:'Cuenta',q:'¿Puedo cambiar el correo de mi cuenta?',a:'Sí, pero hay que hacerlo a mano porque tu correo también es tu licencia en los productos. Escríbeme por WhatsApp con el correo viejo y el nuevo y lo cambio en todo.'},
+  {c:'Cuenta',q:'¿Puedo usar el portal desde el celular?',a:'Sí, el portal funciona en celular, tablet y computadora. Los productos en sí (AddOns y apps) sí requieren Windows con NinjaTrader 8.'},
+
+  // ── LICENCIAS ──
+  {c:'Licencias',q:'¿Cómo activo mi licencia?',a:'Tu correo es tu licencia. Abre el producto, ingresa el mismo correo con el que entras al portal y se activa solo. Si queda pendiente, me llega aviso y la apruebo.'},
+  {c:'Licencias',q:'Mi licencia dice "Pendiente", ¿qué significa?',a:'Que ya registró tu solicitud y estoy por aprobarla. En cuanto la apruebo, cierra y vuelve a abrir el producto y ya entra normal.'},
+  {c:'Licencias',q:'¿En cuántas PCs puedo usar mi licencia?',a:'Depende de lo que hayas adquirido. Cada licencia tiene un número de PCs asignado. Si necesitas más equipos, escríbeme y lo ajusto.'},
+  {c:'Licencias',q:'Cambié de computadora, ¿cómo paso mi licencia?',a:'Escríbeme por WhatsApp y libero el equipo viejo para que puedas activar el nuevo. No tienes que comprar de nuevo.'},
+  {c:'Licencias',q:'Me dice que llegué al máximo de PCs',a:'Ya usaste todos los equipos permitidos de tu licencia. Escríbeme, te libero un espacio o te amplío la cantidad de PCs.'},
+  {c:'Licencias',q:'Formateé mi PC y ahora no activa',a:'Al formatear cambia la identificación del equipo y cuenta como PC nueva. Avísame y libero la anterior para que actives sin problema.'},
+
+  // ── PRODUCTOS Y DESCARGAS ──
+  {c:'Productos',q:'¿Cómo descargo un producto?',a:'En "Mis Productos" toca el producto para ver toda su información y fotos, y usa el botón "Descargar". Si es privado, primero debes comprarlo y que te lo libere.'},
+  {c:'Productos',q:'¿Por qué no puedo descargar un producto?',a:'Si dice "Privado", necesitas comprarlo. Toca el botón de comprar, realiza el pago y te lo libero. Mientras, puedes ver su video para conocerlo.'},
+  {c:'Productos',q:'¿Cómo compro un producto privado?',a:'Toca "Comprar" en el producto, te muestra el precio y un botón para escribirme por WhatsApp. En cuanto confirme el pago, te lo libero y ya podrás descargarlo.'},
+  {c:'Productos',q:'¿Cómo instalo un AddOn en NinjaTrader 8?',a:'En NinjaTrader: Tools → Import → NinjaScript Add-On, selecciona el archivo que descargaste y acepta. Después reinicia NinjaTrader para que cargue bien.'},
+  {c:'Productos',q:'Importé el AddOn y no aparece',a:'Casi siempre es porque falta reiniciar NinjaTrader. Ciérralo por completo y ábrelo de nuevo. Si sigue sin salir, revisa en Control Center → Log si aparece algún error y mándame la captura.'},
+  {c:'Productos',q:'¿Los productos se actualizan?',a:'Sí. Cuando saco una versión nueva la publico aquí en el portal y aviso en Noticias. Descargas la nueva e importas encima, tu licencia sigue igual.'},
+  {c:'Productos',q:'¿Dónde veo las guías de uso?',a:'En la sección "Guías" tienes los videos de cada producto. También en la página de cada producto hay botón de video cuando está disponible.'},
+  {c:'Productos',q:'¿Funciona en Mac?',a:'No directamente. NinjaTrader 8 y las apps son para Windows. En Mac puedes usar Parallels o una máquina virtual con Windows, pero para operar en real recomiendo Windows nativo o un VPS.'},
+  {c:'Productos',q:'¿Necesito dejar la PC prendida?',a:'Sí, para que un bot opere solo, NinjaTrader debe estar abierto y con conexión. Muchos traders usan un VPS para no depender de su PC ni de la luz o el internet de casa.'},
+
+  // ── CUENTAS DE FONDEO ──
+  {c:'Fondeo',q:'¿Con qué prop firms funcionan?',a:'Trabajo con las principales del mercado: TopStep, Lucid, MyFundedFutures, FuturesElite, Funded Futures Network y plataformas tipo ProjectX. Si usas otra, pregúntame antes de comprar.'},
+  {c:'Fondeo',q:'¿Los bots respetan las reglas de la prop firm?',a:'Las herramientas incluyen control de riesgo, break-even y trailing, pero las reglas (drawdown, consistencia, horarios) las controlas tú. Configúralo acorde a tu firma y pruébalo primero en SIM.'},
+  {c:'Fondeo',q:'¿Me garantiza pasar el reto?',a:'No, y desconfía de quien te lo prometa. Estas son herramientas de ejecución y gestión que te ayudan a operar con disciplina y sin errores manuales. El resultado depende del mercado y de tu gestión.'},
+  {c:'Fondeo',q:'¿Puedo usarlo en varias cuentas a la vez?',a:'Sí, para eso están los replicadores: operas en una cuenta maestra y replica las órdenes a las demás. Consulta el producto de replicación que te encaje.'},
+  {c:'Fondeo',q:'¿Hay descuentos para comprar cuentas de fondeo?',a:'Sí, en la sección "Descuentos" publico los códigos vigentes de varias prop firms. Copia el código y úsalo al pagar.'},
+
+  // ── PROBLEMAS ──
+  {c:'Problemas',q:'El bot no me manda órdenes',a:'Revisa tres cosas: que tengas conexión al feed, que la cuenta seleccionada sea la correcta y que el panel esté activado. Si sigue igual, mándame captura del Log de NinjaTrader.'},
+  {c:'Problemas',q:'Me salió un error, ¿qué te mando?',a:'Lo que más ayuda: captura de la pantalla del error, captura del Log de NinjaTrader (Control Center → Log), qué producto usabas y si era SIM o cuenta real. Con eso lo ubico rápido.'},
+  {c:'Problemas',q:'Se me quedó una posición sin stop',a:'Cierra manualmente desde NinjaTrader para protegerte primero, y luego me escribes. Nunca dejes una posición abierta sin protección mientras se revisa algo.'},
+  {c:'Problemas',q:'¿En cuánto tiempo respondes?',a:'Contesto por WhatsApp lo más rápido que puedo, normalmente el mismo día. Si es algo urgente de una cuenta en real, avísame y le doy prioridad.'},
+
+  // ── SEGURIDAD Y RIESGO ──
+  {c:'Riesgo',q:'¿Puedo probar antes de operar en real?',a:'Siempre. Prueba primero en cuenta de simulación (SIM) o Playback antes de usarlo en cuenta real o fondeada. Es la regla número uno.'},
+  {c:'Riesgo',q:'¿Esto es asesoría financiera?',a:'No. SNIPER PORTAL vende software y herramientas de apoyo. No damos señales ni asesoría de inversión. Las decisiones y el riesgo son tuyos.'},
+  {c:'Riesgo',q:'¿Puedo compartir el producto con un amigo?',a:'No. Cada licencia es personal y está ligada a tu correo y tus equipos. Compartirla puede bloquear tu propia licencia. Si tu amigo quiere, dale tu link de referido desde Mi Perfil.'},
+  {c:'Riesgo',q:'¿Qué es el link de referido?',a:'En Mi Perfil tienes un link personal. Quien se registre con él cuenta como tu referido y yo lo veo de tu parte. Compártelo por WhatsApp o Telegram con el botón de ahí mismo.'},
+  {c:'Riesgo',q:'¿Hay reembolsos?',a:'Al ser software digital que se descarga y activa al momento, no manejo reembolsos automáticos. Por eso te doy videos y puedes preguntarme todo antes de comprar. Si tienes un problema real con el producto, escríbeme y lo resolvemos.'}
 ];
 const INFO={
   desc:'SNIPER PORTAL ofrece software y herramientas de trading para futuros: AddOns para NinjaTrader 8, aplicaciones de escritorio y bots de ejecución y gestión para cuentas de fondeo (prop firms). Automatizamos entradas, gestión de riesgo, break-even, trailing y replicación de órdenes, con activación por licencia y soporte directo.',
@@ -748,7 +825,7 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';render()}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';render()}
 function navBtn(id,icon,label){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -1167,17 +1244,49 @@ function discountsPage(){
   return head+`<div class="disc-grid">${cards}</div>
     <div style="font-size:11px;color:var(--text-faint);margin-top:20px;line-height:1.6;max-width:640px">${isEn?'Discount codes for third-party prop firms. Availability and terms depend on each firm. Trading futures involves high risk.':'Códigos de descuento de prop firms de terceros. La disponibilidad y condiciones dependen de cada empresa. El trading de futuros implica alto riesgo.'}</div>`;
 }
+let FAQ_CAT='';
+const FAQ_ICONS={'Cuenta':'👤','Licencias':'🔑','Productos':'📦','Fondeo':'🎯','Problemas':'🛠️','Riesgo':'⚠️'};
+function setFaqCat(c){FAQ_CAT=(FAQ_CAT===c?'':c);render();}
 function faqPage(){
-  const q=faqQuery.toLowerCase();
-  const list=FAQ.filter(f=>!q||f.q.toLowerCase().includes(q)||f.a.toLowerCase().includes(q));
-  const items=list.length?list.map((f,i)=>`<div class="faq-item" onclick="this.classList.toggle('open')">
-    <div class="faq-q">${f.q}<span class="faq-arrow">${sv(I.chev,16)}</span></div>
-    <div class="faq-a">${f.a}</div></div>`).join('')
-    : `<div class="empty-state"><div class="empty-ic">${sv(I.help,28)}</div><h3>${t('sin_result')}</h3><p>${LANG==='en'?'Nothing matched. Use the Contact button and I will help you directly.':'No encontré nada con eso. Usa el botón de Contacto y te ayudo directo.'}</p></div>`;
+  const isEn=LANG==='en';
+  const q=faqQuery.toLowerCase().trim();
+  let list=FAQ.filter(f=>!q||f.q.toLowerCase().includes(q)||f.a.toLowerCase().includes(q));
+  if(FAQ_CAT && !q) list=list.filter(f=>f.c===FAQ_CAT);
+  const cats=[...new Set(FAQ.map(f=>f.c))];
+  const chips=`<div class="faq-cats">
+    ${cats.map(c=>`<button class="faq-chip ${FAQ_CAT===c?'on':''}" onclick="setFaqCat('${c}')">${FAQ_ICONS[c]||''} ${c} <span class="faq-count">${FAQ.filter(f=>f.c===c).length}</span></button>`).join('')}
+  </div>`;
+  let items;
+  if(!list.length){
+    items=`<div class="empty-state"><div class="empty-ic">${sv(I.help,28)}</div><h3>${t('sin_result')}</h3>
+      <p>${isEn?'Nothing matched. Use the Contact button and I will help you directly.':'No encontré nada con eso. Usa el botón de Contacto y te ayudo directo.'}</p></div>`;
+  } else {
+    let cur='';
+    items=list.map(f=>{
+      let hdr='';
+      if(f.c!==cur && !q){ cur=f.c; hdr=`<div class="faq-sec">${FAQ_ICONS[f.c]||''} ${f.c}</div>`; }
+      return `${hdr}<div class="faq-item" onclick="this.classList.toggle('open')">
+        <div class="faq-q">${f.q}<span class="faq-arrow">${sv(I.chev,16)}</span></div>
+        <div class="faq-a">${f.a}</div></div>`;
+    }).join('');
+  }
+  const quick=`<div class="help-quick">
+    <div class="hq" onclick="setTab('products')">${sv(I.box,20)}<div><b>${isEn?'My Products':'Mis Productos'}</b><span>${isEn?'Download and activate':'Descargar y activar'}</span></div></div>
+    <div class="hq" onclick="setTab('guides')">${sv(I.play,20)}<div><b>${isEn?'Guides':'Guías'}</b><span>${isEn?'Step-by-step videos':'Videos paso a paso'}</span></div></div>
+    <div class="hq" onclick="setTab('discounts')">${sv(I.tag,20)}<div><b>${isEn?'Discounts':'Descuentos'}</b><span>${isEn?'Prop firm codes':'Códigos de prop firms'}</span></div></div>
+    <div class="hq" onclick="setTab('contact')">${sv(I.phone,20)}<div><b>${isEn?'Contact':'Contacto'}</b><span>${isEn?'Write me directly':'Escríbeme directo'}</span></div></div>
+  </div>`;
+  const cta=`<div class="help-cta">
+    <div><div class="help-cta-t">${isEn?"Didn't find it?":'¿No encontraste lo que buscabas?'}</div>
+      <div class="help-cta-s">${isEn?'Write me on WhatsApp and I help you directly.':'Escríbeme por WhatsApp y te ayudo directo.'}</div></div>
+    <a class="disc-go" style="width:auto;padding:11px 20px" href="https://wa.me/18326409105" target="_blank" rel="noopener">WhatsApp</a></div>`;
   return `<div class="page-head"><h1>${t('ayuda_h')}</h1><p>${t('ayuda_sub')}</p></div>
-    <div class="search" style="max-width:520px;margin-bottom:18px">${sv(I.search,16)}
+    ${quick}
+    <div class="search" style="max-width:520px;margin-bottom:14px">${sv(I.search,16)}
       <input id="faqsearch" placeholder="${t('buscar')}" value="${faqQuery}" oninput="faqQuery=this.value;render();setTimeout(()=>{const el=document.getElementById('faqsearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)"></div>
-    <div class="faq-list">${items}</div>`;
+    ${q?'':chips}
+    <div class="faq-list" style="max-width:760px">${items}</div>
+    ${cta}`;
 }
 function contactPage(){
   const msg = contactDone==='OK'
@@ -1185,14 +1294,14 @@ function contactPage(){
     : contactDone==='ERR'
     ? `<div class="login-err show">${LANG==='en'?'Could not send. Write your message and try again.':'No se pudo enviar. Escribe tu mensaje e intenta de nuevo.'}</div>` : '';
   return `<div class="page-head"><h1>${t('contacto_h')}</h1><p>${t('contacto_sub')}</p></div>
-    <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start">
-      <div class="card" style="flex:1;min-width:300px;max-width:540px"><div class="card-top"><div class="card-name">${t('enviar_msg')}</div></div>
+    <div class="two-col">
+      <div class="card" style="align-self:start"><div class="card-top"><div class="card-name">${t('enviar_msg')}</div></div>
         <div style="padding:20px">${msg}
           <div class="field"><label>${t('tu_mensaje')}</label>
-            <textarea id="cmsg" placeholder="${t('escribe_aqui')}" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 15px;color:var(--text);font-size:14px;min-height:130px;resize:vertical;font-family:var(--body)"></textarea></div>
+            <textarea id="cmsg" placeholder="${t('escribe_aqui')}" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 15px;color:var(--text);font-size:14px;min-height:150px;resize:vertical;font-family:var(--body)"></textarea></div>
           <button class="btn-primary" id="cbtn" onclick="sendContact()">${t('enviar_msg')}</button>
         </div></div>
-      <div style="display:flex;flex-direction:column;gap:14px;min-width:240px">
+      <div class="contact-side">
         <a class="contact-card" href="https://wa.me/18326409105" target="_blank"><div class="contact-ic" style="color:var(--green)">${sv(I.phone,18)}</div>
           <div class="lbl">WhatsApp</div><div class="val">832 640 9105</div><div class="sub">${LANG==='en'?'Tap to message me':'Toca para escribirme'}</div></a>
         <a class="contact-card" href="mailto:sniperocket2028@gmail.com"><div class="contact-ic" style="color:var(--cyan)">${sv(I.mail,18)}</div>
@@ -1222,12 +1331,12 @@ function profilePage(){
   let refCard='';
   if(view==='client'){
     if(MYREF===null){ loadMyRef();
-      refCard=`<div class="card" style="max-width:480px;margin-bottom:18px"><div class="card-top">
+      refCard=`<div class="card"><div class="card-top">
         <div class="card-name">${isEn?'Refer & share':'Refiere y comparte'}</div></div>
         <div style="padding:20px;color:var(--text-dim);font-size:13px">${isEn?'Loading...':'Cargando...'}</div></div>`;
     } else if(MYREF && MYREF.codigo){
       const link=location.origin+location.pathname+'?ref='+MYREF.codigo;
-      refCard=`<div class="card" style="max-width:480px;margin-bottom:18px"><div class="card-top">
+      refCard=`<div class="card"><div class="card-top">
         <div class="card-name">🔗 ${isEn?'Your referral link':'Tu link de referido'}</div>
         <div class="card-cat">${isEn?'Share it and bring more traders':'Compártelo y trae más traders'}</div></div>
         <div style="padding:20px">
@@ -1235,26 +1344,35 @@ function profilePage(){
             <div class="ref-lbl">${isEn?'people joined with your link':'personas se unieron con tu link'}</div></div>
           <div class="ref-link-box"><span class="ref-link">${link}</span>
             <button class="disc-copy" onclick="copyCode('${link}',this)">${sv(I.copy,14)} ${isEn?'Copy':'Copiar'}</button></div>
-          <div style="font-size:11px;color:var(--text-faint);margin-top:10px;line-height:1.5">
+          <div class="ref-share">
+            <a class="ref-sh wa" href="https://wa.me/?text=${encodeURIComponent((isEn?'Check out SNIPER PORTAL — trading tools for NinjaTrader 8 and prop firms: ':'Mira SNIPER PORTAL — herramientas de trading para NinjaTrader 8 y cuentas de fondeo: ')+link)}" target="_blank" rel="noopener">WhatsApp</a>
+            <a class="ref-sh tg" href="https://t.me/share/url?url=${encodeURIComponent(link)}" target="_blank" rel="noopener">Telegram</a>
+          </div>
+          <div style="font-size:11px;color:var(--text-faint);margin-top:12px;line-height:1.5">
             ${isEn?'Anyone who signs up with your link counts as your referral.':'Quien se registre con tu link cuenta como tu referido.'}</div>
         </div></div>`;
     }
   }
   return `<div class="page-head"><h1>${t('perfil_h')}</h1><p>${t('perfil_sub')}</p></div>
-    <div class="card" style="max-width:480px;margin-bottom:18px"><div class="card-top">
-      <div class="card-name">${CLIENT.name}</div><div class="card-cat">${CLIENT.email}</div></div></div>
-    ${refCard}
-    <div class="card" style="max-width:480px"><div class="card-top"><div class="card-name">${t('cambiar_pass')}</div></div>
-      <div style="padding:20px">
-        ${ok}${err}
-        <div class="field"><label>${t('pass_nueva')}</label><div class="pass-wrap">
-          <input type="password" id="np1" placeholder="${LANG==='en'?'Your new password':'Tu nueva contraseña'}" autocomplete="new-password">
-          <span class="eye" onclick="toggleEye('np1',this)">${EYE}</span></div></div>
-        <div class="field"><label>${LANG==='en'?'Repeat new password':'Repite la nueva contraseña'}</label><div class="pass-wrap">
-          <input type="password" id="np2" placeholder="${LANG==='en'?'Repeat it':'Repítela'}" autocomplete="new-password">
-          <span class="eye" onclick="toggleEye('np2',this)">${EYE}</span></div></div>
-        <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
-      </div></div>`}
+    <div class="two-col">
+      <div class="col-stack">
+        <div class="card"><div class="card-top" style="display:flex;align-items:center;gap:13px">
+          <div class="avatar" style="width:44px;height:44px;font-size:15px">${(CLIENT.name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
+          <div style="min-width:0"><div class="card-name">${CLIENT.name}</div><div class="card-cat">${CLIENT.email}</div></div></div></div>
+        <div class="card"><div class="card-top"><div class="card-name">${t('cambiar_pass')}</div></div>
+          <div style="padding:20px">
+            ${ok}${err}
+            <div class="field"><label>${t('pass_nueva')}</label><div class="pass-wrap">
+              <input type="password" id="np1" placeholder="${isEn?'Your new password':'Tu nueva contraseña'}" autocomplete="new-password">
+              <span class="eye" onclick="toggleEye('np1',this)">${EYE}</span></div></div>
+            <div class="field"><label>${isEn?'Repeat new password':'Repite la nueva contraseña'}</label><div class="pass-wrap">
+              <input type="password" id="np2" placeholder="${isEn?'Repeat it':'Repítela'}" autocomplete="new-password">
+              <span class="eye" onclick="toggleEye('np2',this)">${EYE}</span></div></div>
+            <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
+          </div></div>
+      </div>
+      <div class="col-stack">${refCard}</div>
+    </div>`}
 
 async function changePass(){
   const p1=document.getElementById('np1').value||'', p2=document.getElementById('np2').value||'';
