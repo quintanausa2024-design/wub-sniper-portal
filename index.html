@@ -517,6 +517,10 @@
     border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;font-weight:600}
   .ibtn.on{color:var(--green);border-color:rgba(39,215,150,.3)}
   .ibtn.on:hover{color:var(--fire-soft);border-color:var(--fire)}
+  /* telefono en mensajes */
+  .msg-tel{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-size:12px;color:#25D366}
+  .msg-tel .mono{color:var(--text)}
+  .msg-tel.off{color:var(--text-faint)}
   /* referral */
   .ref-stat{text-align:center;padding:14px 0 18px}
   .ref-num{font-family:var(--display);font-size:44px;font-weight:800;color:var(--fire);line-height:1}
@@ -794,6 +798,8 @@ const LICENSE_APIS = [
 
 let view='login',tab='auth_login',authMsg='',profileMsg='',profileErr='';
 let REMEMBER={email:'',pass:'',on:false};
+let CONTACT_TEL='';
+try{CONTACT_TEL=localStorage.getItem('sp_tel')||'';}catch(e){}
 let REF_CODE='';
 try{const _p=new URLSearchParams(location.search);const _r=(_p.get('ref')||'').toUpperCase().trim();
   if(_r){REF_CODE=_r;localStorage.setItem('sp_ref',_r);}else{REF_CODE=(localStorage.getItem('sp_ref')||'');}}catch(e){}
@@ -1439,6 +1445,9 @@ function contactPage(){
     <div class="two-col">
       <div class="card" style="align-self:start"><div class="card-top"><div class="card-name">${t('enviar_msg')}</div></div>
         <div style="padding:20px">${msg}
+          <div class="field"><label>${LANG==='en'?'Your WhatsApp number':'Tu número de WhatsApp'}</label>
+            <input type="tel" id="ctel" value="${(CONTACT_TEL||'').replace(/"/g,'&quot;')}" placeholder="${LANG==='en'?'e.g. +1 832 640 9105':'Ej: +1 832 640 9105'}" autocomplete="tel" inputmode="tel">
+            <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.5">${LANG==='en'?'With country code, so I can reply on WhatsApp.':'Con código de país, para poder responderte por WhatsApp.'}</div></div>
           <div class="field"><label>${t('tu_mensaje')}</label>
             <textarea id="cmsg" placeholder="${t('escribe_aqui')}" style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:14px 15px;color:var(--text);font-size:14px;min-height:150px;resize:vertical;font-family:var(--body)"></textarea></div>
           <button class="btn-primary" id="cbtn" onclick="sendContact()">${t('enviar_msg')}</button>
@@ -1458,10 +1467,13 @@ function contactPage(){
 }
 async function sendContact(){
   const m=(document.getElementById('cmsg').value||'').trim();
+  const tel=(document.getElementById('ctel')?document.getElementById('ctel').value:'').trim();
   if(!m){contactDone='ERR';return render();}
+  CONTACT_TEL=tel;
+  try{ if(tel) localStorage.setItem('sp_tel',tel); }catch(e){}
   if(!API_URL){contactDone='OK';return render();}
   const btn=document.getElementById('cbtn');btn.textContent=t('enviando_msg');
-  try{ const r=await apiCall({action:'contact',email:CLIENT.email,nombre:CLIENT.name,mensaje:m});
+  try{ const r=await apiCall({action:'contact',email:CLIENT.email,nombre:CLIENT.name,mensaje:m,telefono:tel});
     contactDone=r.ok?'OK':'ERR';render();
   }catch(e){contactDone='ERR';render();}
 }
@@ -1839,15 +1851,23 @@ function adminMessagesPage(){
   const items=MSGS.map(m=>{
     const init=(m.nombre||m.email).split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
     const wamsg=encodeURIComponent('Hola '+(m.nombre||'')+', sobre tu mensaje: ');
+    const num=(m.telefono||'').replace(/[^0-9]/g,'');
+    const waBtn = num
+      ? `<a class="btn-add" style="padding:8px 14px" href="https://wa.me/${num}?text=${wamsg}" target="_blank">${sv(I.phone,14)} Responder WhatsApp</a>`
+      : `<a class="btn-ghost" style="padding:8px 14px" href="https://wa.me/?text=${wamsg}" target="_blank">${sv(I.phone,14)} WhatsApp (sin número)</a>`;
+    const telLine = m.telefono
+      ? `<div class="msg-tel">${sv(I.phone,12)} <span class="mono">${m.telefono}</span>
+          <button class="disc-copy" style="padding:3px 8px;font-size:11px" onclick="copyCode('${m.telefono.replace(/'/g,'')}',this)">${sv(I.copy,12)} Copiar</button></div>`
+      : `<div class="msg-tel off">${sv(I.phone,12)} No dejó número</div>`;
     return `<div class="msg-card">
       <div class="msg-head"><div class="avatar" style="width:34px;height:34px;font-size:12px">${init}</div>
         <div style="flex:1;min-width:0"><div class="msg-name">${m.nombre||'—'}</div>
-          <div class="msg-email">${m.email}</div></div>
+          <div class="msg-email">${m.email}</div>${telLine}</div>
         <div class="msg-date">${m.fecha}</div></div>
       <div class="msg-body">${m.mensaje}</div>
       <div class="msg-actions">
         <a class="btn-ghost" style="padding:8px 14px" href="mailto:${m.email}?subject=SNIPER%20PORTAL&body=Hola%20${encodeURIComponent(m.nombre||'')}%2C%20">${sv(I.mail,14)} Responder correo</a>
-        <a class="btn-ghost" style="padding:8px 14px" href="https://wa.me/?text=${wamsg}" target="_blank">${sv(I.phone,14)} WhatsApp</a>
+        ${waBtn}
         <button class="ibtn danger" title="Borrar" onclick="delMsg('${m.id}')">${sv(I.trash,15)}</button>
       </div></div>`;
   }).join('');
