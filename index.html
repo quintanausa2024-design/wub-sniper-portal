@@ -523,6 +523,15 @@
   .msg-tel.off{color:var(--text-faint)}
   /* guias privadas */
   .gacc-box{max-height:210px;overflow-y:auto;border:1px solid var(--line);border-radius:11px;padding:8px;background:var(--bg-2)}
+  .gacc-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .gacc-search{display:flex;align-items:center;gap:6px;background:var(--bg-2);border:1px solid var(--line);
+    border-radius:9px;padding:5px 10px;color:var(--text-faint);flex:1;min-width:130px;max-width:200px}
+  .gacc-search input{background:none;border:none;outline:none;color:var(--text);font-size:12.5px;
+    font-family:var(--body);width:100%;padding:0}
+  .gacc-search:focus-within{border-color:var(--fire)}
+  .gacc-info{font-size:11.5px;color:var(--text-faint);margin-top:7px}
+  .gacc-info.on{color:var(--fire-soft)}
+  .gacc-info b{color:var(--text)}
   .priv-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--cyan);
     background:rgba(52,179,255,.12);border:1px solid rgba(52,179,255,.28);border-radius:6px;padding:1px 6px;
     vertical-align:middle;margin-left:5px}
@@ -1828,7 +1837,8 @@ async function openGuide(g){
   const listaCli = clientes.length ? clientes.map(c=>{
       const chk=permitidos.indexOf((c.email||'').toLowerCase())>=0?'checked':'';
       const apr=(c.aprobado||'').toUpperCase()==='SI';
-      return `<label class="acc-row"><input type="checkbox" class="gacc" value="${c.email}" ${chk}>
+      const busca=((c.nombre||'')+' '+(c.email||'')).toLowerCase().replace(/"/g,'');
+      return `<label class="acc-row gacc-row" data-s="${busca}"><input type="checkbox" class="gacc" value="${c.email}" ${chk} onchange="gaccCount()">
         <span><b>${c.nombre||c.email}</b>${apr?'':' <span class="off-tag">pendiente</span>'}<br><span style="font-size:11px;color:var(--text-faint)">${c.email}</span></span></label>`;
     }).join('')
     : `<p style="color:var(--text-faint);font-size:12.5px;padding:6px 0">Aún no tienes clientes registrados.</p>`;
@@ -1846,22 +1856,60 @@ async function openGuide(g){
     <input type="hidden" id="gtipo" value="${tp}">
     <div class="mfield" id="gAccField" style="display:${tp==='PRIVADO'?'block':'none'}">
       <label>Clientes con acceso <span style="color:var(--text-faint);font-weight:400">(marca los que sí)</span></label>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button type="button" class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="gaccAll(1)">Marcar todos</button>
-        <button type="button" class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="gaccAll(0)">Quitar todos</button></div>
-      <div class="gacc-box">${listaCli}</div>
+      <div class="gacc-bar">
+        <div style="display:flex;gap:8px">
+          <button type="button" class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="gaccAll(1)">Marcar todos</button>
+          <button type="button" class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="gaccAll(0)">Quitar todos</button></div>
+        <div class="gacc-search">${sv(I.search,14)}
+          <input id="gaccQ" placeholder="Buscar cliente..." oninput="gaccFilter(this.value)" autocomplete="off"></div>
+      </div>
+      <div class="gacc-box" id="gaccBox">${listaCli}</div>
+      <div class="gacc-info" id="gaccInfo"></div>
       <div style="font-size:11px;color:var(--text-faint);margin-top:7px;line-height:1.5">Los demás ni verán la guía en su lista. El link del video no se les manda.</div>
     </div>
     <div id="guideMsg"></div>`;
   document.getElementById('guideModal').classList.add('show');
+  gaccCount();
 }
 function setGuideTipo(v){
   document.getElementById('gtipo').value=v;
   document.getElementById('btnGPub').classList.toggle('on',v!=='PRIVADO');
   document.getElementById('btnGPriv').classList.toggle('on',v==='PRIVADO');
   document.getElementById('gAccField').style.display=(v==='PRIVADO'?'block':'none');
+  if(v==='PRIVADO')gaccCount();
 }
-function gaccAll(on){document.querySelectorAll('.gacc').forEach(c=>c.checked=!!on);}
+function gaccFilter(q){
+  q=(q||'').toLowerCase().trim();
+  let vis=0;
+  document.querySelectorAll('.gacc-row').forEach(r=>{
+    const hit=!q||(r.dataset.s||'').indexOf(q)>=0;
+    r.style.display=hit?'':'none';
+    if(hit)vis++;
+  });
+  const box=document.getElementById('gaccBox');
+  let none=document.getElementById('gaccNone');
+  if(!vis){
+    if(!none&&box){none=document.createElement('p');none.id='gaccNone';
+      none.style.cssText='color:var(--text-faint);font-size:12.5px;padding:10px 6px;margin:0';
+      none.textContent='Ningún cliente con ese nombre.';box.appendChild(none);}
+  } else if(none){none.remove();}
+  gaccCount();
+}
+function gaccAll(on){
+  // solo los que se ven ahora (respeta la búsqueda)
+  document.querySelectorAll('.gacc-row').forEach(r=>{
+    if(r.style.display==='none')return;
+    const c=r.querySelector('.gacc'); if(c)c.checked=!!on;
+  });
+  gaccCount();
+}
+function gaccCount(){
+  const el=document.getElementById('gaccInfo'); if(!el)return;
+  const n=document.querySelectorAll('.gacc:checked').length;
+  const q=(document.getElementById('gaccQ')||{}).value||'';
+  el.innerHTML=n?`<b>${n}</b> cliente${n===1?'':'s'} con acceso${q?' · los botones de arriba solo afectan lo que buscaste':''}`:'Ninguno marcado todavía';
+  el.className='gacc-info'+(n?' on':'');
+}
 async function saveGuide(){
   const titulo=(document.getElementById('gtitulo').value||'').trim();
   if(!titulo){document.getElementById('guideMsg').innerHTML='<div class="login-err show">Ponle un título.</div>';return;}
