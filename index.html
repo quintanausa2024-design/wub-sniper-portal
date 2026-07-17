@@ -532,6 +532,23 @@
   .gacc-info{font-size:11.5px;color:var(--text-faint);margin-top:7px}
   .gacc-info.on{color:var(--fire-soft)}
   .gacc-info b{color:var(--text)}
+  /* flecha flotante ir arriba/abajo */
+  .scrollbtn{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:60;
+    width:44px;height:44px;border-radius:50%;background:var(--fire);border:none;color:#0a0a0a;
+    display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transition:.22s;
+    box-shadow:0 8px 24px -6px rgba(255,107,44,.6)}
+  .scrollbtn.show{opacity:.92;pointer-events:auto;transform:translateX(-50%) translateY(0)}
+  .scrollbtn:hover{opacity:1;box-shadow:0 10px 30px -6px rgba(255,107,44,.8)}
+  .scrollbtn svg{transition:.25s}
+  .scrollbtn.up svg{transform:rotate(180deg)}
+  @media(max-width:640px){.scrollbtn{width:40px;height:40px;bottom:16px}}
+  /* referidos plegables */
+  .ref-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;padding:9px 12px;
+    border-radius:12px;border:1px solid transparent;transition:.13s;user-select:none}
+  .ref-hd:hover{background:var(--surface);border-color:var(--line)}
+  .ref-arrow{display:grid;place-items:center;color:var(--text-faint);transition:.2s;flex-shrink:0}
+  .ref-arrow.open{transform:rotate(180deg);color:var(--fire)}
+  .ref-tools{display:flex;gap:8px;margin-bottom:14px}
   .priv-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--cyan);
     background:rgba(52,179,255,.12);border:1px solid rgba(52,179,255,.28);border-radius:6px;padding:1px 6px;
     vertical-align:middle;margin-left:5px}
@@ -1076,7 +1093,24 @@ function shell(nav,content){const u=view==='admin'?{n:'Otoniel Quintana',e:'Admi
     <div class="side-foot"><div class="side-user"><div class="avatar">${u.av}</div>
       <div class="meta"><div class="n">${u.n}</div><div class="e">${u.e}</div></div></div>
       <button class="logout" onclick="setView('login')">${sv(I.logout)} ${view==='client'?t('logout'):'Cerrar sesión'}</button></div>
-    </aside><main class="main">${content}${footerHTML()}</main></div>`}
+    </aside><main class="main">${content}${footerHTML()}</main>
+    <button class="scrollbtn" id="scrollBtn" onclick="scrollToggle()" title="Ir abajo">${sv(I.chev,20)}</button></div>`}
+// ── flecha flotante: baja al final / sube al inicio ──
+function scrollToggle(){
+  const abajo=(window.innerHeight+window.scrollY)>=(document.body.scrollHeight-80);
+  window.scrollTo({top:abajo?0:document.body.scrollHeight,behavior:'smooth'});
+}
+function updateScrollBtn(){
+  const b=document.getElementById('scrollBtn'); if(!b)return;
+  const alto=document.body.scrollHeight-window.innerHeight;
+  if(alto<220){ b.classList.remove('show'); return; }   // página corta, no estorba
+  b.classList.add('show');
+  const abajo=(window.innerHeight+window.scrollY)>=(document.body.scrollHeight-80);
+  b.classList.toggle('up',abajo);
+  b.title=abajo?'Ir arriba':'Ir abajo';
+}
+window.addEventListener('scroll',updateScrollBtn,{passive:true});
+window.addEventListener('resize',updateScrollBtn);
 
 function clientView(){const nav=navBtn('products',I.box,t('nav_productos'))+navBtn('guides',I.play,t('nav_guias'))+navBtn('discounts',I.tag,LANG==='en'?'Discounts':'Descuentos')+navBtn('news',I.news,t('nav_noticias'))+navBtn('help',I.help,t('nav_ayuda'))+navBtn('contact',I.phone,t('nav_contacto'))+navBtn('profile',I.user,t('nav_perfil'));
   let content;
@@ -1643,9 +1677,32 @@ async function loadUsers(){
   catch(e){ ADMIN_USERS=[]; }
   ADMIN_LOADING=false; render();
 }
-async function approveUser(em){ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:em}); ADMIN_USERS=null; render(); }
-async function revokeUser(em){ await apiCall({action:'revoke',email:SESS.email,pass:SESS.pass,target:em}); ADMIN_USERS=null; render(); }
-function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usuario? Se borra del portal.','Eliminar',async()=>{ await apiCall({action:'deleteuser',email:SESS.email,pass:SESS.pass,target:em}); ADMIN_USERS=null; render(); }); }
+// ── vuelve a dibujar sin perder el lugar donde estabas ──
+function renderKeep(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
+// ── refresca la lista por detrás, sin mostrar "Cargando..." ──
+async function refreshUsersSilent(){
+  try{ const r=await apiCall({action:'listusers',email:SESS.email,pass:SESS.pass});
+    if(r.ok) ADMIN_USERS=r.users; }catch(e){}
+  renderKeep();
+}
+async function approveUser(em){
+  const u=(ADMIN_USERS||[]).find(x=>x.email===em);
+  if(u){ u.aprobado='SI'; renderKeep(); }          // se ve el cambio al instante
+  try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
+  refreshUsersSilent();
+}
+async function revokeUser(em){
+  const u=(ADMIN_USERS||[]).find(x=>x.email===em);
+  if(u){ u.aprobado='NO'; renderKeep(); }
+  try{ await apiCall({action:'revoke',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
+  refreshUsersSilent();
+}
+function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usuario? Se borra del portal.','Eliminar',async()=>{
+  if(ADMIN_USERS) ADMIN_USERS=ADMIN_USERS.filter(x=>x.email!==em);
+  renderKeep();
+  try{ await apiCall({action:'deleteuser',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
+  refreshUsersSilent();
+}); }
 function refreshUsers(){ ADMIN_USERS=null; render(); }
 
 function clientsPage(){
@@ -2064,21 +2121,32 @@ function adminReferidosPage(){
   if(!ADMIN_REF.length)
     return head+`<div class="empty-state"><div class="empty-ic">${sv(I.link,28)}</div><h3>Aún no hay referidos</h3><p>Cuando tus clientes compartan su link y alguien se registre, aparecerá aquí.</p></div>`;
   const blocks=ADMIN_REF.map(r=>{
+    const abierto=!REF_CLOSED[r.codigo];
     const rows=r.refs.map(x=>`<div class="trow" style="grid-template-columns:1.3fr 1.3fr 0.9fr auto">
         <div class="cust-name"><div class="avatar" style="width:28px;height:28px;font-size:11px">${(x.nombre||'?').charAt(0).toUpperCase()}</div>
           <div style="min-width:0"><div class="n">${x.nombre||'—'}</div><div class="cust-email">${x.email||''}</div></div></div>
         <div class="cust-email col-hide">${x.email||'—'}</div>
         <div class="col-hide" style="font-size:11.5px;color:var(--text-faint)">${x.fecha||'—'}</div>
         <div class="row-act">${x.aprobado?'<span class="dot g"></span>Aprobado':'<span class="dot a"></span>Pendiente'}</div></div>`).join('');
-    return `<div style="margin-bottom:24px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+    return `<div style="margin-bottom:${abierto?'24px':'10px'}">
+      <div class="ref-hd" onclick="toggleRef('${r.codigo}')">
+        <span class="ref-arrow${abierto?' open':''}">${sv(I.chev,15)}</span>
         <div class="avatar" style="width:32px;height:32px;font-size:12px">${(r.nombre||'?').charAt(0).toUpperCase()}</div>
-        <div><div style="font-family:var(--display);font-size:15px;font-weight:600">${r.nombre||'—'}</div>
+        <div style="min-width:0"><div style="font-family:var(--display);font-size:15px;font-weight:600">${r.nombre||'—'}</div>
           <div style="font-size:11.5px;color:var(--text-faint)">${r.email} · código <span class="mono" style="color:var(--fire-soft)">${r.codigo}</span></div></div>
         <span class="pill active" style="margin-left:auto">${r.refs.length} referido${r.refs.length===1?'':'s'}</span></div>
-      <div class="table">${rows}</div></div>`;
+      ${abierto?`<div class="table" style="margin-top:10px">${rows}</div>`:''}</div>`;
   }).join('');
-  return head+blocks;
+  return head+`<div class="ref-tools">
+      <button class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="refAll(1)">Abrir todos</button>
+      <button class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="refAll(0)">Cerrar todos</button></div>${blocks}`;
+}
+let REF_CLOSED={};
+function toggleRef(cod){ REF_CLOSED[cod]=!REF_CLOSED[cod]; render(); }
+function refAll(abrir){
+  REF_CLOSED={};
+  if(!abrir)(ADMIN_REF||[]).forEach(r=>{REF_CLOSED[r.codigo]=true;});
+  render();
 }
 
 // ════════ ADMIN: RESEÑAS ════════
@@ -2089,12 +2157,23 @@ async function loadAdminRev(){
     ADMIN_REV = r.ok ? r.reviews : []; }catch(e){ ADMIN_REV=[]; }
   ADMIN_REV_LOADING=false; render();
 }
+async function refreshRevSilent(){
+  try{ const r=await apiCall({action:'listreviewsadmin',email:SESS.email,pass:SESS.pass});
+    if(r.ok) ADMIN_REV=r.reviews; }catch(e){}
+  REVIEWS=null; renderKeep();
+}
 async function setRev(rid,valor){
-  try{ await apiCall({action:'setreview',email:SESS.email,pass:SESS.pass,rid,valor}); ADMIN_REV=null; REVIEWS=null; render(); }catch(e){}
+  const r=(ADMIN_REV||[]).find(x=>x.id===rid);
+  if(r){ r.aprobado=(valor==='SI'); renderKeep(); }
+  try{ await apiCall({action:'setreview',email:SESS.email,pass:SESS.pass,rid,valor}); }catch(e){}
+  refreshRevSilent();
 }
 function delRev(rid){
   confirmAction('Borrar reseña','¿Borrar esta reseña por completo?','Borrar',async()=>{
-    try{ await apiCall({action:'deletereview',email:SESS.email,pass:SESS.pass,rid}); ADMIN_REV=null; REVIEWS=null; render(); }catch(e){}
+    if(ADMIN_REV) ADMIN_REV=ADMIN_REV.filter(x=>x.id!==rid);
+    renderKeep();
+    try{ await apiCall({action:'deletereview',email:SESS.email,pass:SESS.pass,rid}); }catch(e){}
+    refreshRevSilent();
   });
 }
 function adminReviewsPage(){
@@ -2203,13 +2282,23 @@ async function saveDisc(){
     else document.getElementById('discMsg').innerHTML='<div class="login-err show">No se pudo guardar.</div>';
   }catch(e){document.getElementById('discMsg').innerHTML='<div class="login-err show">Error de conexión.</div>';}
 }
+async function refreshDiscSilent(){
+  try{ const r=await apiCall({action:'listdiscountsadmin',email:SESS.email,pass:SESS.pass});
+    if(r.ok) ADMIN_DISC=r.discounts; }catch(e){}
+  DISCOUNTS=null; renderKeep();
+}
 async function toggleDisc(id,visible){
-  try{ await apiCall({action:'setdiscvisible',email:SESS.email,pass:SESS.pass,did:id,valor:visible?'SI':'NO'});
-    ADMIN_DISC=null; DISCOUNTS=null; render(); }catch(e){}
+  const d=(ADMIN_DISC||[]).find(x=>x.id===id);
+  if(d){ d.visible=!!visible; renderKeep(); }
+  try{ await apiCall({action:'setdiscvisible',email:SESS.email,pass:SESS.pass,did:id,valor:visible?'SI':'NO'}); }catch(e){}
+  refreshDiscSilent();
 }
 function delDisc(id){
   confirmAction('Borrar descuento','¿Borrar este descuento?','Borrar',async()=>{
-    try{ await apiCall({action:'deletediscount',email:SESS.email,pass:SESS.pass,did:id}); ADMIN_DISC=null; DISCOUNTS=null; render(); }catch(e){}
+    if(ADMIN_DISC) ADMIN_DISC=ADMIN_DISC.filter(x=>x.id!==id);
+    renderKeep();
+    try{ await apiCall({action:'deletediscount',email:SESS.email,pass:SESS.pass,did:id}); }catch(e){}
+    refreshDiscSilent();
   });
 }
 
@@ -2219,7 +2308,7 @@ async function licCall(url,params){
   const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
   const res=await fetch(url+'?'+qs); return await res.json();
 }
-async function loadAllData(){
+async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
   const results=await Promise.all(LICENSE_APIS.map(async(api)=>{
     if(!api.url||api.url.startsWith('PEGA_AQUI'))return {skip:true};
@@ -2227,7 +2316,7 @@ async function loadAllData(){
       return r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
     catch(e){ return {error:'CONN'}; }
   }));
-  ALL_LICS=results; ALL_LICS_LOADING=false; render();
+  ALL_LICS=results; ALL_LICS_LOADING=false; silent?renderKeep():render();
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
@@ -2236,9 +2325,13 @@ function calcTotals(){
 }
 async function setLic(pi,hwid,valor,maxpcs){
   const api=LICENSE_APIS[pi];
+  const d=ALL_LICS&&ALL_LICS[pi];
+  const l=d&&d.licencias&&d.licencias.find(x=>x.hwid===hwid);
+  if(l){ l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs); renderKeep(); }
   const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
   if(maxpcs)params.maxpcs=maxpcs;
-  try{ await licCall(api.url,params); ALL_LICS=null; render(); }catch(e){}
+  try{ await licCall(api.url,params); }catch(e){}
+  loadAllData(true);
 }
 function approveLic(pi,hwid){
   const api=LICENSE_APIS[pi];
@@ -2268,7 +2361,10 @@ function confirmPcs(){
 function delLic(pi,hwid){
   confirmAction('Borrar licencia','¿Borrar esta licencia por completo? El cliente tendría que volver a solicitar.','Borrar',async()=>{
     const api=LICENSE_APIS[pi];
-    try{ await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid}); ALL_LICS=null; render(); }catch(e){}
+    const d=ALL_LICS&&ALL_LICS[pi];
+    if(d&&d.licencias){ d.licencias=d.licencias.filter(x=>x.hwid!==hwid); renderKeep(); }
+    try{ await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid}); }catch(e){}
+    loadAllData(true);
   });
 }
 function licRow(l,pi,cols){
@@ -2348,7 +2444,8 @@ function adminLicensesPage(){
 }
 
 function render(){const app=document.getElementById('app');
-  app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView()}
+  app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
+  setTimeout(updateScrollBtn,0);}
 restoreSession();
 render();
 </script>
