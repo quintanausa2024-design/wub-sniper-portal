@@ -605,6 +605,10 @@
   body.has-maint .side{top:36px;height:calc(100vh - 36px)}
   body.has-maint .main{padding-top:70px}
   body.has-maint .scrollbtn{bottom:24px}
+  body.has-maint .info-btn{top:52px}
+  body.has-maint .menu-btn{top:50px}
+  body.has-maint .login-wrap{padding-top:60px}
+  body.has-maint .emblem-wrap{top:62px}
   @media(prefers-reduced-motion:reduce){.maint-track{animation:none}}
   /* interruptor */
   .maint-row{display:flex;align-items:center;gap:14px}
@@ -1657,7 +1661,7 @@ function maintTexto(){
 }
 function pintarMaint(){
   const bar=document.getElementById('maintBar'); if(!bar)return;
-  if(!MAINT.on || view==='login'){ bar.classList.remove('show'); document.body.classList.remove('has-maint'); bar.innerHTML=''; return; }
+  if(!MAINT.on){ bar.classList.remove('show'); document.body.classList.remove('has-maint'); bar.innerHTML=''; return; }
   const txt=maintTexto();
   const tira=`<span class="maint-item">${sv(I.tool,15)} ${txt}</span>`;
   bar.innerHTML=`<div class="maint-track">${tira.repeat(6)}</div>`;
@@ -2624,10 +2628,10 @@ function adminLicensesPage(){
 function render(){const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
   pintarMaint();
-  if(!MAINT_LOADED && view!=='login') loadMaint();
+  if(!MAINT_LOADED) loadMaint();
   setTimeout(updateScrollBtn,0);}
 // revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
-setInterval(()=>{ if(view!=='login' && !MAINT_SAVING) loadMaint(); }, 60000);
+setInterval(()=>{ if(!MAINT_SAVING) loadMaint(); }, 60000);
 restoreSession();
 render();
 </script>
