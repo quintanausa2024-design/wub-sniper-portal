@@ -29,7 +29,7 @@
   :root{
     --bg:#06090F;--bg-2:#0A0E16;--surface:#111824;--surface-2:#151E2C;
     --line:#1F2A3A;--line-soft:#16202E;
-    --text:#EAF0F8;--text-dim:#8A98AC;--text-faint:#566377;
+    --text:#F4F8FD;--text-dim:#A8B6C9;--text-faint:#6D7C90;
     --fire:#FF6B2C;--fire-soft:#FF8A4C;--cyan:#34B3FF;--cyan-soft:#6FCBFF;
     --green:#27D796;--red:#FF4D5E;--amber:#FFC247;
     --display:'Space Grotesk',sans-serif;--body:'Inter',sans-serif;--mono:'JetBrains Mono',monospace;
@@ -48,6 +48,28 @@
       radial-gradient(700px 500px at 12% 108%, rgba(52,179,255,.09), transparent 60%),
       radial-gradient(600px 600px at 50% 50%, rgba(52,179,255,.03), transparent 70%);
     animation:drift 16s ease-in-out infinite alternate;
+  }
+  /* rejilla futurista que se desplaza */
+  .grid-bg{
+    position:fixed;inset:-2px;z-index:0;pointer-events:none;opacity:.5;
+    background-image:
+      linear-gradient(rgba(52,179,255,.055) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(52,179,255,.055) 1px,transparent 1px);
+    background-size:52px 52px;
+    -webkit-mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 78%);
+    mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 78%);
+    animation:gridmove 22s linear infinite;
+  }
+  @keyframes gridmove{0%{background-position:0 0,0 0}100%{background-position:52px 52px,52px 52px}}
+  /* barrido de escáner lento */
+  .scan-bg{
+    position:fixed;left:0;right:0;height:180px;z-index:0;pointer-events:none;
+    background:linear-gradient(180deg,transparent,rgba(52,179,255,.05) 45%,rgba(255,107,44,.045) 55%,transparent);
+    animation:scansweep 11s ease-in-out infinite;
+  }
+  @keyframes scansweep{0%{top:-180px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:100vh;opacity:0}}
+  @media(prefers-reduced-motion:reduce){
+    .grid-bg,.scan-bg,body::before{animation:none}
   }
   @keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-20px,18px) scale(1.05)}}
   /* faint star/grid texture */
@@ -170,13 +192,30 @@
   .side .orb-wrap{margin-bottom:32px;padding:0 6px}
   .nav{display:flex;flex-direction:column;gap:3px}
   .nav button{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;
-    font-size:14px;color:var(--text-dim);font-weight:500;text-align:left;width:100%;transition:.15s;position:relative}
-  .nav button:hover{background:var(--surface);color:var(--text)}
+    font-size:14px;color:var(--text-dim);font-weight:500;text-align:left;width:100%;position:relative;
+    overflow:hidden;transition:color .18s,background .18s,transform .18s cubic-bezier(.2,.9,.25,1)}
+  .nav button:hover{background:var(--surface);color:var(--text);transform:translateX(4px)}
   .nav button.on{background:linear-gradient(135deg,var(--surface-2),#101826);color:var(--text)}
   .nav button.on::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;
-    background:linear-gradient(180deg,var(--fire),var(--fire-soft));box-shadow:0 0 12px var(--fire)}
-  .ic{width:18px;height:18px;flex-shrink:0;color:var(--text-faint);transition:.15s}
+    background:linear-gradient(180deg,var(--fire),var(--fire-soft));box-shadow:0 0 12px var(--fire);
+    animation:barpulse 2.4s ease-in-out infinite}
+  @keyframes barpulse{0%,100%{box-shadow:0 0 8px var(--fire);opacity:.85}50%{box-shadow:0 0 18px var(--fire);opacity:1}}
+  /* destello que cruza el botón al pasar el mouse */
+  .nav button::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:45%;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
+    transform:skewX(-18deg);transition:none}
+  .nav button:hover::after{animation:navsheen .65s ease}
+  @keyframes navsheen{from{left:-60%}to{left:130%}}
+  .ic{width:18px;height:18px;flex-shrink:0;color:var(--text-faint);
+    transition:color .18s,transform .28s cubic-bezier(.2,.9,.25,1),filter .18s}
   .nav button.on .ic,.nav button:hover .ic{color:var(--fire-soft)}
+  .nav button:hover .ic{transform:scale(1.18) rotate(-6deg);filter:drop-shadow(0 0 6px rgba(255,107,44,.55))}
+  .nav button.on .ic{filter:drop-shadow(0 0 5px rgba(255,107,44,.45));animation:icfloat 3s ease-in-out infinite}
+  @keyframes icfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  @media(prefers-reduced-motion:reduce){
+    .nav button,.nav button .ic,.nav button.on::before{animation:none!important;transition:none}
+    .nav button:hover{transform:none}
+  }
   .side-foot{margin-top:auto;padding-top:18px;border-top:1px solid var(--line-soft)}
   .side-user{display:flex;align-items:center;gap:11px;padding:8px;border-radius:11px}
   .avatar{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1B2940,#0C1320);
@@ -549,6 +588,52 @@
   .ref-arrow{display:grid;place-items:center;color:var(--text-faint);transition:.2s;flex-shrink:0}
   .ref-arrow.open{transform:rotate(180deg);color:var(--fire)}
   .ref-tools{display:flex;gap:8px;margin-bottom:14px}
+  /* ── cartel de mantenimiento ── */
+  .maint-bar{position:fixed;top:0;left:0;right:0;z-index:70;display:none;overflow:hidden;
+    background:linear-gradient(90deg,#3a1e05,#7a3a0a,#3a1e05);
+    border-bottom:1px solid rgba(255,107,44,.55);
+    box-shadow:0 4px 26px -6px rgba(255,107,44,.55)}
+  .maint-bar.show{display:block}
+  .maint-bar::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(45deg,rgba(255,194,71,.10) 0 12px,transparent 12px 24px)}
+  .maint-track{display:flex;width:max-content;animation:maintrun 34s linear infinite}
+  .maint-item{display:inline-flex;align-items:center;gap:9px;padding:9px 34px;white-space:nowrap;
+    font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.06em;color:#FFD9B8;
+    text-shadow:0 0 12px rgba(255,107,44,.6)}
+  .maint-item svg{color:var(--amber)}
+  @keyframes maintrun{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  body.has-maint .side{top:36px;height:calc(100vh - 36px)}
+  body.has-maint .main{padding-top:70px}
+  body.has-maint .scrollbtn{bottom:24px}
+  @media(prefers-reduced-motion:reduce){.maint-track{animation:none}}
+  /* interruptor */
+  .maint-row{display:flex;align-items:center;gap:14px}
+  .maint-state{font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-faint)}
+  .maint-state.on{color:var(--amber);text-shadow:0 0 14px rgba(255,194,71,.5)}
+  .maint-hint{font-size:11.5px;color:var(--text-faint);margin-top:3px;line-height:1.4}
+  .switch{width:52px;height:29px;border-radius:16px;background:var(--bg-2);border:1px solid var(--line-strong);
+    position:relative;cursor:pointer;transition:.2s;flex-shrink:0;padding:0}
+  .switch span{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:50%;
+    background:var(--text-faint);transition:.22s cubic-bezier(.2,.9,.25,1)}
+  .switch.on{background:rgba(255,194,71,.18);border-color:var(--amber)}
+  .switch.on span{left:26px;background:var(--amber);box-shadow:0 0 12px rgba(255,194,71,.8)}
+  /* ventana de cuenta creada */
+  .ok-ic{width:56px;height:56px;border-radius:50%;margin:4px auto 14px;display:grid;place-items:center;
+    background:rgba(39,215,150,.12);border:1px solid rgba(39,215,150,.35);color:var(--green)}
+  .ok-t{font-family:var(--display);font-size:20px;font-weight:700;text-align:center;margin:0 0 5px;color:var(--text)}
+  .ok-s{text-align:center;font-size:13.5px;color:var(--text-dim);margin:0 0 20px}
+  .ok-steps{display:flex;flex-direction:column;gap:11px}
+  .ok-step{display:flex;gap:11px;background:var(--bg-2);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+  .ok-step.warn{background:rgba(245,166,35,.07);border-color:rgba(245,166,35,.28)}
+  .ok-n{width:22px;height:22px;border-radius:50%;background:var(--fire);color:#0a0a0a;display:grid;place-items:center;
+    font-size:12px;font-weight:800;flex-shrink:0;margin-top:1px}
+  .ok-step.warn .ok-n{background:#F5A623}
+  .ok-step div{display:flex;flex-direction:column;gap:3px;min-width:0}
+  .ok-step b{font-size:13px;color:var(--text);font-weight:600}
+  .ok-step span{font-size:12px;color:var(--text-dim);line-height:1.5}
+  .ok-mail{color:var(--fire-soft);word-break:break-all}
+  .ok-help{text-align:center;font-size:12px;color:var(--text-faint);margin-top:16px;line-height:1.6}
+  .ok-help a{color:#25D366;font-weight:700;margin-left:5px}
   .priv-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--cyan);
     background:rgba(52,179,255,.12);border:1px solid rgba(52,179,255,.28);border-radius:6px;padding:1px 6px;
     vertical-align:middle;margin-left:5px}
@@ -647,6 +732,10 @@
 </head>
 <body>
 
+<div class="grid-bg" aria-hidden="true"></div>
+<div class="scan-bg" aria-hidden="true"></div>
+<div id="maintBar" class="maint-bar" aria-hidden="true"></div>
+
 <div class="app" id="app"></div>
 
 <div class="modal-bg" id="vidModal" onclick="if(event.target===this)closeModal('vidModal')">
@@ -691,6 +780,13 @@
     <div class="modal-body" id="newsBody"></div>
     <div class="modal-foot"><button class="btn-ghost" onclick="closeModal('newsModal')">Cancelar</button>
       <button class="btn-add" onclick="saveNews()">Guardar</button></div></div>
+</div>
+
+<div class="modal-bg" id="okModal" onclick="if(event.target===this)closeModal('okModal')">
+  <div class="modal" style="max-width:440px">
+    <div class="modal-body" id="okBody"></div>
+    <div class="modal-foot" style="justify-content:center">
+      <button class="btn-add" style="min-width:150px" onclick="closeModal('okModal')">Entendido</button></div></div>
 </div>
 
 <div class="modal-bg" id="discModal" onclick="if(event.target===this)closeModal('discModal')">
@@ -798,6 +894,7 @@ const I={user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="
   copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
+  tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
   eyeoff:'<path d="M17.94 17.94A10.1 10.1 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><line x1="1" y1="1" x2="23" y2="23"/>',
   list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
@@ -912,7 +1009,7 @@ async function loadReviews(){
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1060,9 +1157,31 @@ async function doSignup(){
   const btn=document.getElementById('sbtn');btn.textContent='Creando...';
   try{
     const r=await apiCall({action:'signup',email,pass,nombre,ref:REF_CODE});
-    if(r.ok){authMsg='✅ ¡Cuenta creada! Te avisaré por correo cuando apruebe tu acceso.';tab='auth_login';render();}
+    if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(email); }
     else{authMsg = r.error==='EXISTS'?'Ese correo ya está registrado. Inicia sesión.':'No se pudo crear la cuenta.';render();}
   }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
+}
+// ── ventana de "cuenta creada" con el aviso del correo y el spam ──
+function showBienvenida(email){
+  const isEn=LANG==='en';
+  document.getElementById('okBody').innerHTML=`
+    <div class="ok-ic">${sv(I.check,30)}</div>
+    <h3 class="ok-t">${isEn?'Account created!':'¡Cuenta creada!'}</h3>
+    <p class="ok-s">${isEn?'Your access request was received.':'Tu solicitud de acceso ya me llegó.'}</p>
+    <div class="ok-steps">
+      <div class="ok-step"><span class="ok-n">1</span>
+        <div><b>${isEn?'I review it manually':'La reviso a mano'}</b>
+          <span>${isEn?'The portal is only for clients, so I approve each account myself.':'El portal es solo para clientes, por eso apruebo cada cuenta yo mismo.'}</span></div></div>
+      <div class="ok-step"><span class="ok-n">2</span>
+        <div><b>${isEn?'You get an email when approved':'Te aviso por correo al aprobarte'}</b>
+          <span>${isEn?'The notice goes to':'El aviso llega a'} <b class="ok-mail">${email}</b></span></div></div>
+      <div class="ok-step warn"><span class="ok-n">⚠</span>
+        <div><b>${isEn?'Check your Spam folder':'Revisa tu carpeta de Spam'}</b>
+          <span>${isEn?'Sometimes the email lands in Spam or Promotions. If you find it there, mark it as "Not spam" so the next ones arrive fine.':'A veces el correo cae en Spam o Promociones. Si lo encuentras ahí, márcalo como "No es spam" para que los próximos lleguen bien.'}</span></div></div>
+    </div>
+    <div class="ok-help">${isEn?"If it doesn't arrive, write me on WhatsApp and I'll check it right away.":'Si no te llega, escríbeme por WhatsApp y lo reviso al momento.'}
+      <a href="https://wa.me/18326409105" target="_blank" rel="noopener">WhatsApp</a></div>`;
+  document.getElementById('okModal').classList.add('show');
 }
 
 async function doReset(){
@@ -1527,6 +1646,65 @@ async function sendContact(){
   }catch(e){contactDone='ERR';render();}
 }
 
+// ── MODO MANTENIMIENTO ──
+let MAINT={on:false,msg:''}, MAINT_LOADED=false, MAINT_SAVING=false;
+function maintTexto(){
+  return MAINT.msg && MAINT.msg.trim()
+    ? MAINT.msg.trim()
+    : (LANG==='en'
+        ? 'MAINTENANCE IN PROGRESS — I am updating the portal. Sorry for any error you may see.'
+        : 'MANTENIMIENTO EN CURSO — Estoy actualizando el portal. Disculpa cualquier error que veas.');
+}
+function pintarMaint(){
+  const bar=document.getElementById('maintBar'); if(!bar)return;
+  if(!MAINT.on || view==='login'){ bar.classList.remove('show'); document.body.classList.remove('has-maint'); bar.innerHTML=''; return; }
+  const txt=maintTexto();
+  const tira=`<span class="maint-item">${sv(I.tool,15)} ${txt}</span>`;
+  bar.innerHTML=`<div class="maint-track">${tira.repeat(6)}</div>`;
+  bar.classList.add('show'); document.body.classList.add('has-maint');
+}
+async function loadMaint(){
+  if(!API_URL)return;
+  try{ const r=await apiCall({action:'getmaint'});
+    if(r.ok){ MAINT={on:!!r.maint,msg:r.msg||''}; } }catch(e){}
+  MAINT_LOADED=true; pintarMaint();
+}
+async function toggleMaint(){
+  if(MAINT_SAVING)return; MAINT_SAVING=true;
+  const nuevo=!MAINT.on;
+  const el=document.getElementById('maintMsg');
+  if(el)MAINT.msg=(el.value||'').trim();
+  MAINT.on=nuevo; renderKeep(); pintarMaint();
+  try{ await apiCall({action:'setmaint',email:SESS.email,pass:SESS.pass,on:nuevo?'SI':'NO',msg:MAINT.msg}); }catch(e){}
+  MAINT_SAVING=false;
+}
+async function saveMaintMsg(){
+  const el=document.getElementById('maintMsg'); if(!el)return;
+  MAINT.msg=(el.value||'').trim();
+  const b=document.getElementById('maintSave'); if(b)b.textContent='Guardado ✓';
+  try{ await apiCall({action:'setmaint',email:SESS.email,pass:SESS.pass,on:MAINT.on?'SI':'NO',msg:MAINT.msg}); }catch(e){}
+  pintarMaint();
+  setTimeout(()=>{const x=document.getElementById('maintSave');if(x)x.textContent='Guardar aviso';},1400);
+}
+function maintCard(){
+  if(view!=='admin')return '';
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${sv(I.tool,16)} Modo mantenimiento</div>
+      <div class="card-cat">Avisa a todos los clientes que estás haciendo cambios</div></div>
+    <div style="padding:20px">
+      <div class="maint-row">
+        <div style="flex:1;min-width:0">
+          <div class="maint-state ${MAINT.on?'on':''}">${MAINT.on?'🔧 ACTIVADO':'○ Apagado'}</div>
+          <div class="maint-hint">${MAINT.on?'Los clientes están viendo el cartel arriba.':'Nadie ve ningún aviso.'}</div>
+        </div>
+        <button class="switch ${MAINT.on?'on':''}" onclick="toggleMaint()" title="${MAINT.on?'Apagar':'Activar'}"><span></span></button>
+      </div>
+      <div class="mfield" style="margin-top:16px"><label>Aviso (opcional)</label>
+        <input id="maintMsg" value="${(MAINT.msg||'').replace(/"/g,'&quot;')}" placeholder="Déjalo vacío para el aviso por defecto">
+        <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.5">Si lo dejas vacío sale: "${maintTexto()}"</div></div>
+      <button class="btn-ghost" id="maintSave" style="padding:8px 14px" onclick="saveMaintMsg()">Guardar aviso</button>
+    </div></div>`;
+}
 function profilePage(){
   const ok = profileMsg ? `<div class="login-err show" style="max-width:480px;color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)">${profileMsg}</div>` : '';
   const err = profileErr ? `<div class="login-err show" style="max-width:480px">${profileErr}</div>` : '';
@@ -1574,7 +1752,7 @@ function profilePage(){
             <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
           </div></div>
       </div>
-      <div class="col-stack">${refCard}</div>
+      <div class="col-stack">${maintCard()}${refCard}</div>
     </div>`}
 
 async function changePass(){
@@ -2445,7 +2623,11 @@ function adminLicensesPage(){
 
 function render(){const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
+  pintarMaint();
+  if(!MAINT_LOADED && view!=='login') loadMaint();
   setTimeout(updateScrollBtn,0);}
+// revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
+setInterval(()=>{ if(view!=='login' && !MAINT_SAVING) loadMaint(); }, 60000);
 restoreSession();
 render();
 </script>
