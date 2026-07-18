@@ -647,6 +647,10 @@
   .btn-tg:hover{filter:brightness(1.08);box-shadow:0 8px 22px -8px rgba(0,136,204,.7)}
   .btn-tg svg{color:#fff}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
+  .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
+    border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
+  .stat-real b{color:var(--text)}
+  .stat-real span{display:block;color:var(--text-faint);margin-top:3px;font-size:11px}
   @media(max-width:540px){.trust-grid{grid-template-columns:repeat(2,1fr)}.trust-v{font-size:20px}}
   @media(prefers-reduced-motion:reduce){.trust-card:hover{transform:none}.trust-shine{display:none}}
   /* ventana de cuenta creada */
@@ -962,8 +966,15 @@ let REMEMBER={email:'',pass:'',on:false};
 let CONTACT_TEL='';
 try{CONTACT_TEL=localStorage.getItem('sp_tel')||'';}catch(e){}
 let REF_CODE='';
-// ── Números de la barra de confianza (cámbialos cuando quieras) ──
-const STATS={ clientes:'250+', anios:'3+', productos:'6' };
+// ── Números de la barra de confianza (respaldo si el servidor no carga) ──
+const STATS={ clientes:'', anios:'3+', productos:'6' };
+let SRV_STATS=null, SRV_STATS_LOADING=false;
+async function loadStats(){
+  if(SRV_STATS_LOADING||!API_URL)return; SRV_STATS_LOADING=true;
+  try{ const r=await apiCall({action:'getstats'});
+    if(r.ok) SRV_STATS=r; }catch(e){}
+  SRV_STATS_LOADING=false; render();
+}
 try{const _p=new URLSearchParams(location.search);const _r=(_p.get('ref')||'').toUpperCase().trim();
   if(_r){REF_CODE=_r;localStorage.setItem('sp_ref',_r);}else{REF_CODE=(localStorage.getItem('sp_ref')||'');}}catch(e){}
 try{const _r=JSON.parse(localStorage.getItem('sp_remember')||'null');if(_r&&_r.email){REMEMBER={email:_r.email,pass:atob(_r.pass||''),on:true};}}catch(e){}
@@ -1044,7 +1055,7 @@ async function loadReviews(){
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1120,14 +1131,21 @@ function trustBar(){
   const isEn=LANG==='en';
   // reseñas reales del portal
   if(REVIEWS===null) loadReviews();
+  if(SRV_STATS===null) loadStats();
   const rs=REVIEWS||[];
   const nRes=rs.length;
   const avg=nRes?(rs.reduce((s,r)=>s+(r.estrellas||0),0)/nRes):0;
+  // clientes: tu override si lo pusiste, si no el conteo real del servidor, si no el respaldo
+  const cli = (SRV_STATS&&SRV_STATS.clientes) ? SRV_STATS.clientes
+            : (SRV_STATS&&SRV_STATS.reales!=null&&SRV_STATS.reales>0) ? (SRV_STATS.reales+'')
+            : (STATS.clientes||'—');
+  const anios = (SRV_STATS&&SRV_STATS.anios) ? SRV_STATS.anios : STATS.anios;
+  const prods = (SRV_STATS&&SRV_STATS.productos) ? SRV_STATS.productos : STATS.productos;
   const stats=[
-    {v:STATS.clientes, l:isEn?'Active traders':'Traders activos', ic:I.users},
+    {v:cli, l:isEn?'Active traders':'Traders activos', ic:I.users},
     {v:(nRes?avg.toFixed(1):'5.0'), l:isEn?`Rating · ${nRes} reviews`:`Calificación · ${nRes} reseñas`, ic:I.star, star:true},
-    {v:STATS.anios, l:isEn?'Years in the market':'Años en el mercado', ic:I.tool},
-    {v:STATS.productos, l:isEn?'Pro tools':'Herramientas pro', ic:I.box}
+    {v:anios, l:isEn?'Years in the market':'Años en el mercado', ic:I.tool},
+    {v:prods, l:isEn?'Pro tools':'Herramientas pro', ic:I.box}
   ];
   return `<div class="trust-wrap">
     <div class="trust-title">${sv(I.check,13)} ${isEn?'Trusted by traders across multiple prop firms':'La confianza de traders en múltiples prop firms'}</div>
@@ -1748,6 +1766,40 @@ async function saveMaintMsg(){
   pintarMaint();
   setTimeout(()=>{const x=document.getElementById('maintSave');if(x)x.textContent='Guardar aviso';},1400);
 }
+function statsCard(){
+  if(view!=='admin')return '';
+  if(SRV_STATS===null) loadStats();
+  const reales=(SRV_STATS&&SRV_STATS.reales!=null)?SRV_STATS.reales:'—';
+  const cli=(SRV_STATS&&SRV_STATS.clientes)||'';
+  const an=(SRV_STATS&&SRV_STATS.anios)||'';
+  const pr=(SRV_STATS&&SRV_STATS.productos)||'';
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${sv(I.users,16)} Barra de confianza</div>
+      <div class="card-cat">Los números que salen en la portada</div></div>
+    <div style="padding:20px">
+      <div class="stat-real">${sv(I.check,13)} Tienes <b>${reales}</b> clientes aprobados reales.
+        <span>Déjalo vacío abajo para mostrar ese número, o escribe el tuyo (ej. 250+).</span></div>
+      <div class="mfield"><label>Traders activos</label>
+        <input id="stCli" value="${cli.replace(/"/g,'&quot;')}" placeholder="Vacío = ${reales} (real)"></div>
+      <div class="mfield"><label>Años en el mercado</label>
+        <input id="stAn" value="${an.replace(/"/g,'&quot;')}" placeholder="Ej: 3+"></div>
+      <div class="mfield"><label>Herramientas pro</label>
+        <input id="stPr" value="${pr.replace(/"/g,'&quot;')}" placeholder="Ej: 6"></div>
+      <button class="btn-add" id="stSave" style="padding:9px 16px" onclick="saveStats()">Guardar números</button>
+      <div style="font-size:11px;color:var(--text-faint);margin-top:9px;line-height:1.5">⭐ La calificación de estrellas sale sola de tus reseñas, esa no se toca.</div>
+    </div></div>`;
+}
+async function saveStats(){
+  const clientes=(document.getElementById('stCli')||{}).value||'';
+  const anios=(document.getElementById('stAn')||{}).value||'';
+  const productos=(document.getElementById('stPr')||{}).value||'';
+  const b=document.getElementById('stSave'); if(b)b.textContent='Guardando...';
+  try{ await apiCall({action:'setstats',email:SESS.email,pass:SESS.pass,clientes,anios,productos}); }catch(e){}
+  SRV_STATS=null;
+  if(b)b.textContent='Guardado ✓';
+  setTimeout(()=>{const x=document.getElementById('stSave');if(x)x.textContent='Guardar números';},1400);
+  loadStats();
+}
 function maintCard(){
   if(view!=='admin')return '';
   return `<div class="card"><div class="card-top">
@@ -1814,7 +1866,7 @@ function profilePage(){
             <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
           </div></div>
       </div>
-      <div class="col-stack">${maintCard()}${refCard}</div>
+      <div class="col-stack">${statsCard()}${maintCard()}${refCard}</div>
     </div>`}
 
 async function changePass(){
