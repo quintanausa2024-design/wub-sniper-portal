@@ -356,12 +356,13 @@
     display:none;align-items:center;justify-content:center;padding:24px}
   .modal-bg.show{display:flex;animation:fadein .2s}
   .modal{background:linear-gradient(165deg,var(--surface),#0D1420);border:1px solid var(--line);border-radius:18px;
-    width:100%;max-width:560px;overflow:hidden;box-shadow:0 50px 110px -30px rgba(0,0,0,.9);animation:rise .3s}
-  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center}
+    width:100%;max-width:560px;max-height:calc(100vh - 48px);display:flex;flex-direction:column;
+    overflow:hidden;box-shadow:0 50px 110px -30px rgba(0,0,0,.9);animation:rise .3s}
+  .modal-head{padding:20px 24px;border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
   .modal-head h3{font-family:var(--display);font-size:17px;font-weight:600}
   .modal-x{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:var(--text-dim);transition:.13s}
   .modal-x:hover{background:var(--surface-2);color:var(--text)}
-  .modal-body{padding:24px}
+  .modal-body{padding:24px;overflow-y:auto;flex:1;min-height:0}
   .video-frame{aspect-ratio:16/9;background:radial-gradient(circle at 50% 40%,#0E1726,#000);border-radius:13px;
     border:1px solid var(--line);display:grid;place-items:center;position:relative;overflow:hidden}
   .video-frame .play{width:66px;height:66px;border-radius:50%;background:rgba(255,107,44,.95);display:grid;place-items:center;
@@ -379,7 +380,7 @@
     border-radius:11px;padding:12px 13px;color:var(--text);font-size:13.5px;font-family:var(--body)}
   .mfield input:focus,.mfield textarea:focus,.mfield select:focus{outline:none;border-color:var(--fire)}
   .mfield textarea{resize:vertical;min-height:80px}
-  .modal-foot{padding:18px 24px;border-top:1px solid var(--line-soft);display:flex;justify-content:flex-end;gap:10px}
+  .modal-foot{padding:18px 24px;border-top:1px solid var(--line-soft);display:flex;justify-content:flex-end;gap:10px;flex-shrink:0}
 
   @media(max-width:860px){
     .side{position:fixed;left:-262px;transition:left .2s;z-index:60;box-shadow:20px 0 60px rgba(0,0,0,.6)}
