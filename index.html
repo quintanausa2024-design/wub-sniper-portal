@@ -674,6 +674,20 @@
   .zelle-num{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:14px;
     background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:11px 14px;color:#6D3BEB}
   .zelle-num span{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);letter-spacing:.02em}
+  .pp-qr img{cursor:zoom-in;transition:.15s}
+  .pp-qr img:hover{transform:scale(1.03)}
+  .pp-cap svg{vertical-align:-2px;opacity:.7}
+  /* QR a pantalla completa */
+  .qr-zoom{position:fixed;inset:0;z-index:300;background:rgba(4,7,12,.92);backdrop-filter:blur(6px);
+    display:none;align-items:center;justify-content:center;padding:24px}
+  .qr-zoom.show{display:flex;animation:fadein .18s}
+  .qr-zoom-box{text-align:center;max-width:100%}
+  .qr-zoom-box img{width:min(82vw,420px);height:auto;background:#fff;border-radius:20px;padding:16px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.8)}
+  .qr-zoom-cap{color:var(--text);font-size:14px;margin-top:16px;font-weight:600}
+  .qr-zoom-x{margin-top:16px;padding:11px 26px;border-radius:12px;background:var(--surface);
+    border:1px solid var(--line);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body)}
+  .qr-zoom-x:hover{border-color:var(--fire);color:var(--fire-soft)}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -1976,7 +1990,7 @@ function payTab(t){
   if(t==='pp'){
     const ppLink = PAYPAL_LINK || '';
     pane.innerHTML=`
-      ${PAYPAL_QR?`<div class="pp-qr"><img src="${PAYPAL_QR}" alt="PayPal QR" loading="lazy"><div class="pp-cap">${isEn?'Scan to pay with PayPal':'Escanea para pagar con PayPal'}</div></div>`:''}
+      ${PAYPAL_QR?`<div class="pp-qr"><img src="${PAYPAL_QR}" alt="PayPal QR" loading="lazy" onclick="zoomQR('${PAYPAL_QR}','PayPal')"><div class="pp-cap">${sv(I.search,12)} ${isEn?'Tap the QR to enlarge · Scan to pay':'Toca el QR para agrandar · Escanea para pagar'}</div></div>`:''}
       <div class="modal-steps" style="margin-top:${PAYPAL_QR?'6px':'0'}">
         <div class="mstep"><div class="num">1</div><p>${isEn?'Pay with the QR or the button below.':'Paga con el QR o el botón de abajo.'} ${monto}</p></div>
         <div class="mstep"><div class="num">2</div><p>${isEn?'Send me the proof on WhatsApp (your name, email and product go pre-filled).':'Mándame el comprobante por WhatsApp (ya va con tu nombre, correo y producto).'}</p></div>
@@ -1986,7 +2000,7 @@ function payTab(t){
       <a class="btn-primary" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;text-decoration:none" href="${comprobanteURL('PayPal')}" target="_blank">${sv(I.phone,15)} ${isEn?'I paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
   } else {
     pane.innerHTML=`
-      ${ZELLE_QR?`<div class="pp-qr"><img src="${ZELLE_QR}" alt="Zelle QR" loading="lazy"><div class="pp-cap">${isEn?'Scan to pay with Zelle':'Escanea para pagar con Zelle'}</div></div>`:''}
+      ${ZELLE_QR?`<div class="pp-qr"><img src="${ZELLE_QR}" alt="Zelle QR" loading="lazy" onclick="zoomQR('${ZELLE_QR}','Zelle')"><div class="pp-cap">${sv(I.search,12)} ${isEn?'Tap the QR to enlarge · Scan to pay':'Toca el QR para agrandar · Escanea para pagar'}</div></div>`:''}
       <div class="zelle-num">${sv(I.phone,15)} <span>${ZELLE_TEL}</span>
         <button class="disc-copy" style="padding:4px 10px;font-size:11.5px" onclick="copyCode('${ZELLE_TEL.replace(/[^0-9]/g,'')}',this)">${sv(I.copy,12)} ${isEn?'Copy':'Copiar'}</button></div>
       <div class="modal-steps">
@@ -1998,6 +2012,18 @@ function payTab(t){
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove('show')}
+// ── QR grande a pantalla completa para escanear desde otro celular ──
+function zoomQR(src,metodo){
+  const isEn=LANG==='en';
+  let ov=document.getElementById('qrZoom');
+  if(!ov){ ov=document.createElement('div'); ov.id='qrZoom'; ov.className='qr-zoom';
+    ov.onclick=()=>ov.classList.remove('show'); document.body.appendChild(ov); }
+  ov.innerHTML=`<div class="qr-zoom-box" onclick="event.stopPropagation()">
+    <img src="${src}" alt="QR ${metodo}">
+    <div class="qr-zoom-cap">${metodo} · ${isEn?'Scan from the other phone':'Escanea desde el otro celular'}</div>
+    <button class="qr-zoom-x" onclick="document.getElementById('qrZoom').classList.remove('show')">✕ ${isEn?'Close':'Cerrar'}</button></div>`;
+  ov.classList.add('show');
+}
 
 // ── confirmación bonita (reemplaza el confirm() feo del navegador) ──
 let _cfCb=null;
