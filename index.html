@@ -688,6 +688,20 @@
   .qr-zoom-x{margin-top:16px;padding:11px 26px;border-radius:12px;background:var(--surface);
     border:1px solid var(--line);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body)}
   .qr-zoom-x:hover{border-color:var(--fire);color:var(--fire-soft)}
+  /* botones de comprobante */
+  .proof-wrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}
+  .proof-lbl{font-size:12px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+  .proof-lbl svg{color:var(--green)}
+  .proof-btns{display:flex;gap:8px;flex-wrap:wrap}
+  .proof-btn{flex:1;min-width:100px;display:flex;align-items:center;justify-content:center;gap:7px;
+    padding:11px 10px;border-radius:11px;text-decoration:none;font-size:13px;font-weight:700;
+    color:#fff;transition:.14s;border:none}
+  .proof-btn svg{color:#fff}
+  .proof-btn.wa{background:linear-gradient(135deg,#25D366,#128C7E)}
+  .proof-btn.tg{background:linear-gradient(135deg,#29B6F6,#0088CC)}
+  .proof-btn.mail{background:linear-gradient(135deg,#546E7A,#37474F)}
+  .proof-btn:hover{filter:brightness(1.1);transform:translateY(-2px)}
+  .proof-note{font-size:11px;color:var(--text-faint);margin-top:9px;text-align:center;line-height:1.5}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -1017,6 +1031,9 @@ const PAYPAL_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-
 // ── Zelle ──
 const ZELLE_TEL='832 640 9105';
 const ZELLE_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-PARA-MI-PORTAL-WEB/main/WhatsApp%20Image%202026-07-19%20at%202.37.57%20PM.jpeg';
+// ── comprobante ──
+const CONTACT_MAIL='sniperocket2028@gmail.com';
+const TELEGRAM_USER='CEOSOPORTE';  // usuario de Telegram sin @
 let SRV_STATS=null, SRV_STATS_LOADING=false;
 async function loadStats(){
   if(SRV_STATS_LOADING||!API_URL)return; SRV_STATS_LOADING=true;
@@ -1972,14 +1989,32 @@ function openPay(p){
 }
 let PAY_CTX={};
 // arma el mensaje de comprobante con nombre, correo y producto del cliente
-function comprobanteURL(metodo){
+function comprobanteTexto(metodo){
   const isEn=LANG==='en';
   const nom=(CLIENT&&CLIENT.name)||'';
   const mail=(CLIENT&&CLIENT.email)||'';
-  const txt = isEn
+  return isEn
     ? `Hi, I just paid by ${metodo}. Here's my proof.\nName: ${nom}\nEmail: ${mail}\nProduct: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`
     : `Hola, acabo de pagar por ${metodo}. Aquí está mi comprobante.\nNombre: ${nom}\nCorreo: ${mail}\nProducto: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`;
-  return 'https://wa.me/18326409105?text='+encodeURIComponent(txt);
+}
+// botones de comprobante: WhatsApp, Telegram y correo
+function comprobanteBtns(metodo){
+  const isEn=LANG==='en';
+  const txt=comprobanteTexto(metodo);
+  const wa='https://wa.me/18326409105?text='+encodeURIComponent(txt);
+  const tg='https://t.me/'+TELEGRAM_USER+'?text='+encodeURIComponent(txt);
+  const asunto=encodeURIComponent((isEn?'Payment proof · ':'Comprobante de pago · ')+(PAY_CTX.nombre||''));
+  const mail='mailto:'+CONTACT_MAIL+'?subject='+asunto+'&body='+encodeURIComponent(txt);
+  const lbl=isEn?'Send proof by:':'Enviar comprobante por:';
+  return `<div class="proof-wrap">
+    <div class="proof-lbl">${sv(I.check,13)} ${lbl}</div>
+    <div class="proof-btns">
+      <a class="proof-btn wa" href="${wa}" target="_blank" rel="noopener">${sv(I.phone,15)} WhatsApp</a>
+      ${TELEGRAM_USER?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener">${sv(I.send,15)} Telegram</a>`:''}
+      <a class="proof-btn mail" href="${mail}">${sv(I.mail,15)} ${isEn?'Email':'Correo'}</a>
+    </div>
+    <div class="proof-note">${isEn?'Attach the payment screenshot in the chat.':'Adjunta la captura del pago en el chat.'}</div>
+  </div>`;
 }
 function payTab(t){
   const isEn=LANG==='en';
@@ -1997,7 +2032,7 @@ function payTab(t){
         <div class="mstep"><div class="num">3</div><p>${isEn?'I unlock the product and you refresh to download.':'Te libero el producto y refrescas para descargar.'}</p></div>
       </div>
       ${ppLink?`<a class="btn-pp" href="${ppLink}" target="_blank" rel="noopener">${sv(I.card,16)} ${isEn?'Pay with PayPal':'Pagar con PayPal'}</a>`:''}
-      <a class="btn-primary" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;text-decoration:none" href="${comprobanteURL('PayPal')}" target="_blank">${sv(I.phone,15)} ${isEn?'I paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
+      ${comprobanteBtns('PayPal')}`;
   } else {
     pane.innerHTML=`
       ${ZELLE_QR?`<div class="pp-qr"><img src="${ZELLE_QR}" alt="Zelle QR" loading="lazy" onclick="zoomQR('${ZELLE_QR}','Zelle')"><div class="pp-cap">${sv(I.search,12)} ${isEn?'Tap the QR to enlarge · Scan to pay':'Toca el QR para agrandar · Escanea para pagar'}</div></div>`:''}
@@ -2008,7 +2043,7 @@ function payTab(t){
         <div class="mstep"><div class="num">2</div><p>${isEn?'Send me the proof on WhatsApp (your name, email and product go pre-filled).':'Mándame el comprobante por WhatsApp (ya va con tu nombre, correo y producto).'}</p></div>
         <div class="mstep"><div class="num">3</div><p>${isEn?'I unlock the product and you refresh to download.':'Te libero el producto y refrescas para descargar.'}</p></div>
       </div>
-      <a class="btn-primary" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px;text-decoration:none" href="${comprobanteURL('Zelle')}" target="_blank">${sv(I.phone,15)} ${isEn?'I paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
+      ${comprobanteBtns('Zelle')}`;
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove('show')}
