@@ -671,6 +671,9 @@
     background:linear-gradient(135deg,#0070E0,#003087);color:#fff;transition:.14s}
   .btn-pp:hover{filter:brightness(1.1);box-shadow:0 8px 22px -8px rgba(0,112,224,.7)}
   .btn-pp svg{color:#fff}
+  .zelle-num{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:14px;
+    background:var(--bg-2);border:1px solid var(--line);border-radius:11px;padding:11px 14px;color:#6D3BEB}
+  .zelle-num span{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--text);letter-spacing:.02em}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -997,6 +1000,9 @@ const STATS={ clientes:'', anios:'3+', productos:'6' };
 // ── PayPal: pon aquí tu link de PayPal.Me y el link directo de tu QR ──
 const PAYPAL_LINK='https://www.paypal.com/paypalme/LLCQuintana';
 const PAYPAL_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-PARA-MI-PORTAL-WEB/main/WhatsApp%20Image%202026-07-19%20at%202.16.14%20PM.jpeg';
+// ── Zelle ──
+const ZELLE_TEL='832 640 9105';
+const ZELLE_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-PARA-MI-PORTAL-WEB/main/WhatsApp%20Image%202026-07-19%20at%202.37.57%20PM.jpeg';
 let SRV_STATS=null, SRV_STATS_LOADING=false;
 async function loadStats(){
   if(SRV_STATS_LOADING||!API_URL)return; SRV_STATS_LOADING=true;
@@ -1937,46 +1943,58 @@ function openPay(p){
   document.getElementById('payTitle').textContent=p.nombre;
   const precio = p.precio ? ('$'+p.precio) : 'Consultar precio';
   const isEn=LANG==='en';
-  const wamsg = encodeURIComponent('Hola, quiero comprar '+p.nombre+(p.precio?(' ('+precio+')'):'')+'. ¿Cómo realizo el pago?');
-  PAY_CTX={nombre:p.nombre, precio:p.precio||'', wamsg};
+  PAY_CTX={nombre:p.nombre, precio:p.precio||''};
   document.getElementById('payBody').innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:12px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase">${isEn?'Price':'Precio'}</div>
       <div style="font-family:var(--display);font-size:34px;font-weight:600;color:var(--fire-soft);margin-top:4px">${precio}</div></div>
     <div class="pay-tabs">
-      <button class="pay-tab on" id="ptWa" onclick="payTab('wa')">${sv(I.phone,15)} WhatsApp</button>
-      <button class="pay-tab" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal</button>
+      <button class="pay-tab on" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal</button>
+      <button class="pay-tab" id="ptZe" onclick="payTab('ze')">${sv(I.card,15)} Zelle</button>
     </div>
     <div id="payPane"></div>`;
-  payTab('wa');
+  payTab('pp');
   document.getElementById('payModal').classList.add('show');
 }
 let PAY_CTX={};
+// arma el mensaje de comprobante con nombre, correo y producto del cliente
+function comprobanteURL(metodo){
+  const isEn=LANG==='en';
+  const nom=(CLIENT&&CLIENT.name)||'';
+  const mail=(CLIENT&&CLIENT.email)||'';
+  const txt = isEn
+    ? `Hi, I just paid by ${metodo}. Here's my proof.\nName: ${nom}\nEmail: ${mail}\nProduct: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`
+    : `Hola, acabo de pagar por ${metodo}. Aquí está mi comprobante.\nNombre: ${nom}\nCorreo: ${mail}\nProducto: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`;
+  return 'https://wa.me/18326409105?text='+encodeURIComponent(txt);
+}
 function payTab(t){
   const isEn=LANG==='en';
-  const wa=document.getElementById('ptWa'), pp=document.getElementById('ptPp');
-  if(wa)wa.classList.toggle('on',t==='wa'); if(pp)pp.classList.toggle('on',t==='pp');
+  const pp=document.getElementById('ptPp'), ze=document.getElementById('ptZe');
+  if(pp)pp.classList.toggle('on',t==='pp'); if(ze)ze.classList.toggle('on',t==='ze');
   const pane=document.getElementById('payPane'); if(!pane)return;
-  if(t==='wa'){
-    pane.innerHTML=`
-      <div class="modal-steps">
-        <div class="mstep"><div class="num">1</div><p>${isEn?'Tap "Pay with WhatsApp" and pay as I tell you.':'Toca "Pagar por WhatsApp" y realiza el pago como te indique.'}</p></div>
-        <div class="mstep"><div class="num">2</div><p>${isEn?'Once I confirm, I <b>unlock the product</b> in your portal.':'En cuanto confirme tu pago, te <b>libero el producto</b> en tu portal.'}</p></div>
-        <div class="mstep"><div class="num">3</div><p>${isEn?'Refresh and download it. Meanwhile you can watch its video.':'Refresca y ya podrás descargarlo. Mientras, puedes ver su video.'}</p></div>
-      </div>
-      <a class="btn-primary" href="https://wa.me/18326409105?text=${PAY_CTX.wamsg}" target="_blank" style="display:block;text-align:center;margin-top:18px;text-decoration:none">${isEn?'Pay with WhatsApp':'Pagar por WhatsApp'}</a>`;
-  } else {
-    const nota=encodeURIComponent((PAY_CTX.nombre||'')+(PAY_CTX.precio?(' $'+PAY_CTX.precio):''));
+  const monto = PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:'';
+  if(t==='pp'){
     const ppLink = PAYPAL_LINK || '';
     pane.innerHTML=`
       ${PAYPAL_QR?`<div class="pp-qr"><img src="${PAYPAL_QR}" alt="PayPal QR" loading="lazy"><div class="pp-cap">${isEn?'Scan to pay with PayPal':'Escanea para pagar con PayPal'}</div></div>`:''}
       <div class="modal-steps" style="margin-top:${PAYPAL_QR?'6px':'0'}">
-        <div class="mstep"><div class="num">1</div><p>${isEn?'Pay with the QR or the button below.':'Paga con el QR o el botón de abajo.'} ${PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:''}</p></div>
-        <div class="mstep"><div class="num">2</div><p>${isEn?'Send me the payment screenshot on WhatsApp so I can verify it.':'Mándame la captura del pago por WhatsApp para verificarlo.'}</p></div>
+        <div class="mstep"><div class="num">1</div><p>${isEn?'Pay with the QR or the button below.':'Paga con el QR o el botón de abajo.'} ${monto}</p></div>
+        <div class="mstep"><div class="num">2</div><p>${isEn?'Send me the proof on WhatsApp (your name, email and product go pre-filled).':'Mándame el comprobante por WhatsApp (ya va con tu nombre, correo y producto).'}</p></div>
         <div class="mstep"><div class="num">3</div><p>${isEn?'I unlock the product and you refresh to download.':'Te libero el producto y refrescas para descargar.'}</p></div>
       </div>
       ${ppLink?`<a class="btn-pp" href="${ppLink}" target="_blank" rel="noopener">${sv(I.card,16)} ${isEn?'Pay with PayPal':'Pagar con PayPal'}</a>`:''}
-      <a class="btn-ghost" style="display:flex;justify-content:center;margin-top:9px;text-decoration:none" href="https://wa.me/18326409105?text=${encodeURIComponent((isEn?'Hi, I paid by PayPal for ':'Hola, pagué por PayPal ')+ (PAY_CTX.nombre||''))}" target="_blank">${sv(I.phone,14)} ${isEn?'I already paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
+      <a class="btn-primary" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:9px;text-decoration:none" href="${comprobanteURL('PayPal')}" target="_blank">${sv(I.phone,15)} ${isEn?'I paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
+  } else {
+    pane.innerHTML=`
+      ${ZELLE_QR?`<div class="pp-qr"><img src="${ZELLE_QR}" alt="Zelle QR" loading="lazy"><div class="pp-cap">${isEn?'Scan to pay with Zelle':'Escanea para pagar con Zelle'}</div></div>`:''}
+      <div class="zelle-num">${sv(I.phone,15)} <span>${ZELLE_TEL}</span>
+        <button class="disc-copy" style="padding:4px 10px;font-size:11.5px" onclick="copyCode('${ZELLE_TEL.replace(/[^0-9]/g,'')}',this)">${sv(I.copy,12)} ${isEn?'Copy':'Copiar'}</button></div>
+      <div class="modal-steps">
+        <div class="mstep"><div class="num">1</div><p>${isEn?'In your bank app, open Zelle and send to the number above.':'En tu app del banco, abre Zelle y envía al número de arriba.'} ${monto}</p></div>
+        <div class="mstep"><div class="num">2</div><p>${isEn?'Send me the proof on WhatsApp (your name, email and product go pre-filled).':'Mándame el comprobante por WhatsApp (ya va con tu nombre, correo y producto).'}</p></div>
+        <div class="mstep"><div class="num">3</div><p>${isEn?'I unlock the product and you refresh to download.':'Te libero el producto y refrescas para descargar.'}</p></div>
+      </div>
+      <a class="btn-primary" style="display:flex;justify-content:center;align-items:center;gap:8px;margin-top:6px;text-decoration:none" href="${comprobanteURL('Zelle')}" target="_blank">${sv(I.phone,15)} ${isEn?'I paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove('show')}
