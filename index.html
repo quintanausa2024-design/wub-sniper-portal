@@ -974,7 +974,14 @@ async function loadStats(){
   if(SRV_STATS_LOADING||!API_URL)return; SRV_STATS_LOADING=true;
   try{ const r=await apiCall({action:'getstats'});
     if(r.ok) SRV_STATS=r; }catch(e){}
-  SRV_STATS_LOADING=false; render();
+  SRV_STATS_LOADING=false;
+  if(view==='login') repintarTrust(); else render();
+}
+// repinta SOLO la barra de confianza, sin redibujar toda la portada (evita el parpadeo)
+function repintarTrust(){
+  const cont=document.getElementById('trustSlot');
+  if(cont) cont.innerHTML=trustBar();
+  else render();
 }
 try{const _p=new URLSearchParams(location.search);const _r=(_p.get('ref')||'').toUpperCase().trim();
   if(_r){REF_CODE=_r;localStorage.setItem('sp_ref',_r);}else{REF_CODE=(localStorage.getItem('sp_ref')||'');}}catch(e){}
@@ -1052,7 +1059,8 @@ let REVIEWS=null, REVIEWS_LOADING=false, REV_STARS=0, REV_TXT='', REV_MSG='', RE
 async function loadReviews(){
   if(REVIEWS_LOADING)return; REVIEWS_LOADING=true;
   try{ const r=await apiCall({action:'listreviews'}); REVIEWS=r.ok?r.reviews:[]; }catch(e){ REVIEWS=[]; }
-  REVIEWS_LOADING=false; render();
+  REVIEWS_LOADING=false;
+  if(view==='login') repintarTrust(); else render();
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
@@ -1125,14 +1133,11 @@ function loginView(){
   const langToggle=`<div class="lang-toggle">
     <button class="${LANG==='es'?'on':''}" onclick="setLang('es')">ES</button>
     <button class="${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>`;
-  return `<div class="login-wrap">${sniperBG()}<div class="login-col">${langToggle}${card}${trustBar()}${footerHTML()}</div></div>`;
+  return `<div class="login-wrap">${sniperBG()}<div class="login-col">${langToggle}${card}<div id="trustSlot">${trustBar()}</div>${footerHTML()}</div></div>`;
 }
 // ── barra de confianza (clientes, reseñas, años, productos) ──
 function trustBar(){
   const isEn=LANG==='en';
-  // reseñas reales del portal
-  if(REVIEWS===null) loadReviews();
-  if(SRV_STATS===null) loadStats();
   const rs=REVIEWS||[];
   const nRes=rs.length;
   const avg=nRes?(rs.reduce((s,r)=>s+(r.estrellas||0),0)/nRes):0;
@@ -2744,6 +2749,7 @@ function render(){const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
   pintarMaint();
   if(!MAINT_LOADED) loadMaint();
+  if(view==='login'){ if(REVIEWS===null) loadReviews(); if(SRV_STATS===null) loadStats(); }
   setTimeout(updateScrollBtn,0);}
 // revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
 setInterval(()=>{ if(!MAINT_SAVING) loadMaint(); }, 60000);
