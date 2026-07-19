@@ -1949,11 +1949,11 @@ function openPay(p){
       <div style="font-size:12px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase">${isEn?'Price':'Precio'}</div>
       <div style="font-family:var(--display);font-size:34px;font-weight:600;color:var(--fire-soft);margin-top:4px">${precio}</div></div>
     <div class="pay-tabs">
-      <button class="pay-tab on" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal</button>
-      <button class="pay-tab" id="ptZe" onclick="payTab('ze')">${sv(I.card,15)} Zelle</button>
+      <button class="pay-tab on" id="ptZe" onclick="payTab('ze')">${sv(I.card,15)} Zelle</button>
+      <button class="pay-tab" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal</button>
     </div>
     <div id="payPane"></div>`;
-  payTab('pp');
+  payTab('ze');
   document.getElementById('payModal').classList.add('show');
 }
 let PAY_CTX={};
