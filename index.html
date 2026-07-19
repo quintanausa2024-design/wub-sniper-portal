@@ -589,6 +589,14 @@
   .ref-arrow{display:grid;place-items:center;color:var(--text-faint);transition:.2s;flex-shrink:0}
   .ref-arrow.open{transform:rotate(180deg);color:var(--fire)}
   .ref-tools{display:flex;gap:8px;margin-bottom:14px}
+  .ref-list{display:flex;flex-direction:column;gap:8px}
+  .ref-row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .ref-row-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .ref-prods{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:9px;padding-top:9px;
+    border-top:1px solid var(--line-soft);color:var(--text-faint)}
+  .ref-prod{font-size:11px;font-weight:600;background:rgba(255,107,44,.1);color:var(--fire-soft);
+    border:1px solid rgba(255,107,44,.25);border-radius:7px;padding:3px 9px}
+  .ref-prod.none{background:transparent;border:1px dashed var(--line-strong);color:var(--text-faint);font-weight:400}
   /* ── cartel de mantenimiento ── */
   .maint-bar{position:fixed;top:0;left:0;right:0;z-index:70;display:none;overflow:hidden;
     background:linear-gradient(90deg,#3a1e05,#7a3a0a,#3a1e05);
@@ -2424,12 +2432,20 @@ function adminReferidosPage(){
     return head+`<div class="empty-state"><div class="empty-ic">${sv(I.link,28)}</div><h3>Aún no hay referidos</h3><p>Cuando tus clientes compartan su link y alguien se registre, aparecerá aquí.</p></div>`;
   const blocks=ADMIN_REF.map(r=>{
     const abierto=!REF_CLOSED[r.codigo];
-    const rows=r.refs.map(x=>`<div class="trow" style="grid-template-columns:1.3fr 1.3fr 0.9fr auto">
-        <div class="cust-name"><div class="avatar" style="width:28px;height:28px;font-size:11px">${(x.nombre||'?').charAt(0).toUpperCase()}</div>
-          <div style="min-width:0"><div class="n">${x.nombre||'—'}</div><div class="cust-email">${x.email||''}</div></div></div>
-        <div class="cust-email col-hide">${x.email||'—'}</div>
-        <div class="col-hide" style="font-size:11.5px;color:var(--text-faint)">${x.fecha||'—'}</div>
-        <div class="row-act">${x.aprobado?'<span class="dot g"></span>Aprobado':'<span class="dot a"></span>Pendiente'}</div></div>`).join('');
+    const rows=r.refs.map(x=>{
+      const prods=(x.productos&&x.productos.length)
+        ? x.productos.map(p=>`<span class="ref-prod">${p}</span>`).join('')
+        : '<span class="ref-prod none">Sin productos aún</span>';
+      return `<div class="ref-row">
+        <div class="ref-row-top">
+          <div class="cust-name"><div class="avatar" style="width:28px;height:28px;font-size:11px">${(x.nombre||'?').charAt(0).toUpperCase()}</div>
+            <div style="min-width:0"><div class="n">${x.nombre||'—'}</div><div class="cust-email">${x.email||''}</div></div></div>
+          <div style="font-size:11.5px;color:var(--text-faint);white-space:nowrap">${(x.fecha||'').split(' ')[0]||'—'}</div>
+          <div class="row-act">${x.aprobado?'<span class="dot g"></span>Aprobado':'<span class="dot a"></span>Pendiente'}</div>
+        </div>
+        <div class="ref-prods">${sv(I.box,12)} ${prods}</div>
+      </div>`;
+    }).join('');
     return `<div style="margin-bottom:${abierto?'24px':'10px'}">
       <div class="ref-hd" onclick="toggleRef('${r.codigo}')">
         <span class="ref-arrow${abierto?' open':''}">${sv(I.chev,15)}</span>
@@ -2437,18 +2453,20 @@ function adminReferidosPage(){
         <div style="min-width:0"><div style="font-family:var(--display);font-size:15px;font-weight:600">${r.nombre||'—'}</div>
           <div style="font-size:11.5px;color:var(--text-faint)">${r.email} · código <span class="mono" style="color:var(--fire-soft)">${r.codigo}</span></div></div>
         <span class="pill active" style="margin-left:auto">${r.refs.length} referido${r.refs.length===1?'':'s'}</span></div>
-      ${abierto?`<div class="table" style="margin-top:10px">${rows}</div>`:''}</div>`;
+      ${abierto?`<div class="ref-list" style="margin-top:10px">${rows}</div>`:''}</div>`;
   }).join('');
   return head+`<div class="ref-tools">
       <button class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="refAll(1)">Abrir todos</button>
       <button class="btn-ghost" style="padding:5px 11px;font-size:12px" onclick="refAll(0)">Cerrar todos</button></div>${blocks}`;
 }
 let REF_CLOSED={};
-function toggleRef(cod){ REF_CLOSED[cod]=!REF_CLOSED[cod]; render(); }
+try{ REF_CLOSED=JSON.parse(localStorage.getItem('sp_ref_closed')||'{}')||{}; }catch(e){ REF_CLOSED={}; }
+function saveRefClosed(){ try{ localStorage.setItem('sp_ref_closed',JSON.stringify(REF_CLOSED)); }catch(e){} }
+function toggleRef(cod){ REF_CLOSED[cod]=!REF_CLOSED[cod]; if(!REF_CLOSED[cod])delete REF_CLOSED[cod]; saveRefClosed(); renderKeep(); }
 function refAll(abrir){
   REF_CLOSED={};
   if(!abrir)(ADMIN_REF||[]).forEach(r=>{REF_CLOSED[r.codigo]=true;});
-  render();
+  saveRefClosed(); renderKeep();
 }
 
 // ════════ ADMIN: RESEÑAS ════════
