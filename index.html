@@ -706,6 +706,24 @@
     border-radius:9px;padding:8px 11px;margin-top:10px;line-height:1.5;display:flex;align-items:flex-start;gap:6px}
   .proof-tg-note svg{flex-shrink:0;margin-top:1px}
   .proof-tg-note.copied{color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)}
+  /* banner producto nuevo */
+  .np-banner{display:flex;align-items:center;gap:13px;margin-bottom:22px;padding:14px 16px;border-radius:14px;
+    background:linear-gradient(135deg,rgba(255,107,44,.16),rgba(52,179,255,.1));
+    border:1px solid rgba(255,107,44,.4);box-shadow:0 8px 26px -12px rgba(255,107,44,.5);
+    animation:npIn .4s cubic-bezier(.2,.9,.25,1)}
+  @keyframes npIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+  .np-ic{width:40px;height:40px;border-radius:11px;background:var(--fire);color:#0a0a0a;display:grid;
+    place-items:center;flex-shrink:0;box-shadow:0 0 16px rgba(255,107,44,.5);animation:npPulse 2.4s ease-in-out infinite}
+  @keyframes npPulse{0%,100%{box-shadow:0 0 12px rgba(255,107,44,.4)}50%{box-shadow:0 0 22px rgba(255,107,44,.7)}}
+  .np-txt{flex:1;min-width:0;display:flex;flex-direction:column}
+  .np-txt b{font-family:var(--display);font-size:14px;color:var(--text)}
+  .np-txt span{font-size:13px;color:var(--fire-soft);font-weight:600;margin-top:1px}
+  .np-go{padding:9px 18px;border-radius:10px;background:var(--fire);color:#0a0a0a;border:none;
+    font-weight:700;font-size:13px;cursor:pointer;font-family:var(--body);transition:.14s;flex-shrink:0}
+  .np-go:hover{filter:brightness(1.1);transform:translateY(-1px)}
+  .np-x{width:30px;height:30px;border-radius:8px;background:transparent;border:none;color:var(--text-faint);
+    font-size:15px;cursor:pointer;flex-shrink:0;transition:.14s}
+  .np-x:hover{background:rgba(255,255,255,.06);color:var(--text)}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -1133,7 +1151,7 @@ async function loadReviews(){
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1392,7 +1410,36 @@ function clientView(){const nav=navBtn('products',I.box,t('nav_productos'))+navB
   else if(tab==='help')content=faqPage();
   else if(tab==='contact')content=contactPage();
   else content=profilePage();
-  return shell(nav, content)}
+  return shell(nav, newProdBanner()+content)}
+// ── banner de producto nuevo ──
+let NEWPROD=null, NEWPROD_LOADING=false;
+async function loadNewProd(){
+  if(NEWPROD_LOADING||!API_URL)return; NEWPROD_LOADING=true;
+  try{ const r=await apiCall({action:'getnewprod'}); if(r.ok) NEWPROD=r; }catch(e){}
+  NEWPROD_LOADING=false; renderKeep();
+}
+function newProdBanner(){
+  if(NEWPROD===null){ loadNewProd(); return ''; }
+  if(!NEWPROD.id || !NEWPROD.nombre) return '';
+  let visto=''; try{ visto=localStorage.getItem('sp_newprod_seen')||''; }catch(e){}
+  if(visto===NEWPROD.id) return '';
+  const isEn=LANG==='en';
+  return `<div class="np-banner">
+    <div class="np-ic">${sv(I.box,18)}</div>
+    <div class="np-txt"><b>${isEn?'New product available!':'¡Nuevo producto disponible!'}</b>
+      <span>${NEWPROD.nombre}</span></div>
+    <button class="np-go" onclick="verNewProd('${NEWPROD.id}')">${isEn?'View':'Ver'}</button>
+    <button class="np-x" onclick="cerrarNewProd()" title="${isEn?'Dismiss':'Cerrar'}">✕</button>
+  </div>`;
+}
+function verNewProd(id){
+  try{ localStorage.setItem('sp_newprod_seen',id); }catch(e){}
+  tab='products'; PROD_OPEN=id; render(); window.scrollTo(0,0);
+}
+function cerrarNewProd(){
+  try{ if(NEWPROD&&NEWPROD.id) localStorage.setItem('sp_newprod_seen',NEWPROD.id); }catch(e){}
+  renderKeep();
+}
 
 async function loadGuides(){
   if(GUIDES_LOADING)return; GUIDES_LOADING=true;
