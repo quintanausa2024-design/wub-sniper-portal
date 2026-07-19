@@ -702,6 +702,10 @@
   .proof-btn.mail{background:linear-gradient(135deg,#546E7A,#37474F)}
   .proof-btn:hover{filter:brightness(1.1);transform:translateY(-2px)}
   .proof-note{font-size:11px;color:var(--text-faint);margin-top:9px;text-align:center;line-height:1.5}
+  .proof-tg-note{font-size:11px;color:var(--cyan);background:rgba(52,179,255,.08);border:1px solid rgba(52,179,255,.22);
+    border-radius:9px;padding:8px 11px;margin-top:10px;line-height:1.5;display:flex;align-items:flex-start;gap:6px}
+  .proof-tg-note svg{flex-shrink:0;margin-top:1px}
+  .proof-tg-note.copied{color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -2002,19 +2006,32 @@ function comprobanteBtns(metodo){
   const isEn=LANG==='en';
   const txt=comprobanteTexto(metodo);
   const wa='https://wa.me/18326409105?text='+encodeURIComponent(txt);
-  const tg='https://t.me/'+TELEGRAM_USER+'?text='+encodeURIComponent(txt);
+  const tg='https://t.me/'+TELEGRAM_USER;   // Telegram NO permite pre-llenar texto en chat directo
   const asunto=encodeURIComponent((isEn?'Payment proof · ':'Comprobante de pago · ')+(PAY_CTX.nombre||''));
   const mail='mailto:'+CONTACT_MAIL+'?subject='+asunto+'&body='+encodeURIComponent(txt);
   const lbl=isEn?'Send proof by:':'Enviar comprobante por:';
+  // guardamos el texto para copiarlo si usa Telegram
+  window.__proofTxt=txt;
   return `<div class="proof-wrap">
     <div class="proof-lbl">${sv(I.check,13)} ${lbl}</div>
     <div class="proof-btns">
       <a class="proof-btn wa" href="${wa}" target="_blank" rel="noopener">${sv(I.phone,15)} WhatsApp</a>
-      ${TELEGRAM_USER?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener">${sv(I.send,15)} Telegram</a>`:''}
+      ${TELEGRAM_USER?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener" onclick="copiarProof()">${sv(I.send,15)} Telegram</a>`:''}
       <a class="proof-btn mail" href="${mail}">${sv(I.mail,15)} ${isEn?'Email':'Correo'}</a>
     </div>
+    ${TELEGRAM_USER?`<div class="proof-tg-note" id="proofTgNote">${sv(I.copy,12)} ${isEn?'For Telegram: your details are copied — just paste them in the chat and attach the screenshot.':'Para Telegram: tus datos se copian solos — solo pégalos en el chat y adjunta la captura.'}</div>`:''}
     <div class="proof-note">${isEn?'Attach the payment screenshot in the chat.':'Adjunta la captura del pago en el chat.'}</div>
   </div>`;
+}
+// copia el texto del comprobante al abrir Telegram (para que solo lo pegue)
+function copiarProof(){
+  const t=window.__proofTxt||'';
+  try{ navigator.clipboard.writeText(t); }catch(e){
+    const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');}catch(x){} document.body.removeChild(ta);
+  }
+  const n=document.getElementById('proofTgNote');
+  if(n){ n.classList.add('copied'); n.innerHTML=(LANG==='en'?'✓ Copied! Paste it in the Telegram chat and attach the screenshot.':'✓ ¡Copiado! Pégalo en el chat de Telegram y adjunta la captura.'); }
 }
 function payTab(t){
   const isEn=LANG==='en';
