@@ -655,6 +655,22 @@
     background:linear-gradient(135deg,#29B6F6,#0088CC);color:#fff;border:none}
   .btn-tg:hover{filter:brightness(1.08);box-shadow:0 8px 22px -8px rgba(0,136,204,.7)}
   .btn-tg svg{color:#fff}
+  /* pago: pestañas WhatsApp / PayPal */
+  .pay-tabs{display:flex;gap:8px;margin-bottom:16px}
+  .pay-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;
+    background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);font-size:13.5px;font-weight:600;
+    font-family:var(--body);cursor:pointer;transition:.14s}
+  .pay-tab:hover{color:var(--text)}
+  .pay-tab.on{background:var(--surface-2);border-color:var(--fire);color:var(--text)}
+  .pay-tab.on svg{color:var(--fire-soft)}
+  .pp-qr{text-align:center;margin-bottom:14px}
+  .pp-qr img{width:210px;max-width:100%;border-radius:14px;background:#fff;padding:10px}
+  .pp-cap{font-size:11.5px;color:var(--text-faint);margin-top:7px}
+  .btn-pp{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;padding:14px;border-radius:12px;
+    margin-top:6px;text-decoration:none;font-size:14.5px;font-weight:700;
+    background:linear-gradient(135deg,#0070E0,#003087);color:#fff;transition:.14s}
+  .btn-pp:hover{filter:brightness(1.1);box-shadow:0 8px 22px -8px rgba(0,112,224,.7)}
+  .btn-pp svg{color:#fff}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -941,6 +957,7 @@ const I={user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="
   star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
   tool:'<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
   send:'<line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>',
+  card:'<rect x="1" y="4" width="22" height="16" rx="3"/><line x1="1" y1="10" x2="23" y2="10"/>',
   eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
   eyeoff:'<path d="M17.94 17.94A10.1 10.1 0 0 1 12 20c-7 0-11-8-11-8a18.5 18.5 0 0 1 5.06-5.94M9.9 4.24A9.1 9.1 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><line x1="1" y1="1" x2="23" y2="23"/>',
   list:'<line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>',
@@ -977,6 +994,9 @@ try{CONTACT_TEL=localStorage.getItem('sp_tel')||'';}catch(e){}
 let REF_CODE='';
 // ── Números de la barra de confianza (respaldo si el servidor no carga) ──
 const STATS={ clientes:'', anios:'3+', productos:'6' };
+// ── PayPal: pon aquí tu link de PayPal.Me y el link directo de tu QR ──
+const PAYPAL_LINK='https://www.paypal.com/paypalme/LLCQuintana';
+const PAYPAL_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-PARA-MI-PORTAL-WEB/main/WhatsApp%20Image%202026-07-19%20at%202.16.14%20PM.jpeg';
 let SRV_STATS=null, SRV_STATS_LOADING=false;
 async function loadStats(){
   if(SRV_STATS_LOADING||!API_URL)return; SRV_STATS_LOADING=true;
@@ -1916,18 +1936,48 @@ function openVid(p){
 function openPay(p){
   document.getElementById('payTitle').textContent=p.nombre;
   const precio = p.precio ? ('$'+p.precio) : 'Consultar precio';
+  const isEn=LANG==='en';
   const wamsg = encodeURIComponent('Hola, quiero comprar '+p.nombre+(p.precio?(' ('+precio+')'):'')+'. ¿Cómo realizo el pago?');
+  PAY_CTX={nombre:p.nombre, precio:p.precio||'', wamsg};
   document.getElementById('payBody').innerHTML = `
-    <div style="text-align:center;margin-bottom:18px">
-      <div style="font-size:12px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase">Precio</div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase">${isEn?'Price':'Precio'}</div>
       <div style="font-family:var(--display);font-size:34px;font-weight:600;color:var(--fire-soft);margin-top:4px">${precio}</div></div>
-    <div class="modal-steps">
-      <div class="mstep"><div class="num">1</div><p>Toca "Pagar por WhatsApp" y realiza el pago como te indique.</p></div>
-      <div class="mstep"><div class="num">2</div><p>En cuanto confirme tu pago, te <b>libero el producto</b> en tu portal.</p></div>
-      <div class="mstep"><div class="num">3</div><p>Refresca y ya podrás descargarlo. Mientras, puedes ver su video.</p></div>
+    <div class="pay-tabs">
+      <button class="pay-tab on" id="ptWa" onclick="payTab('wa')">${sv(I.phone,15)} WhatsApp</button>
+      <button class="pay-tab" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal</button>
     </div>
-    <a class="btn-primary" href="https://wa.me/18326409105?text=${wamsg}" target="_blank" style="display:block;text-align:center;margin-top:20px;text-decoration:none">Pagar por WhatsApp</a>`;
+    <div id="payPane"></div>`;
+  payTab('wa');
   document.getElementById('payModal').classList.add('show');
+}
+let PAY_CTX={};
+function payTab(t){
+  const isEn=LANG==='en';
+  const wa=document.getElementById('ptWa'), pp=document.getElementById('ptPp');
+  if(wa)wa.classList.toggle('on',t==='wa'); if(pp)pp.classList.toggle('on',t==='pp');
+  const pane=document.getElementById('payPane'); if(!pane)return;
+  if(t==='wa'){
+    pane.innerHTML=`
+      <div class="modal-steps">
+        <div class="mstep"><div class="num">1</div><p>${isEn?'Tap "Pay with WhatsApp" and pay as I tell you.':'Toca "Pagar por WhatsApp" y realiza el pago como te indique.'}</p></div>
+        <div class="mstep"><div class="num">2</div><p>${isEn?'Once I confirm, I <b>unlock the product</b> in your portal.':'En cuanto confirme tu pago, te <b>libero el producto</b> en tu portal.'}</p></div>
+        <div class="mstep"><div class="num">3</div><p>${isEn?'Refresh and download it. Meanwhile you can watch its video.':'Refresca y ya podrás descargarlo. Mientras, puedes ver su video.'}</p></div>
+      </div>
+      <a class="btn-primary" href="https://wa.me/18326409105?text=${PAY_CTX.wamsg}" target="_blank" style="display:block;text-align:center;margin-top:18px;text-decoration:none">${isEn?'Pay with WhatsApp':'Pagar por WhatsApp'}</a>`;
+  } else {
+    const nota=encodeURIComponent((PAY_CTX.nombre||'')+(PAY_CTX.precio?(' $'+PAY_CTX.precio):''));
+    const ppLink = PAYPAL_LINK || '';
+    pane.innerHTML=`
+      ${PAYPAL_QR?`<div class="pp-qr"><img src="${PAYPAL_QR}" alt="PayPal QR" loading="lazy"><div class="pp-cap">${isEn?'Scan to pay with PayPal':'Escanea para pagar con PayPal'}</div></div>`:''}
+      <div class="modal-steps" style="margin-top:${PAYPAL_QR?'6px':'0'}">
+        <div class="mstep"><div class="num">1</div><p>${isEn?'Pay with the QR or the button below.':'Paga con el QR o el botón de abajo.'} ${PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:''}</p></div>
+        <div class="mstep"><div class="num">2</div><p>${isEn?'Send me the payment screenshot on WhatsApp so I can verify it.':'Mándame la captura del pago por WhatsApp para verificarlo.'}</p></div>
+        <div class="mstep"><div class="num">3</div><p>${isEn?'I unlock the product and you refresh to download.':'Te libero el producto y refrescas para descargar.'}</p></div>
+      </div>
+      ${ppLink?`<a class="btn-pp" href="${ppLink}" target="_blank" rel="noopener">${sv(I.card,16)} ${isEn?'Pay with PayPal':'Pagar con PayPal'}</a>`:''}
+      <a class="btn-ghost" style="display:flex;justify-content:center;margin-top:9px;text-decoration:none" href="https://wa.me/18326409105?text=${encodeURIComponent((isEn?'Hi, I paid by PayPal for ':'Hola, pagué por PayPal ')+ (PAY_CTX.nombre||''))}" target="_blank">${sv(I.phone,14)} ${isEn?'I already paid, send proof':'Ya pagué, enviar comprobante'}</a>`;
+  }
 }
 function closeModal(id){document.getElementById(id).classList.remove('show')}
 
