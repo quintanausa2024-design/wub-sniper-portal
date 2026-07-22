@@ -724,6 +724,11 @@
   .np-x{width:30px;height:30px;border-radius:8px;background:transparent;border:none;color:var(--text-faint);
     font-size:15px;cursor:pointer;flex-shrink:0;transition:.14s}
   .np-x:hover{background:rgba(255,255,255,.06);color:var(--text)}
+  .guide-count{font-size:12px;color:var(--text-faint);margin-bottom:14px}
+  .search{position:relative}
+  .search-x{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:transparent;border:none;
+    color:var(--text-faint);font-size:13px;cursor:pointer;padding:4px 6px;border-radius:6px;transition:.13s}
+  .search-x:hover{color:var(--text);background:rgba(255,255,255,.06)}
   @keyframes trustshine{from{left:-70%}to{left:130%}}
   .stat-real{font-size:12px;color:var(--green);background:rgba(39,215,150,.08);border:1px solid rgba(39,215,150,.25);
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
@@ -1140,7 +1145,7 @@ const TR={
   }
 };
 let SESS={email:'',pass:''}, ADMIN_USERS=null, ADMIN_LOADING=false, contactDone='';
-let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='';
+let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='', guideQuery='';
 let PROD_VIEW='cards', PROD_OPEN=null, PROD_PHOTO=0;
 let REVIEWS=null, REVIEWS_LOADING=false, REV_STARS=0, REV_TXT='', REV_MSG='', REV_ERR='';
 async function loadReviews(){
@@ -1159,7 +1164,7 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';render()}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';render()}
 function navBtn(id,icon,label){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -1449,12 +1454,23 @@ async function loadGuides(){
   GUIDES_LOADING=false; render();
 }
 function guidesPage(){
+  const isEn=LANG==='en';
   if(!API_URL) return `<div class="page-head"><h1>Guías</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver las guías.</div>`;
   if(GUIDES===null){ loadGuides();
     return `<div class="page-head"><h1>Guías</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando guías...</div>`; }
   if(!GUIDES.length)
     return `<div class="page-head"><h1>Guías</h1></div><div class="empty-state"><div class="empty-ic">${sv(I.play,28)}</div><h3>Aún no hay guías</h3><p>Pronto verás aquí los videos de instalación y tutoriales.</p></div>`;
-  const cards=GUIDES.map(g=>{
+  const q=guideQuery.toLowerCase().trim();
+  const lista=GUIDES.filter(g=>!q||(g.titulo||'').toLowerCase().includes(q)||(g.descripcion||'').toLowerCase().includes(q));
+  const buscador=`<div class="search" style="max-width:420px;margin-bottom:18px">${sv(I.search,16)}
+    <input id="guidesearch" placeholder="${isEn?'Search guides...':'Buscar guía...'}" value="${guideQuery.replace(/"/g,'&quot;')}"
+      oninput="guideQuery=this.value;renderKeep();setTimeout(()=>{const el=document.getElementById('guidesearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)">
+    ${guideQuery?`<button class="search-x" onclick="guideQuery='';renderKeep()" title="${isEn?'Clear':'Limpiar'}">✕</button>`:''}</div>`;
+  if(!lista.length)
+    return `<div class="page-head"><h1>${t('guias_h')}</h1><p>${t('guias_sub')}</p></div>${buscador}
+      <div class="empty-state"><div class="empty-ic">${sv(I.search,28)}</div><h3>${isEn?'No guides found':'No encontré esa guía'}</h3>
+        <p>${isEn?'Try another word, or use Contact and I will help you.':'Prueba con otra palabra, o escríbeme por Contacto y te ayudo.'}</p></div>`;
+  const cards=lista.map(g=>{
     const embed=toEmbed(g.video);
     const v = g.video
       ? `<div class="video-frame" style="border-radius:13px 13px 0 0"><iframe src="${embed}" style="width:100%;height:100%;border:0" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture" allowfullscreen></iframe></div>`
@@ -1464,7 +1480,9 @@ function guidesPage(){
       <div style="padding:16px 18px"><div class="card-name" style="margin-bottom:5px">${g.titulo||'Guía'}${priv?` <span class="priv-tag">${sv(I.lock,10)} ${LANG==='en'?'Private':'Privada'}</span>`:''}</div>
       <div class="card-desc" style="padding:0">${g.descripcion||''}</div></div></div>`;
   }).join('');
+  const cont=q?`<div class="guide-count">${lista.length} ${lista.length===1?(isEn?'guide':'guía'):(isEn?'guides':'guías')}</div>`:'';
   return `<div class="page-head"><h1>${t('guias_h')}</h1><p>${t('guias_sub')}</p></div>
+    ${buscador}${cont}
     <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(360px,1fr))">${cards}</div>`;
 }
 
