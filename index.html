@@ -193,7 +193,26 @@
   .shell{display:flex;min-height:100vh}
   .side{width:252px;flex-shrink:0;background:linear-gradient(180deg,var(--bg-2),#070B12);
     border-right:1px solid var(--line-soft);padding:24px 16px;display:flex;flex-direction:column;
-    position:sticky;top:0;height:100vh}
+    position:sticky;top:0;height:100vh;overflow:hidden}
+  /* fondo animado del menú lateral */
+  .side::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+    background:
+      radial-gradient(300px 200px at 30% 0%, rgba(255,107,44,.10), transparent 65%),
+      radial-gradient(320px 240px at 70% 100%, rgba(52,179,255,.09), transparent 65%);
+    animation:sideglow 12s ease-in-out infinite alternate}
+  @keyframes sideglow{
+    0%{background-position:0% 0%,100% 100%;opacity:.7}
+    100%{background-position:20% 10%,80% 90%;opacity:1}}
+  /* rejilla vertical que sube lento */
+  .side::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.4;
+    background-image:linear-gradient(rgba(52,179,255,.05) 1px,transparent 1px);
+    background-size:100% 34px;
+    -webkit-mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent);
+    mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent);
+    animation:sidegrid 8s linear infinite}
+  @keyframes sidegrid{from{background-position:0 0}to{background-position:0 -34px}}
+  .side>*{position:relative;z-index:1}
+  @media(prefers-reduced-motion:reduce){.side::before,.side::after{animation:none}}
   .side .orb-wrap{margin-bottom:32px;padding:0 6px}
   .nav{display:flex;flex-direction:column;gap:3px}
   .nav button{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;
