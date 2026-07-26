@@ -2227,6 +2227,16 @@ function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usu
   refreshUsersSilent();
 }); }
 function refreshUsers(){ ADMIN_USERS=null; render(); }
+function aprobarTodosClientes(n){
+  confirmAction('Aprobar a todos',`¿Aprobar los ${n} clientes pendientes de una vez? Todos tendrán acceso al portal.`,'Aprobar a todos',async()=>{
+    const pend=(ADMIN_USERS||[]).filter(u=>(u.aprobado||'').toUpperCase().trim()!=='SI' && (u.rol||'').toUpperCase().trim()!=='ADMIN');
+    pend.forEach(u=>u.aprobado='SI'); renderKeep();   // se ven aprobados al instante
+    for(const u of pend){
+      try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:u.email}); }catch(e){}
+    }
+    refreshUsersSilent();
+  });
+}
 
 function clientsPage(){
   if(!API_URL){return `<div class="page-head"><h1>Clientes</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver tus clientes reales.</div>`;}
@@ -2262,6 +2272,7 @@ function clientsPage(){
       <div class="stat"><div class="v green">${activos}</div><div class="l">Con acceso</div></div>
       <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
     <div class="admin-toolbar"><div class="search">${sv(I.search,16)}<input id="cfilter" placeholder="Buscar correo o nombre..." oninput="filterRows()"></div>
+      ${pend>0?`<button class="btn-add" onclick="aprobarTodosClientes(${pend})">${sv(I.check,15)} Aprobar a todos (${pend})</button>`:''}
       <button class="btn-ghost" onclick="refreshUsers()">${sv(I.refresh,15)} Actualizar</button></div>
     <div class="table" id="ctable"><div class="trow head"><div>Cliente</div><div class="col-hide">Correo</div>
       <div class="col-hide">Último acceso</div><div class="col-hide">Estado</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
@@ -2874,6 +2885,25 @@ function approveLic(pi,hwid){
   const api=LICENSE_APIS[pi];
   if(api.pcs){ openPcs(pi,hwid); } else setLic(pi,hwid,'SI');
 }
+// aprueba TODAS las licencias pendientes de todos los productos
+function aprobarTodasLic(){
+  let pend=[];
+  (ALL_LICS||[]).forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
+  if(!pend.length)return;
+  const conPcs=pend.some(x=>LICENSE_APIS[x.pi].pcs);
+  const nota=conPcs?' Los productos que usan PCs se aprobarán con 1 PC (luego puedes subirlas).':'';
+  confirmAction('Aprobar todas',`¿Aprobar las ${pend.length} licencias pendientes de una vez?${nota}`,'Aprobar todas',async()=>{
+    pend.forEach(({l,pi})=>{ l.aprobado=true; if(LICENSE_APIS[pi].pcs && !l.maxpcs) l.maxpcs=1; });
+    renderKeep();
+    for(const {l,pi} of pend){
+      const api=LICENSE_APIS[pi];
+      const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid,valor:'SI'};
+      if(api.pcs)params.maxpcs=(l.maxpcs&&l.maxpcs>0)?l.maxpcs:1;
+      try{ await licCall(api.url,params); }catch(e){}
+    }
+    loadAllData(true);
+  });
+}
 function openPcs(pi,hwid){
   document.getElementById('pcsBody').innerHTML=`
     <p style="font-size:13.5px;color:var(--text-dim);margin-bottom:16px">¿Para cuántas PCs apruebas esta licencia?</p>
@@ -2934,7 +2964,9 @@ function adminLicensesPage(){
   if(LIC_MODE==='pending'){
     let pend=[];
     ALL_LICS.forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
-    const toolbar=`<div class="admin-toolbar">${modeToggle}<button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
+    const toolbar=`<div class="admin-toolbar">${modeToggle}<div style="display:flex;gap:8px">
+      ${pend.length?`<button class="btn-add" onclick="aprobarTodasLic()">${sv(I.check,15)} Aprobar todas (${pend.length})</button>`:''}
+      <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div></div>`;
     if(!pend.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>No hay pendientes 🎉</h3><p>Todas las licencias están al día. Nada por aprobar.</p></div>`;
     const rows=pend.map(({l,pi})=>{
       const r=licRow(l,pi);
