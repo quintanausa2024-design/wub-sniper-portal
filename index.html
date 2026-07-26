@@ -758,6 +758,19 @@
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
   .stat-real b{color:var(--text)}
   .stat-real span{display:block;color:var(--text-faint);margin-top:3px;font-size:11px}
+  /* toggles de métodos de pago */
+  .pay-toggle{display:flex;align-items:center;gap:14px}
+  .pay-tg-name{font-family:var(--display);font-size:15px;font-weight:600;color:var(--text)}
+  .pay-tg-hint{font-size:11.5px;color:var(--text-faint);margin-top:3px}
+  .pay-tg-hint.on{color:var(--green)}
+  .pay-warn{margin-top:14px;font-size:12px;color:var(--amber);background:rgba(245,166,35,.08);
+    border:1px solid rgba(245,166,35,.28);border-radius:10px;padding:10px 12px;line-height:1.5}
+  /* pago no disponible */
+  .pay-off{text-align:center;padding:26px 16px;color:var(--text-faint)}
+  .pay-off svg{color:var(--amber);opacity:.8}
+  .pay-off h3{font-family:var(--display);font-size:17px;color:var(--text);margin:12px 0 6px}
+  .pay-off p{font-size:13px;color:var(--text-dim);line-height:1.6;max-width:300px;margin:0 auto 14px}
+  .pay-tab .on{color:var(--fire-soft)}
   @media(max-width:540px){.trust-grid{grid-template-columns:repeat(2,1fr)}.trust-v{font-size:20px}}
   @media(prefers-reduced-motion:reduce){.trust-card:hover{transform:none}.trust-shine{display:none}}
   /* ventana de cuenta creada */
@@ -1931,6 +1944,42 @@ async function saveMaintMsg(){
   pintarMaint();
   setTimeout(()=>{const x=document.getElementById('maintSave');if(x)x.textContent='Guardar aviso';},1400);
 }
+function pagosCard(){
+  if(view!=='admin')return '';
+  if(SRV_STATS===null) loadStats();
+  const ze=SRV_STATS?SRV_STATS.pay_zelle!==false:true;
+  const pp=SRV_STATS?SRV_STATS.pay_paypal!==false:true;
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${sv(I.card,16)} Métodos de pago</div>
+      <div class="card-cat">Apaga uno si tienes problemas con Zelle o PayPal</div></div>
+    <div style="padding:20px">
+      <div class="pay-toggle">
+        <div style="flex:1;min-width:0">
+          <div class="pay-tg-name">Zelle</div>
+          <div class="pay-tg-hint ${ze?'on':''}">${ze?'✓ Disponible para los clientes':'○ Apagado · el cliente ve "no disponible"'}</div>
+        </div>
+        <button class="switch ${ze?'on':''}" onclick="togglePago('zelle',${ze?0:1})"><span></span></button>
+      </div>
+      <div class="pay-toggle" style="margin-top:14px">
+        <div style="flex:1;min-width:0">
+          <div class="pay-tg-name">PayPal</div>
+          <div class="pay-tg-hint ${pp?'on':''}">${pp?'✓ Disponible para los clientes':'○ Apagado · el cliente ve "no disponible"'}</div>
+        </div>
+        <button class="switch ${pp?'on':''}" onclick="togglePago('paypal',${pp?0:1})"><span></span></button>
+      </div>
+      ${(!ze&&!pp)?`<div class="pay-warn">⚠️ Los dos están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
+    </div></div>`;
+}
+let PAGOS_SAVING=false;
+async function togglePago(metodo,activar){
+  if(PAGOS_SAVING)return; PAGOS_SAVING=true;
+  if(SRV_STATS){ if(metodo==='zelle')SRV_STATS.pay_zelle=!!activar; else SRV_STATS.pay_paypal=!!activar; }
+  renderKeep();
+  const params={action:'setstats',email:SESS.email,pass:SESS.pass};
+  params[metodo==='zelle'?'pay_zelle':'pay_paypal']=activar?'SI':'NO';
+  try{ await apiCall(params); }catch(e){}
+  PAGOS_SAVING=false;
+}
 function statsCard(){
   if(view!=='admin')return '';
   if(SRV_STATS===null) loadStats();
@@ -2031,7 +2080,7 @@ function profilePage(){
             <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
           </div></div>
       </div>
-      <div class="col-stack">${statsCard()}${maintCard()}${refCard}</div>
+      <div class="col-stack">${statsCard()}${pagosCard()}${maintCard()}${refCard}</div>
     </div>`}
 
 async function changePass(){
@@ -2065,20 +2114,25 @@ function openVid(p){
   document.getElementById('vidModal').classList.add('show');
 }
 function openPay(p){
+  if(SRV_STATS===null) loadStats();
   document.getElementById('payTitle').textContent=p.nombre;
   const precio = p.precio ? ('$'+p.precio) : 'Consultar precio';
   const isEn=LANG==='en';
   PAY_CTX={nombre:p.nombre, precio:p.precio||''};
+  const zeOn=SRV_STATS?SRV_STATS.pay_zelle!==false:true;
+  const ppOn=SRV_STATS?SRV_STATS.pay_paypal!==false:true;
+  // abrir en la primera pestaña que esté activa
+  const start = zeOn ? 'ze' : (ppOn ? 'pp' : 'ze');
   document.getElementById('payBody').innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:12px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase">${isEn?'Price':'Precio'}</div>
       <div style="font-family:var(--display);font-size:34px;font-weight:600;color:var(--fire-soft);margin-top:4px">${precio}</div></div>
     <div class="pay-tabs">
-      <button class="pay-tab on" id="ptZe" onclick="payTab('ze')">${sv(I.card,15)} Zelle</button>
-      <button class="pay-tab" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal</button>
+      <button class="pay-tab ${start==='ze'?'on':''}" id="ptZe" onclick="payTab('ze')">${sv(I.card,15)} Zelle${zeOn?'':' ·'}</button>
+      <button class="pay-tab ${start==='pp'?'on':''}" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal${ppOn?'':' ·'}</button>
     </div>
     <div id="payPane"></div>`;
-  payTab('ze');
+  payTab(start);
   document.getElementById('payModal').classList.add('show');
 }
 let PAY_CTX={};
@@ -2128,6 +2182,17 @@ function payTab(t){
   const pp=document.getElementById('ptPp'), ze=document.getElementById('ptZe');
   if(pp)pp.classList.toggle('on',t==='pp'); if(ze)ze.classList.toggle('on',t==='ze');
   const pane=document.getElementById('payPane'); if(!pane)return;
+  // ¿está activo este método?
+  const activo = t==='ze'
+    ? (SRV_STATS?SRV_STATS.pay_zelle!==false:true)
+    : (SRV_STATS?SRV_STATS.pay_paypal!==false:true);
+  if(!activo){
+    pane.innerHTML=`<div class="pay-off">${sv(I.tool,26)}
+      <h3>${isEn?'Temporarily unavailable':'No disponible por el momento'}</h3>
+      <p>${isEn?'This payment method is paused right now. Please use the other option or contact me.':'Este método está en pausa ahora mismo. Usa la otra opción o escríbeme.'}</p>
+      <a class="btn-ghost" style="text-decoration:none;margin-top:4px" href="https://wa.me/18326409105" target="_blank">${sv(I.phone,14)} WhatsApp</a></div>`;
+    return;
+  }
   const monto = PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:'';
   if(t==='pp'){
     const ppLink = PAYPAL_LINK || '';
