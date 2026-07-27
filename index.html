@@ -1196,7 +1196,7 @@ const TR={
   }
 };
 let SESS={email:'',pass:''}, ADMIN_USERS=null, ADMIN_LOADING=false, contactDone='';
-let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='', guideQuery='';
+let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='', guideQuery='', prodQuery='';
 let PROD_VIEW='cards', PROD_OPEN=null, PROD_PHOTO=0;
 let REVIEWS=null, REVIEWS_LOADING=false, REV_STARS=0, REV_TXT='', REV_MSG='', REV_ERR='';
 async function loadReviews(){
@@ -1215,7 +1215,7 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';render()}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';render()}
 function navBtn(id,icon,label){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -2394,7 +2394,9 @@ function adminProductsPage(){
   if(!API_URL) return `<div class="page-head"><h1>Productos</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para administrar productos.</div>`;
   if(ADMIN_PRODS===null){ loadAdminProds();
     return `<div class="page-head"><h1>Productos</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando productos...</div>`; }
-  const rows = ADMIN_PRODS.length ? ADMIN_PRODS.map(p=>{
+  const q=(prodQuery||'').toLowerCase().trim();
+  const lista=ADMIN_PRODS.filter(p=>!q||(p.nombre||'').toLowerCase().includes(q)||(p.descripcion||'').toLowerCase().includes(q));
+  const rows = lista.length ? lista.map(p=>{
     const tag = p.tipo==='PROXIMO'
       ? `<span class="pill" style="background:rgba(52,179,255,.12);color:var(--cyan);border:1px solid rgba(52,179,255,.28)"><span class="pdot" style="background:var(--cyan)"></span>Próximamente</span>`
       : p.tipo==='PRIVADO'
@@ -2407,10 +2409,15 @@ function adminProductsPage(){
         <button class="ibtn" title="Editar" onclick='openProd(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${sv(I.edit,15)}</button>
         <button class="ibtn danger" title="Borrar" onclick="delProd('${p.id}','${(p.nombre||'').replace(/'/g,"")}')">${sv(I.trash,15)}</button>
       </div></div>`;
-  }).join('') : `<div style="padding:40px;text-align:center;color:var(--text-faint)">Aún no has añadido productos.</div>`;
+  }).join('') : `<div style="padding:40px;text-align:center;color:var(--text-faint)">${q?'No hay productos con ese nombre.':'Aún no has añadido productos.'}</div>`;
   return `<div class="page-head"><h1>Productos</h1><p>Añade tus productos, su video, link de descarga y si son públicos o privados.</p></div>
-    <div class="admin-toolbar"><button class="btn-ghost" onclick="refreshProds()">${sv(I.refresh,15)} Actualizar</button>
+    <div class="admin-toolbar">
+      <div class="search">${sv(I.search,16)}<input id="prodsearch" placeholder="Buscar producto..." value="${(prodQuery||'').replace(/"/g,'&quot;')}"
+        oninput="prodQuery=this.value;renderKeep();setTimeout(()=>{const el=document.getElementById('prodsearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)">
+        ${prodQuery?`<button class="search-x" onclick="prodQuery='';renderKeep()" title="Limpiar">✕</button>`:''}</div>
+      <button class="btn-ghost" onclick="refreshProds()">${sv(I.refresh,15)} Actualizar</button>
       <button class="btn-add" onclick="openProd(null)">${sv(I.plus,15)} Añadir producto</button></div>
+    ${q?`<div class="guide-count">${lista.length} ${lista.length===1?'producto':'productos'}</div>`:''}
     <div class="table"><div class="trow head" style="grid-template-columns:1.6fr 1.2fr auto">
       <div>Producto</div><div class="col-hide">Acceso</div><div style="text-align:right">Acciones</div></div>${rows}</div>`;
 }
