@@ -1196,7 +1196,7 @@ const TR={
   }
 };
 let SESS={email:'',pass:''}, ADMIN_USERS=null, ADMIN_LOADING=false, contactDone='';
-let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='', guideQuery='', prodQuery='';
+let CLIENT_PRODS=null, CLIENT_PRODS_LOADING=false, ADMIN_PRODS=null, ADMIN_PRODS_LOADING=false, faqQuery='', guideQuery='', prodQuery='', licQuery='';
 let PROD_VIEW='cards', PROD_OPEN=null, PROD_PHOTO=0;
 let REVIEWS=null, REVIEWS_LOADING=false, REV_STARS=0, REV_TXT='', REV_MSG='', REV_ERR='';
 async function loadReviews(){
@@ -1215,7 +1215,7 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';render()}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';render()}
 function navBtn(id,icon,label){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -3071,11 +3071,17 @@ function adminLicensesPage(){
   if(LIC_MODE==='pending'){
     let pend=[];
     ALL_LICS.forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
-    const toolbar=`<div class="admin-toolbar">${modeToggle}<div style="display:flex;gap:8px">
+    const ql=(licQuery||'').toLowerCase().trim();
+    const pendF=ql?pend.filter(({l})=>((l.nombre||'')+' '+(l.correo||'')).toLowerCase().includes(ql)):pend;
+    const buscador=`<div class="search">${sv(I.search,16)}<input id="licsearch" placeholder="Buscar cliente o correo..." value="${(licQuery||'').replace(/"/g,'&quot;')}"
+      oninput="licQuery=this.value;renderKeep();setTimeout(()=>{const el=document.getElementById('licsearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)">
+      ${licQuery?`<button class="search-x" onclick="licQuery='';renderKeep()" title="Limpiar">✕</button>`:''}</div>`;
+    const toolbar=`<div class="admin-toolbar">${modeToggle}<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${buscador}
       ${pend.length?`<button class="btn-add" onclick="aprobarTodasLic()">${sv(I.check,15)} Aprobar todas (${pend.length})</button>`:''}
       <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div></div>`;
     if(!pend.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>No hay pendientes 🎉</h3><p>Todas las licencias están al día. Nada por aprobar.</p></div>`;
-    const rows=pend.map(({l,pi})=>{
+    if(!pendF.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.search,28)}</div><h3>Sin resultados</h3><p>Ningún pendiente con ese nombre o correo.</p></div>`;
+    const rows=pendF.map(({l,pi})=>{
       const r=licRow(l,pi);
       return `<div class="trow" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
         <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${r.init}</div>
@@ -3092,7 +3098,10 @@ function adminLicensesPage(){
   const apis=LICENSE_APIS;
   const sel=`<select onchange="LIC_SEL=parseInt(this.value);render()" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:var(--text);font-size:13.5px;font-family:var(--body)">
     ${apis.map((a,i)=>`<option value="${i}" ${i===LIC_SEL?'selected':''}>${a.name}</option>`).join('')}</select>`;
-  const toolbar=`<div class="admin-toolbar"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${modeToggle}<span style="font-size:12px;color:var(--text-faint)">Producto:</span>${sel}</div>
+  const toolbar=`<div class="admin-toolbar"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${modeToggle}<span style="font-size:12px;color:var(--text-faint)">Producto:</span>${sel}
+    <div class="search">${sv(I.search,16)}<input id="licsearch2" placeholder="Buscar cliente..." value="${(licQuery||'').replace(/"/g,'&quot;')}"
+      oninput="licQuery=this.value;renderKeep();setTimeout(()=>{const el=document.getElementById('licsearch2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)">
+      ${licQuery?`<button class="search-x" onclick="licQuery='';renderKeep()" title="Limpiar">✕</button>`:''}</div></div>
     <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
   const api=apis[LIC_SEL], d=ALL_LICS[LIC_SEL];
   if(!api.url||api.url.startsWith('PEGA_AQUI'))
@@ -3101,7 +3110,9 @@ function adminLicensesPage(){
     return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>${d&&d.error==='NO_ADMIN'?'Acceso no válido':'No se pudo conectar'}</h3><p>${d&&d.error==='NO_ADMIN'?'Revisa la contraseña del portal en el script (PORTAL_ADMIN_PASS).':'Verifica la URL y que el deploy esté como "Cualquiera".'}</p></div>`;
   const lics=d.licencias;
   const aprob=lics.filter(l=>l.aprobado).length, pend=lics.length-aprob;
-  const rows=lics.length?lics.map(l=>{
+  const ql=(licQuery||'').toLowerCase().trim();
+  const licsF=ql?lics.filter(l=>((l.nombre||'')+' '+(l.correo||'')).toLowerCase().includes(ql)):lics;
+  const rows=licsF.length?licsF.map(l=>{
     const r=licRow(l,LIC_SEL);
     return `<div class="trow" style="grid-template-columns:1.4fr 1.3fr 0.7fr 0.9fr auto">
       <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${r.init}</div>
@@ -3110,7 +3121,7 @@ function adminLicensesPage(){
       <div class="col-hide" title="PCs/Usuarios"><span class="mono" style="font-size:12px">${r.pcsTxt}</span></div>
       <div class="col-hide">${r.badge}</div>
       <div class="row-act">${r.act}</div></div>`;
-  }).join(''):`<div style="padding:40px;text-align:center;color:var(--text-faint)">Aún no hay solicitudes para este producto.</div>`;
+  }).join(''):`<div style="padding:40px;text-align:center;color:var(--text-faint)">${ql?'Ningún cliente con ese nombre o correo.':'Aún no hay solicitudes para este producto.'}</div>`;
   return head+toolbar+`<div class="stat-row">
       <div class="stat"><div class="v fire">${lics.length}</div><div class="l">Solicitudes</div></div>
       <div class="stat"><div class="v green">${aprob}</div><div class="l">Aprobadas</div></div>
