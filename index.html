@@ -225,6 +225,11 @@
     animation:barpulse 2.4s ease-in-out infinite}
   @keyframes barpulse{0%,100%{box-shadow:0 0 8px var(--fire);opacity:.85}50%{box-shadow:0 0 18px var(--fire);opacity:1}}
   /* destello que cruza el botón al pasar el mouse */
+  .nav-badge{margin-left:auto;background:var(--fire);color:#0a0a0a;font-size:11px;font-weight:800;
+    min-width:20px;height:20px;padding:0 6px;border-radius:11px;display:inline-flex;align-items:center;
+    justify-content:center;box-shadow:0 0 12px rgba(255,107,44,.6);animation:badgePulse 2s ease-in-out infinite}
+  @keyframes badgePulse{0%,100%{transform:scale(1);box-shadow:0 0 10px rgba(255,107,44,.5)}50%{transform:scale(1.08);box-shadow:0 0 18px rgba(255,107,44,.8)}}
+  .nav button.on .nav-badge{background:#0a0a0a;color:var(--fire-soft);box-shadow:none;animation:none}
   .nav button::after{content:"";position:absolute;top:0;bottom:0;left:-60%;width:45%;pointer-events:none;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.07),transparent);
     transform:skewX(-18deg);transition:none}
@@ -1215,8 +1220,8 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';render()}
-function navBtn(id,icon,label){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}</button>`}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';if(t==='amsg')marcarMsgsVistos();render()}
+function navBtn(id,icon,label,badge){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}${badge?`<span class="nav-badge">${badge>99?'99+':badge}</span>`:''}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
 function toggleEye(id,el){const i=document.getElementById(id);i.type=i.type==='password'?'text':'password';el.style.color=i.type==='text'?'var(--fire-soft)':''}
@@ -2273,7 +2278,10 @@ function openInfo(){
   document.getElementById('infoModal').classList.add('show');
 }
 
-function adminView(){const nav=navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes')+navBtn('aprofile',I.user,'Mi Perfil');
+function adminView(){
+  if(MSGS===null) loadMsgs();          // para saber cuántos mensajes hay
+  const nuevos=unreadMsgs();
+  const nav=navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes',nuevos)+navBtn('aprofile',I.user,'Mi Perfil');
   let content;
   if(tab==='clients')content=clientsPage();
   else if(tab==='aprod')content=adminProductsPage();
@@ -2634,12 +2642,26 @@ function delGuide(id,titulo){
 }
 
 // ════════ ADMIN: MENSAJES ════════
+// ── contador de mensajes sin leer ──
+function msgsVistos(){ try{ return JSON.parse(localStorage.getItem('sp_msgs_seen')||'[]')||[]; }catch(e){ return []; } }
+function unreadMsgs(){
+  if(!MSGS||!MSGS.length) return 0;
+  const vistos=msgsVistos();
+  return MSGS.filter(m=>vistos.indexOf(m.id)<0).length;
+}
+function marcarMsgsVistos(){
+  if(!MSGS) return;
+  const ids=MSGS.map(m=>m.id);
+  try{ localStorage.setItem('sp_msgs_seen',JSON.stringify(ids)); }catch(e){}
+}
 async function loadMsgs(){
   if(MSGS_LOADING)return; MSGS_LOADING=true;
   try{ const r=await apiCall({action:'listmessages',email:SESS.email,pass:SESS.pass});
     MSGS = r.ok ? r.messages : []; }
   catch(e){ MSGS=[]; }
-  MSGS_LOADING=false; render();
+  MSGS_LOADING=false;
+  if(tab==='amsg') marcarMsgsVistos();   // si ya estoy en Mensajes, se marcan leídos
+  renderKeep();
 }
 function adminMessagesPage(){
   if(!API_URL) return `<div class="page-head"><h1>Mensajes</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver los mensajes.</div>`;
@@ -3138,6 +3160,12 @@ function render(){const app=document.getElementById('app');
   setTimeout(updateScrollBtn,0);}
 // revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
 setInterval(()=>{ if(!MAINT_SAVING) loadMaint(); }, 60000);
+// revisar mensajes nuevos cada 45s (solo en admin, en silencio)
+setInterval(async()=>{
+  if(view!=='admin'||MSGS_LOADING)return;
+  try{ const r=await apiCall({action:'listmessages',email:SESS.email,pass:SESS.pass});
+    if(r.ok){ MSGS=r.messages; if(tab==='amsg')marcarMsgsVistos(); renderKeep(); } }catch(e){}
+}, 45000);
 restoreSession();
 render();
 </script>
