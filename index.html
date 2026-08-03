@@ -3160,13 +3160,13 @@ function render(){const app=document.getElementById('app');
   if(view==='login'){ if(REVIEWS===null) loadReviews(); if(SRV_STATS===null) loadStats(); }
   setTimeout(updateScrollBtn,0);}
 // revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
-setInterval(()=>{ if(!MAINT_SAVING) loadMaint(); }, 60000);
-// revisar mensajes nuevos cada 45s (solo en admin, en silencio)
+setInterval(()=>{ if(!MAINT_SAVING && !document.hidden) loadMaint(); }, 90000);
+// revisar mensajes nuevos cada 2 min (solo en admin, en silencio, y solo si la pestaña está visible)
 setInterval(async()=>{
-  if(view!=='admin'||MSGS_LOADING)return;
+  if(view!=='admin'||MSGS_LOADING||document.hidden)return;
   try{ const r=await apiCall({action:'listmessages',email:SESS.email,pass:SESS.pass});
     if(r.ok){ MSGS=r.messages; if(tab==='amsg')marcarMsgsVistos(); renderKeep(); } }catch(e){}
-}, 45000);
+}, 120000);
 restoreSession();
 render();
 </script>
