@@ -45,16 +45,15 @@
     background:var(--bg);color:var(--text);font-family:var(--body);
     -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;position:relative;
   }
-  /* ambient animated background */
+  /* ambient background (estático, para no cargar el CPU) */
   body::before{
     content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     background:
       radial-gradient(800px 500px at 78% -8%, rgba(255,107,44,.10), transparent 60%),
       radial-gradient(700px 500px at 12% 108%, rgba(52,179,255,.09), transparent 60%),
       radial-gradient(600px 600px at 50% 50%, rgba(52,179,255,.03), transparent 70%);
-    animation:drift 16s ease-in-out infinite alternate;
   }
-  /* rejilla futurista que se desplaza */
+  /* rejilla futurista (estática) */
   .grid-bg{
     position:fixed;inset:-2px;z-index:0;pointer-events:none;opacity:.5;
     background-image:
@@ -63,15 +62,10 @@
     background-size:52px 52px;
     -webkit-mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 78%);
     mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 78%);
-    animation:gridmove 22s linear infinite;
   }
   @keyframes gridmove{0%{background-position:0 0,0 0}100%{background-position:52px 52px,52px 52px}}
-  /* barrido de escáner lento */
-  .scan-bg{
-    position:fixed;left:0;right:0;height:180px;z-index:0;pointer-events:none;
-    background:linear-gradient(180deg,transparent,rgba(52,179,255,.05) 45%,rgba(255,107,44,.045) 55%,transparent);
-    animation:scansweep 11s ease-in-out infinite;
-  }
+  /* barrido de escáner — desactivado (pesaba mucho) */
+  .scan-bg{ display:none; }
   @keyframes scansweep{0%{top:-180px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:100vh;opacity:0}}
   @media(prefers-reduced-motion:reduce){
     .grid-bg,.scan-bg,body::before{animation:none}
@@ -199,7 +193,7 @@
     background:
       radial-gradient(300px 200px at 30% 0%, rgba(255,107,44,.10), transparent 65%),
       radial-gradient(320px 240px at 70% 100%, rgba(52,179,255,.09), transparent 65%);
-    animation:sideglow 12s ease-in-out infinite alternate}
+    }
   @keyframes sideglow{
     0%{background-position:0% 0%,100% 100%;opacity:.7}
     100%{background-position:20% 10%,80% 90%;opacity:1}}
@@ -209,7 +203,7 @@
     background-size:100% 34px;
     -webkit-mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent);
     mask-image:linear-gradient(180deg,transparent,#000 25%,#000 75%,transparent);
-    animation:sidegrid 8s linear infinite}
+    }
   @keyframes sidegrid{from{background-position:0 0}to{background-position:0 -34px}}
   .side>*{position:relative;z-index:1}
   @media(prefers-reduced-motion:reduce){.side::before,.side::after{animation:none}}
@@ -634,7 +628,7 @@
   .maint-bar.show{display:block}
   .maint-bar::after{content:"";position:absolute;inset:0;pointer-events:none;
     background:repeating-linear-gradient(45deg,rgba(255,194,71,.10) 0 12px,transparent 12px 24px)}
-  .maint-track{display:flex;width:max-content;animation:maintrun 34s linear infinite}
+  .maint-track{display:flex;width:max-content;animation:maintrun 60s linear infinite}
   .maint-item{display:inline-flex;align-items:center;gap:9px;padding:9px 34px;white-space:nowrap;
     font-family:var(--display);font-size:13px;font-weight:700;letter-spacing:.06em;color:#FFD9B8;
     text-shadow:0 0 12px rgba(255,107,44,.6)}
@@ -1330,7 +1324,7 @@ function sniperBG(){
     const col=up?'#1f9d6b':'#c0392b';
     const dur=(5+Math.random()*4).toFixed(1);
     const delay=(Math.random()*4).toFixed(1);
-    candles+=`<g opacity="0.55" style="animation:candleFloat ${dur}s ease-in-out ${delay}s infinite">
+    candles+=`<g opacity="0.55">
       <line x1="${x+5}" y1="${y-wick}" x2="${x+5}" y2="${y+h+wick}" stroke="${col}" stroke-width="1.2"/>
       <rect x="${x}" y="${y}" width="10" height="${h}" rx="1.5" fill="${col}"/></g>`;
   }
@@ -1946,21 +1940,25 @@ function pintarMaint(){
   if(!MAINT.on){ bar.classList.remove('show'); document.body.classList.remove('has-maint'); bar.innerHTML=''; return; }
   const txt=maintTexto();
   const tira=`<span class="maint-item">${sv(I.tool,15)} ${txt}</span>`;
-  bar.innerHTML=`<div class="maint-track">${tira.repeat(6)}</div>`;
+  // 4 copias en 2 mitades iguales → el -50% del keyframe hace un loop perfecto y lento
+  bar.innerHTML=`<div class="maint-track">${tira.repeat(4)}</div>`;
   bar.classList.add('show'); document.body.classList.add('has-maint');
 }
 async function loadMaint(){
   if(!API_URL)return;
+  const antes=MAINT.on;
   try{ const r=await apiCall({action:'getmaint'});
     if(r.ok){ MAINT={on:!!r.maint,msg:r.msg||''}; } }catch(e){}
   MAINT_LOADED=true; pintarMaint();
+  // si estoy en mi perfil de admin y cambió el estado, refrescar el switch
+  if(view==='admin' && tab==='aprofile' && antes!==MAINT.on) renderKeep();
 }
 async function toggleMaint(){
   if(MAINT_SAVING)return; MAINT_SAVING=true;
   const nuevo=!MAINT.on;
   const el=document.getElementById('maintMsg');
   if(el)MAINT.msg=(el.value||'').trim();
-  MAINT.on=nuevo; renderKeep(); pintarMaint();
+  MAINT.on=nuevo; MAINT_LOADED=true; renderKeep(); pintarMaint();
   try{ await apiCall({action:'setmaint',email:SESS.email,pass:SESS.pass,on:nuevo?'SI':'NO',msg:MAINT.msg}); }catch(e){}
   MAINT_SAVING=false;
 }
@@ -2044,6 +2042,7 @@ async function saveStats(){
 }
 function maintCard(){
   if(view!=='admin')return '';
+  if(!MAINT_LOADED && !MAINT_SAVING) loadMaint();   // cargar estado real del servidor
   return `<div class="card"><div class="card-top">
       <div class="card-name">${sv(I.tool,16)} Modo mantenimiento</div>
       <div class="card-cat">Avisa a todos los clientes que estás haciendo cambios</div></div>
