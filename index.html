@@ -2864,14 +2864,14 @@ async function setRev(rid,valor){
   const r=(ADMIN_REV||[]).find(x=>x.id===rid);
   if(r){ r.aprobado=(valor==='SI'); renderKeep(); }
   try{ await apiCall({action:'setreview',email:SESS.email,pass:SESS.pass,rid,valor}); }catch(e){}
-  refreshRevSilent();
+  REVIEWS=null;   // para que las estrellas públicas se refresquen la próxima vez
 }
 function delRev(rid){
   confirmAction('Borrar reseña','¿Borrar esta reseña por completo?','Borrar',async()=>{
     if(ADMIN_REV) ADMIN_REV=ADMIN_REV.filter(x=>x.id!==rid);
     renderKeep();
     try{ await apiCall({action:'deletereview',email:SESS.email,pass:SESS.pass,rid}); }catch(e){}
-    refreshRevSilent();
+    REVIEWS=null;
   });
 }
 function adminReviewsPage(){
@@ -2989,14 +2989,14 @@ async function toggleDisc(id,visible){
   const d=(ADMIN_DISC||[]).find(x=>x.id===id);
   if(d){ d.visible=!!visible; renderKeep(); }
   try{ await apiCall({action:'setdiscvisible',email:SESS.email,pass:SESS.pass,did:id,valor:visible?'SI':'NO'}); }catch(e){}
-  refreshDiscSilent();
+  DISCOUNTS=null;
 }
 function delDisc(id){
   confirmAction('Borrar descuento','¿Borrar este descuento?','Borrar',async()=>{
     if(ADMIN_DISC) ADMIN_DISC=ADMIN_DISC.filter(x=>x.id!==id);
     renderKeep();
     try{ await apiCall({action:'deletediscount',email:SESS.email,pass:SESS.pass,did:id}); }catch(e){}
-    refreshDiscSilent();
+    DISCOUNTS=null;
   });
 }
 
@@ -3008,17 +3008,16 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-  // arranca con arreglo vacío para ir pintando cada producto según llega
   if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
-  LICENSE_APIS.forEach((api,i)=>{
+  // pedir a los 8 en paralelo y redibujar UNA SOLA VEZ cuando todos respondan (sin parpadeo)
+  await Promise.all(LICENSE_APIS.map(async(api,i)=>{
     if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
-    licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass})
-      .then(r=>{ ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; })
-      .catch(()=>{ ALL_LICS[i]={error:'CONN'}; })
-      .finally(()=>{ if(view==='admin'&&tab==='alic') renderKeep(); });
-  });
+    try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
+      ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ ALL_LICS[i]={error:'CONN'}; }
+  }));
   ALL_LICS_LOADING=false;
-  if(!silent) render();
+  if(view==='admin'&&tab==='alic'){ silent?renderKeep():render(); }
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
