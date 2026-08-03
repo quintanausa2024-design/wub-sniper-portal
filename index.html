@@ -2335,19 +2335,16 @@ async function approveUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
   if(u){ u.aprobado='SI'; renderKeep(); }          // se ve el cambio al instante
   try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
-  refreshUsersSilent();
 }
 async function revokeUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
   if(u){ u.aprobado='NO'; renderKeep(); }
   try{ await apiCall({action:'revoke',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
-  refreshUsersSilent();
 }
 function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usuario? Se borra del portal.','Eliminar',async()=>{
   if(ADMIN_USERS) ADMIN_USERS=ADMIN_USERS.filter(x=>x.email!==em);
   renderKeep();
   try{ await apiCall({action:'deleteuser',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
-  refreshUsersSilent();
 }); }
 function refreshUsers(){ ADMIN_USERS=null; render(); }
 function aprobarTodosClientes(n){
@@ -2357,7 +2354,6 @@ function aprobarTodosClientes(n){
     for(const u of pend){
       try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:u.email}); }catch(e){}
     }
-    refreshUsersSilent();
   });
 }
 
