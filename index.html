@@ -1130,7 +1130,7 @@ async function loadStats(){
   try{ const r=await apiCall({action:'getstats'});
     if(r.ok) SRV_STATS=r; }catch(e){}
   SRV_STATS_LOADING=false;
-  if(view==='login') repintarTrust(); else render();
+  if(view==='login') repintarTrust(); else renderContent();
 }
 // repinta SOLO la barra de confianza, sin redibujar toda la portada (evita el parpadeo)
 function repintarTrust(){
@@ -1215,11 +1215,11 @@ async function loadReviews(){
   if(REVIEWS_LOADING)return; REVIEWS_LOADING=true;
   try{ const r=await apiCall({action:'listreviews'}); REVIEWS=r.ok?r.reviews:[]; }catch(e){ REVIEWS=[]; }
   REVIEWS_LOADING=false;
-  if(view==='login') repintarTrust(); else render();
+  if(view==='login') repintarTrust(); else renderContent();
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin')tab='clients';else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -1227,7 +1227,14 @@ function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
-function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';if(t==='amsg')marcarMsgsVistos();render()}
+function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';if(t==='amsg')marcarMsgsVistos();
+  // marcar el botón activo en el menú sin reconstruirlo
+  document.querySelectorAll('.nav button').forEach(b=>{
+    const oc=b.getAttribute('onclick')||''; b.classList.toggle('on',oc==="setTab('"+t+"')");
+  });
+  if(t==='amsg')actualizarBadgeMsg();
+  renderContent(); window.scrollTo(0,0);
+}
 function navBtn(id,icon,label,badge){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}${badge?`<span class="nav-badge">${badge>99?'99+':badge}</span>`:''}</button>`}
 
 const EYE='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -1450,7 +1457,7 @@ function shell(nav,content){const u=view==='admin'?{n:'Otoniel Quintana',e:'Admi
     <div class="side-foot"><div class="side-user"><div class="avatar">${u.av}</div>
       <div class="meta"><div class="n">${u.n}</div><div class="e">${u.e}</div></div></div>
       <button class="logout" onclick="setView('login')">${sv(I.logout)} ${view==='client'?t('logout'):'Cerrar sesión'}</button></div>
-    </aside><main class="main">${content}${footerHTML()}</main>
+    </aside><main class="main" id="mainSlot">${content}${footerHTML()}</main>
     <button class="scrollbtn" id="scrollBtn" onclick="scrollToggle()" title="Ir abajo">${sv(I.chev,20)}</button></div>`}
 // ── flecha flotante: baja al final / sube al inicio ──
 function scrollToggle(){
@@ -1514,7 +1521,7 @@ async function loadGuides(){
   try{ const r=await apiCall({action:'listguides',email:SESS.email,pass:SESS.pass});
     GUIDES = r.ok ? r.guides : []; }
   catch(e){ GUIDES=[]; }
-  GUIDES_LOADING=false; render();
+  GUIDES_LOADING=false; renderContent();
 }
 function guidesPage(){
   const isEn=LANG==='en';
@@ -1554,7 +1561,7 @@ async function loadClientProds(){
   try{ const r=await apiCall({action:'listproducts',email:SESS.email,pass:SESS.pass});
     CLIENT_PRODS = r.ok ? r.products : []; }
   catch(e){ CLIENT_PRODS=[]; }
-  CLIENT_PRODS_LOADING=false; render();
+  CLIENT_PRODS_LOADING=false; renderContent();
 }
 function productsPage(){
   if(!API_URL) return `<div class="page-head"><h1>Mis Productos</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver tus productos.</div>`;
@@ -1733,7 +1740,7 @@ async function loadNews(){
   try{ const r=await apiCall({action:'listnews'}); MYNEWS = r.ok ? r.news : []; }catch(e){ MYNEWS=[]; }
   try{ const r2=await apiCall({action:'marketnews'}); MKTNEWS = r2.ok ? r2.news : []; }catch(e){ MKTNEWS=[]; }
   try{ const r3=await apiCall({action:'marketcal'}); MKTCAL = r3.ok ? r3.eventos : []; }catch(e){ MKTCAL=[]; }
-  NEWS_LOADING=false; render();
+  NEWS_LOADING=false; renderContent();
 }
 function mktDate(s){
   if(!s)return'';
@@ -1806,7 +1813,7 @@ async function loadMyRef(){
 async function loadDiscounts(){
   if(DISCOUNTS_LOADING)return; DISCOUNTS_LOADING=true;
   try{ const r=await apiCall({action:'listdiscounts'}); DISCOUNTS=r.ok?r.discounts:[]; }catch(e){ DISCOUNTS=[]; }
-  DISCOUNTS_LOADING=false; render();
+  DISCOUNTS_LOADING=false; renderContent();
 }
 function copyCode(code,btn){
   try{ navigator.clipboard.writeText(code); }catch(e){}
@@ -2294,7 +2301,6 @@ function openInfo(){
 }
 
 function adminView(){
-  if(MSGS===null) loadMsgs();          // para saber cuántos mensajes hay
   const nuevos=unreadMsgs();
   const nav=navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes',nuevos)+navBtn('aprofile',I.user,'Mi Perfil');
   let content;
@@ -2321,10 +2327,10 @@ async function loadUsers(){
   try{ const r=await apiCall({action:'listusers',email:SESS.email,pass:SESS.pass});
     ADMIN_USERS = r.ok ? r.users : []; }
   catch(e){ ADMIN_USERS=[]; }
-  ADMIN_LOADING=false; render();
+  ADMIN_LOADING=false; renderContent();
 }
 // ── vuelve a dibujar sin perder el lugar donde estabas ──
-function renderKeep(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
+function renderKeep(){ renderContent(); }
 // ── refresca la lista por detrás, sin mostrar "Cargando..." ──
 async function refreshUsersSilent(){
   try{ const r=await apiCall({action:'listusers',email:SESS.email,pass:SESS.pass});
@@ -2675,8 +2681,18 @@ async function loadMsgs(){
     MSGS = r.ok ? r.messages : []; }
   catch(e){ MSGS=[]; }
   MSGS_LOADING=false;
-  if(tab==='amsg') marcarMsgsVistos();   // si ya estoy en Mensajes, se marcan leídos
-  renderKeep();
+  if(tab==='amsg'){ marcarMsgsVistos(); renderContent(); }
+  actualizarBadgeMsg();
+}
+// actualiza solo el globito de mensajes en el menú (sin redibujar todo)
+function actualizarBadgeMsg(){
+  const btns=document.querySelectorAll('.nav button');
+  btns.forEach(b=>{ if(b.getAttribute('onclick')==="setTab('amsg')"){
+    const n=unreadMsgs();
+    let bd=b.querySelector('.nav-badge');
+    if(n){ if(!bd){ bd=document.createElement('span'); bd.className='nav-badge'; b.appendChild(bd);} bd.textContent=n>99?'99+':n; }
+    else if(bd){ bd.remove(); }
+  }});
 }
 function adminMessagesPage(){
   if(!API_URL) return `<div class="page-head"><h1>Mensajes</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver los mensajes.</div>`;
@@ -2724,7 +2740,7 @@ function delMsg(id){
 async function loadAdminNews(){
   if(ADMIN_NEWS_LOADING)return; ADMIN_NEWS_LOADING=true;
   try{ const r=await apiCall({action:'listnews'}); ADMIN_NEWS = r.ok ? r.news : []; }catch(e){ ADMIN_NEWS=[]; }
-  ADMIN_NEWS_LOADING=false; render();
+  ADMIN_NEWS_LOADING=false; renderContent();
 }
 function adminNewsPage(){
   if(!API_URL) return `<div class="page-head"><h1>Noticias</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para administrar noticias.</div>`;
@@ -3181,13 +3197,45 @@ function render(){const app=document.getElementById('app');
   if(!MAINT_LOADED) loadMaint();
   if(view==='login'){ if(REVIEWS===null) loadReviews(); if(SRV_STATS===null) loadStats(); }
   setTimeout(updateScrollBtn,0);}
+// actualiza SOLO el contenido central (no el menú lateral) → sin parpadeo del sidebar
+function renderContent(){
+  if(view==='login'){ const y=scrollY; render(); scrollTo(0,y); return; }
+  const slot=document.getElementById('mainSlot');
+  if(!slot){ const y=scrollY; render(); scrollTo(0,y); return; }
+  let content;
+  if(view==='admin'){
+    if(tab==='clients')content=clientsPage();
+    else if(tab==='aprod')content=adminProductsPage();
+    else if(tab==='alic')content=adminLicensesPage();
+    else if(tab==='arev')content=adminReviewsPage();
+    else if(tab==='aref')content=adminReferidosPage();
+    else if(tab==='adisc')content=adminDiscountsPage();
+    else if(tab==='aguides')content=adminGuidesPage();
+    else if(tab==='anews')content=adminNewsPage();
+    else if(tab==='amsg')content=adminMessagesPage();
+    else content=profilePage();
+  } else {
+    if(tab==='products')content=productsPage();
+    else if(tab==='guides')content=guidesPage();
+    else if(tab==='discounts')content=discountsPage();
+    else if(tab==='news')content=newsPage();
+    else if(tab==='help')content=faqPage();
+    else if(tab==='contact')content=contactPage();
+    else content=profilePage();
+    content=newProdBanner()+content;
+  }
+  const y=scrollY;
+  slot.innerHTML=content+footerHTML();
+  scrollTo(0,y);
+  updateScrollBtn();
+}
 // revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
 setInterval(()=>{ if(!MAINT_SAVING && !document.hidden) loadMaint(); }, 90000);
 // revisar mensajes nuevos cada 2 min (solo en admin, en silencio, y solo si la pestaña está visible)
 setInterval(async()=>{
   if(view!=='admin'||MSGS_LOADING||document.hidden)return;
   try{ const r=await apiCall({action:'listmessages',email:SESS.email,pass:SESS.pass});
-    if(r.ok){ MSGS=r.messages; if(tab==='amsg')marcarMsgsVistos(); renderKeep(); } }catch(e){}
+    if(r.ok){ MSGS=r.messages; if(tab==='amsg'){marcarMsgsVistos();renderContent();} actualizarBadgeMsg(); } }catch(e){}
 }, 120000);
 restoreSession();
 render();
