@@ -717,6 +717,12 @@
   .qr-zoom-x{margin-top:16px;padding:11px 26px;border-radius:12px;background:var(--surface);
     border:1px solid var(--line);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body)}
   .qr-zoom-x:hover{border-color:var(--fire);color:var(--fire-soft)}
+  /* toast */
+  .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:400;
+    background:var(--surface-2);border:1px solid var(--line-strong);color:var(--text);font-size:13.5px;
+    font-weight:600;padding:12px 20px;border-radius:12px;box-shadow:0 16px 40px -12px rgba(0,0,0,.7);
+    opacity:0;pointer-events:none;transition:.25s;max-width:90vw}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   /* botones de comprobante */
   .proof-wrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}
   .proof-lbl{font-size:12px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px}
@@ -2241,6 +2247,14 @@ function payTab(t){
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove('show')}
+// ── aviso chico abajo (toast) ──
+let TOAST_T=null;
+function toast(msg){
+  let el=document.getElementById('toast');
+  if(!el){ el=document.createElement('div'); el.id='toast'; el.className='toast'; document.body.appendChild(el); }
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(TOAST_T); TOAST_T=setTimeout(()=>el.classList.remove('show'),2600);
+}
 // ── QR grande a pantalla completa para escanear desde otro celular ──
 function zoomQR(src,metodo){
   const isEn=LANG==='en';
@@ -2988,13 +3002,17 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-  const results=await Promise.all(LICENSE_APIS.map(async(api)=>{
-    if(!api.url||api.url.startsWith('PEGA_AQUI'))return {skip:true};
-    try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      return r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
-    catch(e){ return {error:'CONN'}; }
-  }));
-  ALL_LICS=results; ALL_LICS_LOADING=false; silent?renderKeep():render();
+  // arranca con arreglo vacío para ir pintando cada producto según llega
+  if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
+  LICENSE_APIS.forEach((api,i)=>{
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
+    licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass})
+      .then(r=>{ ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; })
+      .catch(()=>{ ALL_LICS[i]={error:'CONN'}; })
+      .finally(()=>{ if(view==='admin'&&tab==='alic') renderKeep(); });
+  });
+  ALL_LICS_LOADING=false;
+  if(!silent) render();
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
@@ -3008,8 +3026,10 @@ async function setLic(pi,hwid,valor,maxpcs){
   if(l){ l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs); renderKeep(); }
   const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
   if(maxpcs)params.maxpcs=maxpcs;
-  try{ await licCall(api.url,params); }catch(e){}
-  loadAllData(true);
+  try{ const r=await licCall(api.url,params);
+    // si el servidor falló, revierto el cambio visual y aviso
+    if(r&&r.ok===false&&l){ l.aprobado=(valor!=='SI'); renderKeep(); toast('No se pudo guardar, intenta de nuevo'); }
+  }catch(e){ if(l){ l.aprobado=(valor!=='SI'); renderKeep(); toast('Sin conexión, intenta de nuevo'); } }
 }
 function approveLic(pi,hwid){
   const api=LICENSE_APIS[pi];
@@ -3031,7 +3051,7 @@ function aprobarTodasLic(){
       if(api.pcs)params.maxpcs=(l.maxpcs&&l.maxpcs>0)?l.maxpcs:1;
       try{ await licCall(api.url,params); }catch(e){}
     }
-    loadAllData(true);
+    toast('Listo, licencias aprobadas');
   });
 }
 function openPcs(pi,hwid){
@@ -3059,9 +3079,11 @@ function delLic(pi,hwid){
   confirmAction('Borrar licencia','¿Borrar esta licencia por completo? El cliente tendría que volver a solicitar.','Borrar',async()=>{
     const api=LICENSE_APIS[pi];
     const d=ALL_LICS&&ALL_LICS[pi];
-    if(d&&d.licencias){ d.licencias=d.licencias.filter(x=>x.hwid!==hwid); renderKeep(); }
-    try{ await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid}); }catch(e){}
-    loadAllData(true);
+    let borrado=null;
+    if(d&&d.licencias){ borrado=d.licencias.find(x=>x.hwid===hwid); d.licencias=d.licencias.filter(x=>x.hwid!==hwid); renderKeep(); }
+    try{ const r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid});
+      if(r&&r.ok===false&&borrado&&d){ d.licencias.push(borrado); renderKeep(); toast('No se pudo borrar'); }
+    }catch(e){ if(borrado&&d){ d.licencias.push(borrado); renderKeep(); toast('Sin conexión'); } }
   });
 }
 function licRow(l,pi,cols){
