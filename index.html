@@ -3021,16 +3021,39 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-  if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
-  // pedir a los 8 en paralelo y redibujar UNA SOLA VEZ cuando todos respondan (sin parpadeo)
+
+  // 1) COPIA RÁPIDA: mostrar la foto guardada en Firebase al instante
+  if(!ALL_LICS){
+    try{
+      const cache=await apiCall({action:'getliccache'});
+      if(cache.ok && cache.data){
+        const guardado=JSON.parse(cache.data);
+        if(Array.isArray(guardado) && guardado.length===LICENSE_APIS.length){
+          ALL_LICS=guardado;
+          if(view==='admin'&&tab==='alic') renderKeep();   // ya se ve algo, rápido
+        }
+      }
+    }catch(e){}
+    if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
+  }
+
+  // 2) REFRESCO REAL: consultar los 8 servidores por detrás
+  const frescos=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
-    if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
     try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
-    catch(e){ ALL_LICS[i]={error:'CONN'}; }
+      frescos[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ frescos[i]={error:'CONN'}; }
   }));
+  ALL_LICS=frescos;
   ALL_LICS_LOADING=false;
-  if(view==='admin'&&tab==='alic'){ silent?renderKeep():render(); }
+  if(view==='admin'&&tab==='alic'){ renderKeep(); }
+
+  // 3) GUARDAR la foto nueva en Firebase (solo lo que sí conectó bien)
+  try{
+    const guardar=frescos.map(d=> (d&&d.licencias)?d:{licencias:[]} );
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
+  }catch(e){}
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
@@ -3664,6 +3687,24 @@ window.fbCall = async function(p){
     // ---------- noticias de mercado (esas quedan sin datos por ahora) ----------
     if(a==='marketnews') return {ok:true, news:[]};
     if(a==='marketcal')  return {ok:true, eventos:[]};
+
+    // ---------- COPIA RÁPIDA DE LICENCIAS (para verlas al instante) ----------
+    // guardar la foto de las 8 licencias en Firebase
+    if(a==='saveliccache'){
+      try{
+        await setDoc(doc(db,'config','lic_cache'), { data: p.data||'[]', ts: Date.now() });
+        return {ok:true};
+      }catch(e){ return {ok:false, error:'SAVE_FAIL'}; }
+    }
+    // leer la foto guardada
+    if(a==='getliccache'){
+      try{
+        const s=await getDoc(doc(db,'config','lic_cache'));
+        if(!s.exists()) return {ok:true, data:null};
+        const d=s.data();
+        return {ok:true, data:d.data||null, ts:d.ts||0};
+      }catch(e){ return {ok:true, data:null}; }
+    }
 
     return {ok:false, error:'ACCION_DESCONOCIDA:'+a};
 
