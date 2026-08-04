@@ -1213,7 +1213,7 @@ async function loadReviews(){
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs(); if(ALL_LICS===null)loadAllData(true);} else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -3021,39 +3021,16 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-
-  // 1) COPIA RÁPIDA: mostrar la foto guardada en Firebase al instante
-  if(!ALL_LICS){
-    try{
-      const cache=await apiCall({action:'getliccache'});
-      if(cache.ok && cache.data){
-        const guardado=JSON.parse(cache.data);
-        if(Array.isArray(guardado) && guardado.length===LICENSE_APIS.length){
-          ALL_LICS=guardado;
-          if(view==='admin'&&tab==='alic') renderKeep();   // ya se ve algo, rápido
-        }
-      }
-    }catch(e){}
-    if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
-  }
-
-  // 2) REFRESCO REAL: consultar los 8 servidores por detrás
-  const frescos=LICENSE_APIS.map(()=>null);
+  if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
+  // consultar los 8 servidores REALES (siempre datos frescos, sin copia vieja)
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
-    if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
     try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      frescos[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
-    catch(e){ frescos[i]={error:'CONN'}; }
+      ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ ALL_LICS[i]={error:'CONN'}; }
   }));
-  ALL_LICS=frescos;
   ALL_LICS_LOADING=false;
   if(view==='admin'&&tab==='alic'){ renderKeep(); }
-
-  // 3) GUARDAR la foto nueva en Firebase (solo lo que sí conectó bien)
-  try{
-    const guardar=frescos.map(d=> (d&&d.licencias)?d:{licencias:[]} );
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
-  }catch(e){}
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
