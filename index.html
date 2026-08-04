@@ -3021,16 +3021,45 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-  if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
-  // consultar los 8 servidores REALES (siempre datos frescos, sin copia vieja)
+
+  // 1) COPIA RÁPIDA (arranque instantáneo, solo si aún no hay datos)
+  if(!ALL_LICS){
+    try{
+      const cache=await apiCall({action:'getliccache'});
+      if(cache.ok && cache.data){
+        const g=JSON.parse(cache.data);
+        if(Array.isArray(g) && g.length===LICENSE_APIS.length){
+          ALL_LICS=g.map(d=> d&&d.licencias ? {licencias:d.licencias} : d);
+          if(view==='admin'&&tab==='alic') renderKeep();
+        }
+      }
+    }catch(e){}
+    if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
+  }
+
+  // 2) REAL: consultar los 8 servidores. Lo real SIEMPRE reemplaza todo.
+  const frescos=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
-    if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
     try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
-    catch(e){ ALL_LICS[i]={error:'CONN'}; }
+      frescos[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ frescos[i]={error:'CONN'}; }
   }));
+  ALL_LICS=frescos;
   ALL_LICS_LOADING=false;
   if(view==='admin'&&tab==='alic'){ renderKeep(); }
+
+  // 3) GUARDAR copia solo de lo que conectó bien (conserva la anterior si falló)
+  try{
+    let previa=[];
+    try{ const c=await apiCall({action:'getliccache'}); if(c.ok&&c.data) previa=JSON.parse(c.data); }catch(e){}
+    const guardar=frescos.map((d,i)=>{
+      if(d&&d.licencias) return {licencias:d.licencias};
+      if(previa[i]&&previa[i].licencias) return previa[i];
+      return {licencias:[]};
+    });
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
+  }catch(e){}
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
@@ -3116,6 +3145,30 @@ function licRow(l,pi,cols){
     : `<button class="btn-add" style="padding:7px 13px" onclick="approveLic(${pi},'${hwid}')">✓ Aprobar</button>${delBtn}`;
   return {hwid,init,badge,pcsTxt,act};
 }
+// genera solo las filas de pendientes (según licQuery) — sin redibujar toda la página
+function filasPendHTML(){
+  let pend=[];
+  (ALL_LICS||[]).forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
+  const ql=(licQuery||'').toLowerCase().trim();
+  const pendF=ql?pend.filter(({l})=>((l.nombre||'')+' '+(l.correo||'')).toLowerCase().includes(ql)):pend;
+  if(!pendF.length) return `<div class="empty-state"><div class="empty-ic">${sv(I.search,28)}</div><h3>Sin resultados</h3><p>Ningún pendiente con ese nombre o correo.</p></div>`;
+  const rows=pendF.map(({l,pi})=>{
+    const r=licRow(l,pi);
+    return `<div class="trow" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
+      <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${r.init}</div>
+        <div style="min-width:0"><div class="n">${l.nombre||'—'}</div><div class="cust-email">${l.correo||'—'}</div></div></div>
+      <div class="cust-email col-hide">${l.correo||'—'}</div>
+      <div class="col-hide"><span class="pill pending" style="font-size:10.5px">${LICENSE_APIS[pi].name}</span></div>
+      <div class="row-act">${r.act}</div></div>`;
+  }).join('');
+  return `<div class="table"><div class="trow head" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
+    <div>Cliente</div><div class="col-hide">Correo</div><div class="col-hide">Producto</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
+}
+// actualiza SOLO la tabla al escribir (sin parpadeo)
+function filtrarLicPend(){
+  const w=document.getElementById('licTablaWrap'); if(w) w.innerHTML=filasPendHTML();
+  const x=document.getElementById('licX'); if(x) x.style.display=licQuery?'':'none';
+}
 function adminLicensesPage(){
   if(ALL_LICS===null){ loadAllData();
     return `<div class="page-head"><h1>Licencias</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando licencias...</div>`; }
@@ -3137,24 +3190,13 @@ function adminLicensesPage(){
     const ql=(licQuery||'').toLowerCase().trim();
     const pendF=ql?pend.filter(({l})=>((l.nombre||'')+' '+(l.correo||'')).toLowerCase().includes(ql)):pend;
     const buscador=`<div class="search">${sv(I.search,16)}<input id="licsearch" placeholder="Buscar cliente o correo..." value="${(licQuery||'').replace(/"/g,'&quot;')}"
-      oninput="licQuery=this.value;renderKeep();setTimeout(()=>{const el=document.getElementById('licsearch');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)">
-      ${licQuery?`<button class="search-x" onclick="licQuery='';renderKeep()" title="Limpiar">✕</button>`:''}</div>`;
+      oninput="licQuery=this.value;filtrarLicPend()">
+      <button class="search-x" id="licX" style="${licQuery?'':'display:none'}" onclick="licQuery='';document.getElementById('licsearch').value='';filtrarLicPend()" title="Limpiar">✕</button></div>`;
     const toolbar=`<div class="admin-toolbar">${modeToggle}<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${buscador}
       ${pend.length?`<button class="btn-add" onclick="aprobarTodasLic()">${sv(I.check,15)} Aprobar todas (${pend.length})</button>`:''}
       <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div></div>`;
     if(!pend.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>No hay pendientes 🎉</h3><p>Todas las licencias están al día. Nada por aprobar.</p></div>`;
-    if(!pendF.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.search,28)}</div><h3>Sin resultados</h3><p>Ningún pendiente con ese nombre o correo.</p></div>`;
-    const rows=pendF.map(({l,pi})=>{
-      const r=licRow(l,pi);
-      return `<div class="trow" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
-        <div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${r.init}</div>
-          <div style="min-width:0"><div class="n">${l.nombre||'—'}</div><div class="cust-email">${l.correo||'—'}</div></div></div>
-        <div class="cust-email col-hide">${l.correo||'—'}</div>
-        <div class="col-hide"><span class="pill pending" style="font-size:10.5px">${LICENSE_APIS[pi].name}</span></div>
-        <div class="row-act">${r.act}</div></div>`;
-    }).join('');
-    return head+toolbar+`<div class="table"><div class="trow head" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
-      <div>Cliente</div><div class="col-hide">Correo</div><div class="col-hide">Producto</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
+    return head+toolbar+`<div id="licTablaWrap">${filasPendHTML()}</div>`;
   }
 
   // ── MODO POR PRODUCTO ──
@@ -3163,8 +3205,8 @@ function adminLicensesPage(){
     ${apis.map((a,i)=>`<option value="${i}" ${i===LIC_SEL?'selected':''}>${a.name}</option>`).join('')}</select>`;
   const toolbar=`<div class="admin-toolbar"><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${modeToggle}<span style="font-size:12px;color:var(--text-faint)">Producto:</span>${sel}
     <div class="search">${sv(I.search,16)}<input id="licsearch2" placeholder="Buscar cliente..." value="${(licQuery||'').replace(/"/g,'&quot;')}"
-      oninput="licQuery=this.value;renderKeep();setTimeout(()=>{const el=document.getElementById('licsearch2');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)">
-      ${licQuery?`<button class="search-x" onclick="licQuery='';renderKeep()" title="Limpiar">✕</button>`:''}</div></div>
+      oninput="licQuery=this.value;filtrarLicProd()">
+      <button class="search-x" id="licX2" style="${licQuery?'':'display:none'}" onclick="licQuery='';document.getElementById('licsearch2').value='';filtrarLicProd()" title="Limpiar">✕</button></div></div>
     <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
   const api=apis[LIC_SEL], d=ALL_LICS[LIC_SEL];
   if(!api.url||api.url.startsWith('PEGA_AQUI'))
@@ -3173,6 +3215,16 @@ function adminLicensesPage(){
     return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>${d&&d.error==='NO_ADMIN'?'Acceso no válido':'No se pudo conectar'}</h3><p>${d&&d.error==='NO_ADMIN'?'Revisa la contraseña del portal en el script (PORTAL_ADMIN_PASS).':'Verifica la URL y que el deploy esté como "Cualquiera".'}</p></div>`;
   const lics=d.licencias;
   const aprob=lics.filter(l=>l.aprobado).length, pend=lics.length-aprob;
+  return head+toolbar+`<div class="stat-row">
+      <div class="stat"><div class="v fire">${lics.length}</div><div class="l">Solicitudes</div></div>
+      <div class="stat"><div class="v green">${aprob}</div><div class="l">Aprobadas</div></div>
+      <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
+    <div id="licTablaWrap">${filasProdHTML()}</div>`;
+}
+// genera solo la tabla del producto seleccionado (según licQuery)
+function filasProdHTML(){
+  const d=ALL_LICS[LIC_SEL]; if(!d||!d.licencias) return '';
+  const lics=d.licencias;
   const ql=(licQuery||'').toLowerCase().trim();
   const licsF=ql?lics.filter(l=>((l.nombre||'')+' '+(l.correo||'')).toLowerCase().includes(ql)):lics;
   const rows=licsF.length?licsF.map(l=>{
@@ -3185,12 +3237,12 @@ function adminLicensesPage(){
       <div class="col-hide">${r.badge}</div>
       <div class="row-act">${r.act}</div></div>`;
   }).join(''):`<div style="padding:40px;text-align:center;color:var(--text-faint)">${ql?'Ningún cliente con ese nombre o correo.':'Aún no hay solicitudes para este producto.'}</div>`;
-  return head+toolbar+`<div class="stat-row">
-      <div class="stat"><div class="v fire">${lics.length}</div><div class="l">Solicitudes</div></div>
-      <div class="stat"><div class="v green">${aprob}</div><div class="l">Aprobadas</div></div>
-      <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
-    <div class="table"><div class="trow head" style="grid-template-columns:1.4fr 1.3fr 0.7fr 0.9fr auto">
-      <div>Cliente</div><div class="col-hide">Correo</div><div class="col-hide">PCs</div><div class="col-hide">Estado</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
+  return `<div class="table"><div class="trow head" style="grid-template-columns:1.4fr 1.3fr 0.7fr 0.9fr auto">
+    <div>Cliente</div><div class="col-hide">Correo</div><div class="col-hide">PCs</div><div class="col-hide">Estado</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
+}
+function filtrarLicProd(){
+  const w=document.getElementById('licTablaWrap'); if(w) w.innerHTML=filasProdHTML();
+  const x=document.getElementById('licX2'); if(x) x.style.display=licQuery?'':'none';
 }
 
 function render(){const app=document.getElementById('app');
