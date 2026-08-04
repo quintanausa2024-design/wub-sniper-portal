@@ -3213,6 +3213,7 @@ render();
 //  (las licencias de producto siguen yendo por licCall a Apps Script)
 // ═══════════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc,
   deleteDoc, query, where
@@ -3227,6 +3228,15 @@ const firebaseConfig = {
   appId: "1:63899249287:web:8f2ed2976e7c203914e622"
 };
 const fbApp = initializeApp(firebaseConfig);
+
+// ── App Check (reCAPTCHA v3): solo tu web puede tocar la base ──
+try {
+  initializeAppCheck(fbApp, {
+    provider: new ReCaptchaV3Provider('6LfUe3QtAAAAAHI4n-BSMMf1BUkyqSKY7rdgL3Ud'),
+    isTokenAutoRefreshEnabled: true
+  });
+} catch(e){ console.warn('AppCheck init', e); }
+
 const db = getFirestore(fbApp);
 
 const SALT = "SNIPER_PORTAL_2026";
