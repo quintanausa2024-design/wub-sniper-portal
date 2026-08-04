@@ -1213,7 +1213,7 @@ async function loadReviews(){
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs(); if(ALL_LICS===null)loadAllData(true);} else tab='products';authMsg='';render()}
+function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
@@ -3052,11 +3052,11 @@ async function loadAllData(silent){
 
   // actualizar la vista SIN parpadeo:
   if(view==='admin'&&tab==='alic'){
-    if(mostróCopia){
-      // ya había algo pintado → solo refresco tabla + números (no toda la página)
-      refrescarTablaLic(); actualizarTotalesLic();
-    } else {
-      renderKeep();   // no había copia → pintura normal
+    // no regenerar si hay un modal abierto (el usuario está aprobando)
+    const modalAbierto=document.querySelector('.modal-bg.show');
+    if(!modalAbierto){
+      if(mostróCopia){ refrescarTablaLic(); actualizarTotalesLic(); }
+      else { renderKeep(); }
     }
   }
 
@@ -3311,8 +3311,8 @@ setInterval(async()=>{
     if(r.ok){
       const antes=MSGS?MSGS.length:0;
       MSGS=r.messages;
-      // solo redibuja si de verdad llegó un mensaje nuevo
-      if(MSGS.length!==antes){ if(tab==='amsg')marcarMsgsVistos(); renderKeep(); }
+      // solo redibuja si llegó mensaje nuevo Y estás viendo mensajes (no interrumpe otras pestañas)
+      if(MSGS.length!==antes && tab==='amsg'){ marcarMsgsVistos(); renderKeep(); }
     } }catch(e){}
 }, 180000);
 restoreSession();
