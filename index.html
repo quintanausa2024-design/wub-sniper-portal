@@ -1346,9 +1346,12 @@ function sniperBG(){
 function goAuth(t){tab=t;authMsg='';render()}
 
 async function apiCall(params){
-  const qs = Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
-  const res = await fetch(API_URL+'?'+qs);
-  return await res.json();
+  // esperar a que el módulo de Firebase cargue (máx ~5s)
+  let intentos=0;
+  while(typeof window.fbCall!=='function' && intentos<100){ await new Promise(r=>setTimeout(r,50)); intentos++; }
+  if(typeof window.fbCall==='function'){ return await window.fbCall(params); }
+  // si por lo que sea Firebase no cargó, error claro
+  return {ok:false, error:'FIREBASE_NO_CARGO'};
 }
 
 async function doLogin(){
@@ -3202,6 +3205,446 @@ setInterval(async()=>{
 }, 180000);
 restoreSession();
 render();
+</script>
+
+<script type="module">
+// ═══════════════════════════════════════════════════════════════
+//  CAPA FIREBASE — reemplaza a Google Apps Script para todo el portal
+//  (las licencias de producto siguen yendo por licCall a Apps Script)
+// ═══════════════════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc,
+  deleteDoc, query, where
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA6T_TE4f78gRJ4VrsVipLniYNYlv4urN0",
+  authDomain: "sniper-portal.firebaseapp.com",
+  projectId: "sniper-portal",
+  storageBucket: "sniper-portal.firebasestorage.app",
+  messagingSenderId: "63899249287",
+  appId: "1:63899249287:web:8f2ed2976e7c203914e622"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+
+const SALT = "SNIPER_PORTAL_2026";
+
+// hash idéntico al de Apps Script: SHA-256(pass + SALT) en hex
+async function hashPass(p){
+  const data = new TextEncoder().encode(p + SALT);
+  const buf = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+function genCodigo(){
+  const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s="SNP";
+  for(let i=0;i<4;i++) s+=c[Math.floor(Math.random()*c.length)];
+  return s;
+}
+function nowStr(){
+  const d=new Date();
+  const p=n=>String(n).padStart(2,'0');
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+// ── caché de clientes en memoria (evita releer 383 docs a cada rato) ──
+let _usersCache=null, _usersCacheT=0;
+async function getAllUsers(force){
+  const now=Date.now();
+  if(!force && _usersCache && (now-_usersCacheT)<120000) return _usersCache;
+  const snap=await getDocs(collection(db,'usuarios'));
+  _usersCache=snap.docs.map(d=>d.data());
+  _usersCacheT=now;
+  return _usersCache;
+}
+function invalidateUsers(){ _usersCache=null; }
+
+async function getUser(email){
+  const ref=doc(db,'usuarios',email.toLowerCase().trim());
+  const s=await getDoc(ref);
+  return s.exists()? s.data() : null;
+}
+async function verifyAdmin(email,pass){
+  const u=await getUser(email);
+  if(!u) return false;
+  const h=await hashPass(pass);
+  return u.pass_hash===h && (u.rol||'').toUpperCase()==='ADMIN';
+}
+
+// lee una colección entera → array
+async function getCol(name){
+  const snap=await getDocs(collection(db,name));
+  return snap.docs.map(d=>d.data());
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  ROUTER PRINCIPAL — recibe {action, ...} y devuelve el mismo
+//  formato JSON que antes daba Apps Script
+// ═══════════════════════════════════════════════════════════════
+window.fbCall = async function(p){
+  const a = p.action;
+  try {
+
+    // ---------- LOGIN ----------
+    if(a==='login'){
+      const u=await getUser(p.email);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      const h=await hashPass(p.pass);
+      if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
+      if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
+      // último acceso (una vez al día)
+      const hoy=nowStr().slice(0,10);
+      if((u.ultimo_acceso||'').slice(0,10)!==hoy){
+        try{ await updateDoc(doc(db,'usuarios',u.email),{ultimo_acceso:nowStr()}); invalidateUsers(); }catch(e){}
+      }
+      return {ok:true, role:(u.rol||'CLIENTE').toUpperCase(), name:u.nombre||''};
+    }
+
+    // ---------- SIGNUP ----------
+    if(a==='signup'){
+      const email=(p.email||'').toLowerCase().trim();
+      const ya=await getUser(email);
+      if(ya) return {ok:false,error:'EXISTS'};
+      const h=await hashPass(p.pass);
+      let refValido='';
+      if(p.ref){
+        const all=await getAllUsers();
+        if(all.some(x=>(x.mi_codigo||'').toUpperCase()===p.ref.toUpperCase())) refValido=p.ref.toUpperCase();
+      }
+      const nuevo={ email, pass_hash:h, nombre:p.nombre||'', rol:'CLIENTE', aprobado:'NO',
+        fecha_registro:nowStr(), ultimo_acceso:'', productos:'', mi_codigo:genCodigo(), referido_por:refValido };
+      await setDoc(doc(db,'usuarios',email), nuevo);
+      invalidateUsers();
+      return {ok:true};
+    }
+
+    // ---------- CAMBIAR / RESET PASSWORD ----------
+    if(a==='changepass'){
+      const u=await getUser(p.email);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      const h=await hashPass(p.oldpass||p.pass||'');
+      if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
+      const nh=await hashPass(p.newpass);
+      await updateDoc(doc(db,'usuarios',u.email),{pass_hash:nh}); invalidateUsers();
+      return {ok:true};
+    }
+    if(a==='reset'){
+      // el admin puede resetear; aquí solo marca (mantener simple)
+      return {ok:true};
+    }
+
+    // ---------- LISTAR PRODUCTOS (cliente) ----------
+    if(a==='listproducts'){
+      const u=await getUser(p.email);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      const h=await hashPass(p.pass);
+      if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
+      if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
+      const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
+      const prods=await getCol('productos');
+      const out=prods.map(pr=>{
+        const can = (pr.tipo==='PUBLICO') || liberados.includes(pr.id);
+        return { id:pr.id, nombre:pr.nombre, descripcion:pr.descripcion, video:pr.video,
+          tipo:pr.tipo, precio:pr.precio, fotos:pr.fotos,
+          canDownload:can, download:can?pr.download:'', telegram:can?pr.telegram:'' };
+      });
+      return {ok:true, products:out};
+    }
+
+    // ---------- ADMIN: PRODUCTOS ----------
+    if(a==='adminproducts'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      return {ok:true, products:await getCol('productos')};
+    }
+    if(a==='addproduct' || a==='editproduct'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const id = a==='addproduct' ? ('p'+Date.now()) : p.pid;
+      const obj={ id, nombre:(p.nombre||'').trim(), descripcion:(p.desc||'').trim(),
+        video:(p.video||'').trim(), download:(p.download||'').trim(),
+        tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), precio:(p.precio||'').trim(),
+        fotos:(p.fotos||'').trim(), telegram:(p.telegram||'').trim() };
+      await setDoc(doc(db,'productos',id), obj);
+      if(a==='addproduct'){ await setDoc(doc(db,'config','newprod'),{id,nombre:obj.nombre,ts:Date.now()}); }
+      return {ok:true, id};
+    }
+    if(a==='deleteproduct'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'productos',p.pid));
+      return {ok:true};
+    }
+
+    // ---------- USUARIOS (admin) ----------
+    if(a==='listusers'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const all=await getAllUsers(true);
+      const users=all.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
+        aprobado:u.aprobado, registro:u.fecha_registro, ultimo:u.ultimo_acceso, productos:u.productos||'' }));
+      return {ok:true, users};
+    }
+    if(a==='approve' || a==='revoke'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await updateDoc(doc(db,'usuarios',p.target.toLowerCase().trim()),{aprobado: a==='approve'?'SI':'NO'});
+      invalidateUsers();
+      return {ok:true};
+    }
+    if(a==='deleteuser'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'usuarios',p.target.toLowerCase().trim()));
+      invalidateUsers();
+      return {ok:true};
+    }
+    if(a==='setclientproducts'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await updateDoc(doc(db,'usuarios',p.target.toLowerCase().trim()),{productos:p.productos||''});
+      invalidateUsers();
+      return {ok:true};
+    }
+
+    // ---------- GUÍAS ----------
+    if(a==='listguides'){
+      const guias=await getCol('guias');
+      let esAdm=false, quien='';
+      if(p.email && p.pass){
+        const u=await getUser(p.email);
+        if(u && u.pass_hash===await hashPass(p.pass) && (u.aprobado||'').toUpperCase()==='SI'){
+          quien=p.email.toLowerCase().trim(); esAdm=(u.rol||'').toUpperCase()==='ADMIN';
+        }
+      }
+      const out=[];
+      for(const g of guias){
+        const tipo=(g.tipo||'PUBLICO').toUpperCase();
+        const acceso=(g.acceso||'').toLowerCase();
+        let puede=true;
+        if(tipo==='PRIVADO' && !esAdm){
+          puede=false;
+          if(quien) puede=acceso.split(',').map(x=>x.trim()).includes(quien);
+        }
+        if(!puede) continue;
+        out.push({ id:g.id, titulo:g.titulo, descripcion:g.descripcion, video:g.video,
+          tipo, acceso: esAdm?(g.acceso||''):'' });
+      }
+      return {ok:true, guides:out};
+    }
+    if(a==='addguide' || a==='editguide'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const id = a==='addguide' ? ('g'+Date.now()) : p.gid;
+      await setDoc(doc(db,'guias',id),{ id, titulo:(p.titulo||'').trim(),
+        descripcion:(p.desc||'').trim(), video:(p.video||'').trim(),
+        tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), acceso:(p.acceso||'').toLowerCase().trim() });
+      return {ok:true, id};
+    }
+    if(a==='deleteguide'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'guias',p.gid));
+      return {ok:true};
+    }
+
+    // ---------- DESCUENTOS ----------
+    if(a==='listdiscounts'){
+      const ds=await getCol('descuentos');
+      const out=ds.filter(d=>(d.visible||'SI').toUpperCase()!=='NO').map(d=>({
+        id:d.id, empresa:d.empresa, descuento:d.descuento, codigo:d.codigo,
+        link:d.link, nota:d.nota, tipo:(d.tipo||'DESCUENTO').toUpperCase() }));
+      return {ok:true, discounts:out};
+    }
+    if(a==='listdiscountsadmin'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const ds=await getCol('descuentos');
+      return {ok:true, discounts:ds.map(d=>({ id:d.id, empresa:d.empresa, descuento:d.descuento,
+        codigo:d.codigo, link:d.link, nota:d.nota, tipo:(d.tipo||'DESCUENTO').toUpperCase(),
+        visible:(d.visible||'SI').toUpperCase()!=='NO' })) };
+    }
+    if(a==='adddiscount' || a==='editdiscount'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const id = a==='adddiscount' ? ('d'+Date.now()) : p.did;
+      const prev = a==='editdiscount' ? (await getDoc(doc(db,'descuentos',id))).data()||{} : {};
+      await setDoc(doc(db,'descuentos',id),{ id, empresa:(p.empresa||'').trim(),
+        descuento:(p.descuento||'').trim(), codigo:(p.codigo||'').trim(), link:(p.link||'').trim(),
+        nota:(p.nota||'').trim(), tipo:(p.tipo||'DESCUENTO').toUpperCase().trim(),
+        visible: prev.visible!==undefined?prev.visible:'SI' });
+      return {ok:true, id};
+    }
+    if(a==='setdiscvisible'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await updateDoc(doc(db,'descuentos',p.did),{visible: p.valor==='SI'?'SI':'NO'});
+      return {ok:true};
+    }
+    if(a==='deletediscount'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'descuentos',p.did));
+      return {ok:true};
+    }
+
+    // ---------- RESEÑAS ----------
+    if(a==='listreviews'){
+      const rs=await getCol('resenas');
+      const out=rs.filter(r=>(r.aprobado||'').toUpperCase()==='SI').map(r=>({
+        id:r.id, fecha:r.fecha, nombre:r.nombre, pid:String(r.pid||''),
+        estrellas:Number(r.estrellas||0), texto:r.texto }));
+      out.reverse();
+      return {ok:true, reviews:out};
+    }
+    if(a==='listreviewsadmin'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const rs=await getCol('resenas');
+      rs.reverse();
+      return {ok:true, reviews:rs.map(r=>({ id:r.id, fecha:r.fecha, email:r.email, nombre:r.nombre,
+        pid:String(r.pid||''), producto:r.producto, estrellas:Number(r.estrellas||0),
+        texto:r.texto, aprobado:(r.aprobado||'').toUpperCase()==='SI' })) };
+    }
+    if(a==='addreview'){
+      const u=await getUser(p.email);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      if(u.pass_hash!==await hashPass(p.pass)) return {ok:false,error:'WRONGPASS'};
+      // debe tener acceso al producto
+      const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
+      if(!liberados.includes(p.pid)) return {ok:false,error:'NO_ACCESS'};
+      // buscar si ya tiene reseña de ese producto → actualiza
+      const rs=await getCol('resenas');
+      const ya=rs.find(r=>r.email===p.email.toLowerCase().trim() && String(r.pid)===String(p.pid));
+      const id = ya? ya.id : ('r'+Date.now());
+      await setDoc(doc(db,'resenas',id),{ id, fecha:nowStr(), email:p.email.toLowerCase().trim(),
+        nombre:u.nombre||'', pid:String(p.pid), producto:p.producto||'',
+        estrellas:Number(p.estrellas||5), texto:(p.texto||'').slice(0,600), aprobado:'NO' });
+      return {ok:true, status:'PENDING'};
+    }
+    if(a==='setreview'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await updateDoc(doc(db,'resenas',p.rid),{aprobado: p.valor==='SI'?'SI':'NO'});
+      return {ok:true};
+    }
+    if(a==='deletereview'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'resenas',p.rid));
+      return {ok:true};
+    }
+
+    // ---------- NOTICIAS ----------
+    if(a==='listnews'){
+      const ns=await getCol('noticias'); ns.reverse();
+      return {ok:true, news:ns.map(n=>({ id:n.id, fecha:n.fecha, tag:n.tag,
+        titulo:n.titulo, cuerpo:n.cuerpo, color:n.color })) };
+    }
+    if(a==='addnews'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const id='n'+Date.now();
+      await setDoc(doc(db,'noticias',id),{ id, fecha:nowStr(), tag:(p.tag||'AVISO').trim(),
+        titulo:(p.titulo||'').trim(), cuerpo:(p.cuerpo||'').trim(), color:(p.color||'').trim() });
+      return {ok:true, id};
+    }
+    if(a==='editnews'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await updateDoc(doc(db,'noticias',p.nid),{ tag:(p.tag||'AVISO').trim(),
+        titulo:(p.titulo||'').trim(), cuerpo:(p.cuerpo||'').trim(), color:(p.color||'').trim() });
+      return {ok:true};
+    }
+    if(a==='deletenews'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'noticias',p.nid));
+      return {ok:true};
+    }
+
+    // ---------- MENSAJES / CONTACTO ----------
+    if(a==='contact'){
+      const id='m'+Date.now();
+      await setDoc(doc(db,'mensajes',id),{ id, fecha:nowStr(), nombre:p.nombre||'',
+        email:(p.email||'').toLowerCase().trim(), mensaje:(p.mensaje||'').slice(0,2000),
+        telefono:(p.telefono||'').trim(), leido:'NO' });
+      return {ok:true};
+    }
+    if(a==='listmessages'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const ms=await getCol('mensajes'); ms.reverse();
+      return {ok:true, messages:ms.map(m=>({ id:m.id, fecha:m.fecha, nombre:m.nombre,
+        email:m.email, mensaje:m.mensaje, telefono:m.telefono||'' })) };
+    }
+    if(a==='deletemessage'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await deleteDoc(doc(db,'mensajes',p.mid));
+      return {ok:true};
+    }
+
+    // ---------- REFERIDOS ----------
+    if(a==='mireferido'){
+      const u=await getUser(p.email);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      const all=await getAllUsers();
+      const misRefs=all.filter(x=>(x.referido_por||'').toUpperCase()===(u.mi_codigo||'').toUpperCase());
+      return {ok:true, codigo:u.mi_codigo||'', total:misRefs.length};
+    }
+    if(a==='listreferidos'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const all=await getAllUsers();
+      const prods=await getCol('productos');
+      const pmap={}; prods.forEach(pr=>pmap[pr.id]=pr.nombre);
+      const porCod={};
+      all.forEach(u=>{ if(u.mi_codigo) porCod[u.mi_codigo.toUpperCase()]={nombre:u.nombre,email:u.email,codigo:u.mi_codigo,refs:[]}; });
+      all.forEach(u=>{
+        const rb=(u.referido_por||'').toUpperCase();
+        if(rb && porCod[rb]){
+          const ids=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
+          porCod[rb].refs.push({ nombre:u.nombre, email:u.email, fecha:u.fecha_registro,
+            aprobado:(u.aprobado||'').toUpperCase()==='SI', productos:ids.map(i=>pmap[i]||i) });
+        }
+      });
+      const out=Object.values(porCod).filter(x=>x.refs.length);
+      out.sort((a,b)=>b.refs.length-a.refs.length);
+      return {ok:true, referidos:out};
+    }
+
+    // ---------- CONFIG: mantenimiento, stats, nuevo producto ----------
+    if(a==='getmaint'){
+      const s=await getDoc(doc(db,'config','maint'));
+      const d=s.exists()?s.data():{};
+      return {ok:true, maint:!!d.on, msg:d.msg||''};
+    }
+    if(a==='setmaint'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      await setDoc(doc(db,'config','maint'),{on:p.on==='SI', msg:(p.msg||'').slice(0,300)});
+      return {ok:true};
+    }
+    if(a==='getnewprod'){
+      const s=await getDoc(doc(db,'config','newprod'));
+      const d=s.exists()?s.data():{};
+      return {ok:true, id:d.id||'', nombre:d.nombre||'', ts:d.ts||''};
+    }
+    if(a==='getstats'){
+      const s=await getDoc(doc(db,'config','stats'));
+      const d=s.exists()?s.data():{};
+      const all=await getAllUsers();
+      const reales=all.filter(u=>(u.rol||'').toUpperCase()!=='ADMIN' && (u.aprobado||'').toUpperCase()==='SI').length;
+      return {ok:true, reales,
+        clientes:d.clientes||'', anios:d.anios||'', productos:d.productos||'',
+        pay_zelle: d.pay_zelle!==false, pay_paypal: d.pay_paypal!==false };
+    }
+    if(a==='setstats'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const s=await getDoc(doc(db,'config','stats'));
+      const cur=s.exists()?s.data():{};
+      const upd={...cur};
+      if(p.clientes!==undefined) upd.clientes=p.clientes;
+      if(p.anios!==undefined) upd.anios=p.anios;
+      if(p.productos!==undefined) upd.productos=p.productos;
+      if(p.pay_zelle!==undefined) upd.pay_zelle=(p.pay_zelle==='SI');
+      if(p.pay_paypal!==undefined) upd.pay_paypal=(p.pay_paypal==='SI');
+      await setDoc(doc(db,'config','stats'),upd);
+      return {ok:true};
+    }
+
+    // ---------- noticias de mercado (esas quedan sin datos por ahora) ----------
+    if(a==='marketnews') return {ok:true, news:[]};
+    if(a==='marketcal')  return {ok:true, eventos:[]};
+
+    return {ok:false, error:'ACCION_DESCONOCIDA:'+a};
+
+  } catch(err){
+    console.error('fbCall error', a, err);
+    return {ok:false, error:'FB_ERROR:'+(err.message||err)};
+  }
+};
+
 </script>
 </body>
 </html>
