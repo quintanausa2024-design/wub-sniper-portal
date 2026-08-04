@@ -3021,15 +3021,56 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-  if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
+
+  // 1) COPIA RÁPIDA: mostrar al instante lo guardado en Firebase
+  let mostróCopia=false;
+  if(!ALL_LICS){
+    try{
+      const cache=await apiCall({action:'getliccache'});
+      if(cache.ok && cache.data){
+        const g=JSON.parse(cache.data);
+        if(Array.isArray(g) && g.length===LICENSE_APIS.length){
+          ALL_LICS=g.map(d=> d&&d.licencias ? {licencias:d.licencias} : d);
+          mostróCopia=true;
+          if(view==='admin'&&tab==='alic') renderKeep();   // primera pintura (con copia)
+        }
+      }
+    }catch(e){}
+    if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
+  }
+
+  // 2) REAL: consultar los 8 servidores
+  const frescos=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
-    if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
     try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
-    catch(e){ ALL_LICS[i]={error:'CONN'}; }
+      frescos[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ frescos[i]={error:'CONN'}; }
   }));
+  ALL_LICS=frescos;
   ALL_LICS_LOADING=false;
-  if(view==='admin'&&tab==='alic'){ renderKeep(); }
+
+  // actualizar la vista SIN parpadeo:
+  if(view==='admin'&&tab==='alic'){
+    if(mostróCopia){
+      // ya había algo pintado → solo refresco tabla + números (no toda la página)
+      refrescarTablaLic(); actualizarTotalesLic();
+    } else {
+      renderKeep();   // no había copia → pintura normal
+    }
+  }
+
+  // 3) GUARDAR copia (solo lo que conectó bien; conserva la anterior si falló)
+  try{
+    let previa=[];
+    try{ const c=await apiCall({action:'getliccache'}); if(c.ok&&c.data) previa=JSON.parse(c.data); }catch(e){}
+    const guardar=frescos.map((d,i)=>{
+      if(d&&d.licencias) return {licencias:d.licencias};
+      if(previa[i]&&previa[i].licencias) return previa[i];
+      return {licencias:[]};
+    });
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
+  }catch(e){}
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
@@ -3039,6 +3080,24 @@ function calcTotals(){
 function refrescarTablaLic(){
   const w=document.getElementById('licTablaWrap');
   if(w){ w.innerHTML = LIC_MODE==='pending' ? filasPendHTML() : filasProdHTML(); }
+}
+// recarga las licencias SIN borrar la pantalla (no parpadea)
+async function actualizarLicSuave(){
+  if(ALL_LICS_LOADING)return;
+  ALL_LICS_LOADING=true;
+  const frescos=LICENSE_APIS.map(()=>null);
+  await Promise.all(LICENSE_APIS.map(async(api,i)=>{
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
+    try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
+      frescos[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ frescos[i]={error:'CONN'}; }
+  }));
+  ALL_LICS=frescos; ALL_LICS_LOADING=false;
+  refrescarTablaLic(); actualizarTotalesLic();
+  toast('Licencias actualizadas');
+  // guardar copia nueva
+  try{ const guardar=frescos.map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)}); }catch(e){}
 }
 async function setLic(pi,hwid,valor,maxpcs){
   const api=LICENSE_APIS[pi];
@@ -3184,7 +3243,7 @@ function adminLicensesPage(){
       <button class="search-x" id="licX" style="${licQuery?'':'display:none'}" onclick="licQuery='';document.getElementById('licsearch').value='';filtrarLicPend()" title="Limpiar">✕</button></div>`;
     const toolbar=`<div class="admin-toolbar">${modeToggle}<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${buscador}
       ${pend.length?`<button class="btn-add" onclick="aprobarTodasLic()">${sv(I.check,15)} Aprobar todas (${pend.length})</button>`:''}
-      <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div></div>`;
+      <button class="btn-ghost" onclick="actualizarLicSuave()">${sv(I.refresh,15)} Actualizar</button></div></div>`;
     if(!pend.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>No hay pendientes 🎉</h3><p>Todas las licencias están al día. Nada por aprobar.</p></div>`;
     return head+toolbar+`<div id="licTablaWrap">${filasPendHTML()}</div>`;
   }
@@ -3197,7 +3256,7 @@ function adminLicensesPage(){
     <div class="search">${sv(I.search,16)}<input id="licsearch2" placeholder="Buscar cliente..." value="${(licQuery||'').replace(/"/g,'&quot;')}"
       oninput="licQuery=this.value;filtrarLicProd()">
       <button class="search-x" id="licX2" style="${licQuery?'':'display:none'}" onclick="licQuery='';document.getElementById('licsearch2').value='';filtrarLicProd()" title="Limpiar">✕</button></div></div>
-    <button class="btn-ghost" onclick="ALL_LICS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>`;
+    <button class="btn-ghost" onclick="actualizarLicSuave()">${sv(I.refresh,15)} Actualizar</button></div>`;
   const api=apis[LIC_SEL], d=ALL_LICS[LIC_SEL];
   if(!api.url||api.url.startsWith('PEGA_AQUI'))
     return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>Falta conectar este producto</h3><p>Pega la URL del Apps Script de "${api.name}".</p></div>`;
