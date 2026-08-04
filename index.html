@@ -3375,13 +3375,43 @@ function nowStr(){
 let _usersCache=null, _usersCacheT=0;
 async function getAllUsers(force){
   const now=Date.now();
-  if(!force && _usersCache && (now-_usersCacheT)<120000) return _usersCache;
+  if(!force && _usersCache && (now-_usersCacheT)<600000) return _usersCache;   // 10 min en memoria
+  // intentar caché del navegador (evita releer al recargar la página)
+  if(!force){
+    try{
+      const raw=localStorage.getItem('sp_users_cache');
+      const rawT=parseInt(localStorage.getItem('sp_users_cache_t')||'0');
+      if(raw && (now-rawT)<600000){
+        _usersCache=JSON.parse(raw); _usersCacheT=rawT;
+        return _usersCache;
+      }
+    }catch(e){}
+  }
   const snap=await getDocs(collection(db,'usuarios'));
   _usersCache=snap.docs.map(d=>d.data());
   _usersCacheT=now;
+  try{ localStorage.setItem('sp_users_cache', JSON.stringify(_usersCache));
+       localStorage.setItem('sp_users_cache_t', String(now)); }catch(e){}
   return _usersCache;
 }
-function invalidateUsers(){ _usersCache=null; }
+function invalidateUsers(){
+  _usersCache=null;
+  try{ localStorage.removeItem('sp_users_cache'); localStorage.removeItem('sp_users_cache_t'); }catch(e){}
+}
+// actualiza UN usuario en el caché sin releer los 386 (ahorra lecturas)
+function actualizarUserEnCache(email, cambios){
+  if(_usersCache){
+    const u=_usersCache.find(x=>x.email===email);
+    if(u) Object.assign(u, cambios);
+    try{ localStorage.setItem('sp_users_cache', JSON.stringify(_usersCache)); }catch(e){}
+  }
+}
+function borrarUserDeCache(email){
+  if(_usersCache){
+    _usersCache=_usersCache.filter(x=>x.email!==email);
+    try{ localStorage.setItem('sp_users_cache', JSON.stringify(_usersCache)); }catch(e){}
+  }
+}
 
 async function getUser(email){
   const ref=doc(db,'usuarios',email.toLowerCase().trim());
@@ -3416,10 +3446,10 @@ window.fbCall = async function(p){
       const h=await hashPass(p.pass);
       if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
-      // último acceso (una vez al día)
+      // último acceso (una vez al día) — sin invalidar todo el caché
       const hoy=nowStr().slice(0,10);
       if((u.ultimo_acceso||'').slice(0,10)!==hoy){
-        try{ await updateDoc(doc(db,'usuarios',u.email),{ultimo_acceso:nowStr()}); invalidateUsers(); }catch(e){}
+        try{ await updateDoc(doc(db,'usuarios',u.email),{ultimo_acceso:nowStr()}); }catch(e){}
       }
       return {ok:true, role:(u.rol||'CLIENTE').toUpperCase(), name:u.nombre||''};
     }
@@ -3500,7 +3530,7 @@ window.fbCall = async function(p){
     // ---------- USUARIOS (admin) ----------
     if(a==='listusers'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      const all=await getAllUsers(true);
+      const all=await getAllUsers();   // usa caché (no fuerza lectura de 386 docs cada vez)
       const users=all.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
         aprobado:u.aprobado, registro:u.fecha_registro, ultimo:u.ultimo_acceso, productos:u.productos||'' }));
       // ordenar: más nuevos primero (por fecha de registro dd/mm/aaaa hh:mm)
@@ -3514,20 +3544,23 @@ window.fbCall = async function(p){
     }
     if(a==='approve' || a==='revoke'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await updateDoc(doc(db,'usuarios',p.target.toLowerCase().trim()),{aprobado: a==='approve'?'SI':'NO'});
-      invalidateUsers();
+      const em=p.target.toLowerCase().trim();
+      await updateDoc(doc(db,'usuarios',em),{aprobado: a==='approve'?'SI':'NO'});
+      actualizarUserEnCache(em,{aprobado: a==='approve'?'SI':'NO'});
       return {ok:true};
     }
     if(a==='deleteuser'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'usuarios',p.target.toLowerCase().trim()));
-      invalidateUsers();
+      const em=p.target.toLowerCase().trim();
+      await deleteDoc(doc(db,'usuarios',em));
+      borrarUserDeCache(em);
       return {ok:true};
     }
     if(a==='setclientproducts'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await updateDoc(doc(db,'usuarios',p.target.toLowerCase().trim()),{productos:p.productos||''});
-      invalidateUsers();
+      const em=p.target.toLowerCase().trim();
+      await updateDoc(doc(db,'usuarios',em),{productos:p.productos||''});
+      actualizarUserEnCache(em,{productos:p.productos||''});
       return {ok:true};
     }
 
