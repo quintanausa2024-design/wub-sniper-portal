@@ -3021,62 +3021,35 @@ async function licCall(url,params){
 }
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
-
-  // 1) COPIA RÁPIDA (arranque instantáneo, solo si aún no hay datos)
-  if(!ALL_LICS){
-    try{
-      const cache=await apiCall({action:'getliccache'});
-      if(cache.ok && cache.data){
-        const g=JSON.parse(cache.data);
-        if(Array.isArray(g) && g.length===LICENSE_APIS.length){
-          ALL_LICS=g.map(d=> d&&d.licencias ? {licencias:d.licencias} : d);
-          if(view==='admin'&&tab==='alic') renderKeep();
-        }
-      }
-    }catch(e){}
-    if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
-  }
-
-  // 2) REAL: consultar los 8 servidores. Lo real SIEMPRE reemplaza todo.
-  const frescos=LICENSE_APIS.map(()=>null);
+  if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
-    if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
+    if(!api.url||api.url.startsWith('PEGA_AQUI')){ ALL_LICS[i]={skip:true}; return; }
     try{ const r=await licCall(api.url,{action:'portal_list',padmin:SESS.email,ppass:SESS.pass});
-      frescos[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
-    catch(e){ frescos[i]={error:'CONN'}; }
+      ALL_LICS[i]= r.ok ? {licencias:r.licencias} : {error:r.error||'ERR'}; }
+    catch(e){ ALL_LICS[i]={error:'CONN'}; }
   }));
-  ALL_LICS=frescos;
   ALL_LICS_LOADING=false;
   if(view==='admin'&&tab==='alic'){ renderKeep(); }
-
-  // 3) GUARDAR copia solo de lo que conectó bien (conserva la anterior si falló)
-  try{
-    let previa=[];
-    try{ const c=await apiCall({action:'getliccache'}); if(c.ok&&c.data) previa=JSON.parse(c.data); }catch(e){}
-    const guardar=frescos.map((d,i)=>{
-      if(d&&d.licencias) return {licencias:d.licencias};
-      if(previa[i]&&previa[i].licencias) return previa[i];
-      return {licencias:[]};
-    });
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
-  }catch(e){}
 }
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
   (ALL_LICS||[]).forEach(d=>{ if(d&&d.licencias){conn++;tot+=d.licencias.length;apr+=d.licencias.filter(l=>l.aprobado).length;pend+=d.licencias.filter(l=>!l.aprobado).length;} });
   return {tot,apr,pend,conn};
 }
+function refrescarTablaLic(){
+  const w=document.getElementById('licTablaWrap');
+  if(w){ w.innerHTML = LIC_MODE==='pending' ? filasPendHTML() : filasProdHTML(); }
+}
 async function setLic(pi,hwid,valor,maxpcs){
   const api=LICENSE_APIS[pi];
   const d=ALL_LICS&&ALL_LICS[pi];
   const l=d&&d.licencias&&d.licencias.find(x=>x.hwid===hwid);
-  if(l){ l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs); renderKeep(); }
+  if(l){ l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs); refrescarTablaLic(); actualizarTotalesLic(); }
   const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
   if(maxpcs)params.maxpcs=maxpcs;
   try{ const r=await licCall(api.url,params);
-    // si el servidor falló, revierto el cambio visual y aviso
-    if(r&&r.ok===false&&l){ l.aprobado=(valor!=='SI'); renderKeep(); toast('No se pudo guardar, intenta de nuevo'); }
-  }catch(e){ if(l){ l.aprobado=(valor!=='SI'); renderKeep(); toast('Sin conexión, intenta de nuevo'); } }
+    if(r&&r.ok===false&&l){ l.aprobado=(valor!=='SI'); refrescarTablaLic(); toast('No se pudo guardar, intenta de nuevo'); }
+  }catch(e){ if(l){ l.aprobado=(valor!=='SI'); refrescarTablaLic(); toast('Sin conexión, intenta de nuevo'); } }
 }
 function approveLic(pi,hwid){
   const api=LICENSE_APIS[pi];
@@ -3127,11 +3100,28 @@ function delLic(pi,hwid){
     const api=LICENSE_APIS[pi];
     const d=ALL_LICS&&ALL_LICS[pi];
     let borrado=null;
-    if(d&&d.licencias){ borrado=d.licencias.find(x=>x.hwid===hwid); d.licencias=d.licencias.filter(x=>x.hwid!==hwid); renderKeep(); }
+    if(d&&d.licencias){ borrado=d.licencias.find(x=>x.hwid===hwid); d.licencias=d.licencias.filter(x=>x.hwid!==hwid); refrescarTablaLic(); actualizarTotalesLic(); }
     try{ const r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid});
-      if(r&&r.ok===false&&borrado&&d){ d.licencias.push(borrado); renderKeep(); toast('No se pudo borrar'); }
-    }catch(e){ if(borrado&&d){ d.licencias.push(borrado); renderKeep(); toast('Sin conexión'); } }
+      if(r&&r.ok===false&&borrado&&d){ d.licencias.push(borrado); refrescarTablaLic(); actualizarTotalesLic(); toast('No se pudo borrar'); }
+    }catch(e){ if(borrado&&d){ d.licencias.push(borrado); refrescarTablaLic(); actualizarTotalesLic(); toast('Sin conexión'); } }
   });
+}
+// actualiza solo los números de arriba sin redibujar todo
+function actualizarTotalesLic(){
+  const cont=document.getElementById('licTotales');
+  if(!cont)return;
+  if(LIC_MODE==='pending'){
+    const T=calcTotals();
+    cont.innerHTML=`<div class="stat"><div class="v fire">${T.tot}</div><div class="l">Total · todos los productos</div></div>
+      <div class="stat"><div class="v green">${T.apr}</div><div class="l">Aprobadas</div></div>
+      <div class="stat"><div class="v amber">${T.pend}</div><div class="l">Pendientes</div></div>`;
+  } else {
+    const d=ALL_LICS[LIC_SEL];
+    if(d&&d.licencias){ const ap=d.licencias.filter(l=>l.aprobado).length;
+      cont.innerHTML=`<div class="stat"><div class="v fire">${d.licencias.length}</div><div class="l">Solicitudes</div></div>
+        <div class="stat"><div class="v green">${ap}</div><div class="l">Aprobadas</div></div>
+        <div class="stat"><div class="v amber">${d.licencias.length-ap}</div><div class="l">Pendientes</div></div>`; }
+  }
 }
 function licRow(l,pi,cols){
   const hwid=(l.hwid||'').replace(/'/g,'');
@@ -3173,7 +3163,7 @@ function adminLicensesPage(){
   if(ALL_LICS===null){ loadAllData();
     return `<div class="page-head"><h1>Licencias</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando licencias...</div>`; }
   const T=calcTotals();
-  const totals=`<div class="stat-row">
+  const totals=`<div class="stat-row" id="licTotales">
     <div class="stat"><div class="v fire">${T.tot}</div><div class="l">Total · todos los productos</div></div>
     <div class="stat"><div class="v green">${T.apr}</div><div class="l">Aprobadas (total)</div></div>
     <button class="stat statbtn ${LIC_MODE==='pending'?'on':''}" onclick="LIC_MODE='pending';render()"><div class="v amber">${T.pend}</div><div class="l">Pendientes (total) · toca para ver</div></button>
@@ -3215,7 +3205,7 @@ function adminLicensesPage(){
     return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>${d&&d.error==='NO_ADMIN'?'Acceso no válido':'No se pudo conectar'}</h3><p>${d&&d.error==='NO_ADMIN'?'Revisa la contraseña del portal en el script (PORTAL_ADMIN_PASS).':'Verifica la URL y que el deploy esté como "Cualquiera".'}</p></div>`;
   const lics=d.licencias;
   const aprob=lics.filter(l=>l.aprobado).length, pend=lics.length-aprob;
-  return head+toolbar+`<div class="stat-row">
+  return head+toolbar+`<div class="stat-row" id="licTotales">
       <div class="stat"><div class="v fire">${lics.length}</div><div class="l">Solicitudes</div></div>
       <div class="stat"><div class="v green">${aprob}</div><div class="l">Aprobadas</div></div>
       <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
