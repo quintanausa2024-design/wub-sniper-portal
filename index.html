@@ -2368,7 +2368,12 @@ function clientsPage(){
   const up=s=>(s||'').toUpperCase().trim();
   const activos=users.filter(u=>up(u.aprobado)==='SI').length;
   const pend=users.filter(u=>up(u.aprobado)!=='SI').length;
-  const rows = users.length ? users.map(u=>{
+  // pendientes de aprobar arriba de todo; el resto ya viene ordenado (más nuevos primero)
+  const ordenados=[...users].sort((a,b)=>{
+    const pa=up(a.aprobado)!=='SI'?0:1, pb=up(b.aprobado)!=='SI'?0:1;
+    return pa-pb;   // 0 (pendiente) antes que 1 (aprobado); estable conserva el orden por fecha
+  });
+  const rows = ordenados.length ? ordenados.map(u=>{
     const aprob=up(u.aprobado)==='SI';
     const init=(u.nombre||u.email).split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
     const badge=aprob?'<span class="dot g"></span>Activo':'<span class="dot a"></span>Pendiente';
@@ -3391,6 +3396,13 @@ window.fbCall = async function(p){
       const all=await getAllUsers(true);
       const users=all.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
         aprobado:u.aprobado, registro:u.fecha_registro, ultimo:u.ultimo_acceso, productos:u.productos||'' }));
+      // ordenar: más nuevos primero (por fecha de registro dd/mm/aaaa hh:mm)
+      const parseF=s=>{ if(!s)return 0;
+        const m=String(s).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+        if(!m)return 0;
+        return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0)).getTime();
+      };
+      users.sort((x,y)=>parseF(y.registro)-parseF(x.registro));
       return {ok:true, users};
     }
     if(a==='approve' || a==='revoke'){
