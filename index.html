@@ -1969,7 +1969,7 @@ async function sendContact(){
 }
 
 // ── MODO MANTENIMIENTO ──
-let MAINT={on:false,msg:''}, MAINT_LOADED=false, MAINT_SAVING=false;
+let MAINT={on:false,msg:''}, MAINT_LOADED=false, MAINT_SAVING=false, MAINT_LOADING=false;
 function maintTexto(){
   return MAINT.msg && MAINT.msg.trim()
     ? MAINT.msg.trim()
@@ -1988,10 +1988,12 @@ function pintarMaint(){
 }
 async function loadMaint(){
   if(!API_URL)return;
+  if(MAINT_LOADING)return;   // evitar llamadas repetidas (bucle)
+  MAINT_LOADING=true;
   const antes=MAINT.on;
   try{ const r=await apiCall({action:'getmaint'});
     if(r.ok){ MAINT={on:!!r.maint,msg:r.msg||''}; } }catch(e){}
-  MAINT_LOADED=true; pintarMaint();
+  MAINT_LOADED=true; MAINT_LOADING=false; pintarMaint();
   // si estoy en mi perfil de admin y cambió el estado, refrescar el switch
   if(view==='admin' && tab==='aprofile' && antes!==MAINT.on) renderKeep();
 }
@@ -2805,12 +2807,14 @@ function marcarMsgsVistos(){
 }
 async function loadMsgs(){
   if(MSGS_LOADING)return; MSGS_LOADING=true;
+  const antes=MSGS?MSGS.length:-1;
   try{ const r=await apiCall({action:'listmessages',email:SESS.email,pass:SESS.pass});
     MSGS = r.ok ? r.messages : []; }
   catch(e){ MSGS=[]; }
   MSGS_LOADING=false;
   if(tab==='amsg') marcarMsgsVistos();
-  renderKeep();
+  // solo redibujar si de verdad cambió algo (evita bucles de render)
+  if(MSGS.length!==antes) renderKeep();
 }
 // actualiza solo el globito de mensajes en el menú (sin redibujar todo)
 function actualizarBadgeMsg(){
@@ -3447,11 +3451,18 @@ function filtrarLicProd(){
   const x=document.getElementById('licX2'); if(x) x.style.display=licQuery?'':'none';
 }
 
-function render(){const app=document.getElementById('app');
+let _renderCount=0, _renderWindowStart=Date.now();
+function render(){
+  // freno anti-bucle: si se renderiza demasiado rápido, parar
+  const ahora=Date.now();
+  if(ahora-_renderWindowStart>1000){ _renderCount=0; _renderWindowStart=ahora; }
+  _renderCount++;
+  if(_renderCount>40){ console.warn('render throttled'); return; }  // corta bucles
+  const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
   pintarMaint();
-  if(!MAINT_LOADED) loadMaint();
-  if(view==='login'){ if(REVIEWS===null) loadReviews(); if(SRV_STATS===null) loadStats(); }
+  if(!MAINT_LOADED && !MAINT_LOADING) loadMaint();
+  if(view==='login'){ if(REVIEWS===null && !REVIEWS_LOADING) loadReviews(); if(SRV_STATS===null && !SRV_STATS_LOADING) loadStats(); }
   setTimeout(updateScrollBtn,0);}
 // actualiza SOLO el contenido central (no el menú lateral) → sin parpadeo del sidebar
 function renderContent(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
