@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mudanza — Sniper Portal</title>
+<style>
+  body{background:#0d1117;color:#e6edf3;font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+       max-width:760px;margin:0 auto;padding:28px 18px}
+  h1{color:#ff6b35;font-size:22px;margin:0 0 6px}
+  .sub{color:#8b949e;font-size:14px;margin:0 0 22px}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:16px}
+  button{background:#ff6b35;color:#fff;border:0;border-radius:9px;padding:13px 22px;
+         font-size:15px;font-weight:700;cursor:pointer;margin-right:10px}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.gris{background:#30363d}
+  #log{background:#010409;border:1px solid #30363d;border-radius:9px;padding:14px;
+       font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;
+       height:340px;overflow-y:auto;white-space:pre-wrap}
+  .ok{color:#3fb950}.err{color:#f85149}.warn{color:#d29922}.info{color:#58a6ff}
+  .big{font-size:30px;font-weight:800;color:#ff6b35}
+</style>
+</head>
+<body>
+
+<h1>Mudanza de clientes</h1>
+<p class="sub">Copia tus clientes reales de <b>usuarios</b> a la coleccion nueva <b>clientes</b>. No borra nada.</p>
+
+<div class="card">
+  <button id="btn1">1 · Revisar</button>
+  <button id="btn2" class="gris" disabled>2 · Copiar</button>
+  <div id="resumen" style="margin-top:16px"></div>
+</div>
+
+<div class="card"><div id="log">Empieza por "Revisar".
+</div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
+import { getFirestore, collection, getDocs, doc, writeBatch }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA6T_TE4f78gRJ4VrsVipLniYNYlv4urN0",
+  authDomain: "sniper-portal.firebaseapp.com",
+  projectId: "sniper-portal",
+  storageBucket: "sniper-portal.firebasestorage.app",
+  messagingSenderId: "63899249287",
+  appId: "1:63899249287:web:8f2ed2976e7c203914e622"
+};
+
+const BASURA = "Hacked By Ghost";
+const LOTE = 400;
+
+const app = initializeApp(firebaseConfig);
+try {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider("6LfUe3QtAAAAAHI4n-BSMMf1BUkyqSKY7rdgL3Ud"),
+    isTokenAutoRefreshEnabled: true
+  });
+} catch(e) {}
+const db = getFirestore(app);
+
+const $log = document.getElementById('log');
+const $res = document.getElementById('resumen');
+const $b1 = document.getElementById('btn1');
+const $b2 = document.getElementById('btn2');
+
+function log(t,c){ $log.innerHTML += `<span class="${c||''}">${t}</span>\n`; $log.scrollTop=$log.scrollHeight; }
+
+let buenos = [];
+
+$b1.onclick = async () => {
+  $b1.disabled = true; buenos = [];
+  log('Leyendo usuarios...', 'info');
+  try {
+    const snap = await getDocs(collection(db,'usuarios'));
+    let basura = 0;
+    snap.docs.forEach(d => {
+      const data = d.data();
+      const n = (data.nombre || '').trim();
+      if (n === BASURA) { basura++; return; }
+      buenos.push({ id: d.id, data });
+    });
+    log(`Total leidos: ${snap.size}`, 'info');
+    log(`Basura ignorada: ${basura}`, 'warn');
+    log(`Se copiaran: ${buenos.length}`, 'ok');
+
+    const conAcceso = buenos.filter(u => String(u.data.aprobado||'').toUpperCase().trim()==='SI').length;
+    const admins = buenos.filter(u => String(u.data.rol||'').toUpperCase().trim()==='ADMIN').length;
+    log(`  · con acceso (SI): ${conAcceso}`, 'ok');
+    log(`  · admins: ${admins}`, 'ok');
+
+    $res.innerHTML = `<div class="big">${buenos.length}</div>
+      <div style="color:#8b949e;font-size:13.5px">documentos se copiaran a <b>clientes</b></div>`;
+
+    if (buenos.length) { $b2.disabled = false; $b2.className=''; }
+  } catch(e) {
+    log('ERROR: ' + (e.code || e.message), 'err');
+  }
+  $b1.disabled = false;
+};
+
+$b2.onclick = async () => {
+  if (!confirm(`Copiar ${buenos.length} documentos a la coleccion "clientes"? No se borra nada de "usuarios".`)) return;
+  $b1.disabled = true; $b2.disabled = true;
+
+  let hechos = 0, fallos = 0;
+  log(`\nCopiando en lotes de ${LOTE}...`, 'info');
+
+  for (let i = 0; i < buenos.length; i += LOTE) {
+    const trozo = buenos.slice(i, i + LOTE);
+    const batch = writeBatch(db);
+    trozo.forEach(u => batch.set(doc(db,'clientes',u.id), u.data));
+    try {
+      await batch.commit();
+      hechos += trozo.length;
+      log(`  ${hechos} / ${buenos.length}`, 'ok');
+    } catch(e) {
+      fallos += trozo.length;
+      log(`  lote fallo: ${e.code || e.message}`, 'err');
+      if (String(e.code||'').includes('permission')) { log('Permisos rechazados. Deteniendo.', 'err'); break; }
+    }
+    await new Promise(r => setTimeout(r, 150));
+  }
+
+  log(`\nListo — copiados: ${hechos} · fallidos: ${fallos}`, fallos ? 'warn' : 'ok');
+  if (!fallos && hechos) log('Ahora avisame para cambiar el index.html.', 'ok');
+  $b1.disabled = false;
+};
+</script>
+</body>
+</html>
