@@ -2105,8 +2105,13 @@ function maintCard(){
 // cuadro con el número de productos disponibles para descargar del cliente
 function prodCountCard(){
   const isEn=LANG==='en';
-  // asegurar que los productos estén cargados
-  if(CLIENT_PRODS===null){ loadClientProds(); }
+  // NO disparar carga aquí (evita bucle). Si aún no hay datos, mostrar guion.
+  if(CLIENT_PRODS===null){
+    return `<div class="card"><div class="card-top">
+        <div class="card-name">${isEn?'Your products':'Tus productos'}</div>
+        <div class="card-cat">${isEn?'Available to download':'Disponibles para descargar'}</div></div>
+      <div style="padding:20px;color:var(--text-faint);font-size:13px">${isEn?'Loading...':'Cargando...'}</div></div>`;
+  }
   const disponibles=(CLIENT_PRODS||[]).filter(p=>p.canDownload).length;
   return `<div class="card"><div class="card-top">
       <div class="card-name">${isEn?'Your products':'Tus productos'}</div>
@@ -2123,6 +2128,8 @@ function prodCountCard(){
     </div></div>`;
 }
 function profilePage(){
+  // cargar productos una sola vez para el contador (sin bucle)
+  if(CLIENT_PRODS===null && !CLIENT_PRODS_LOADING){ loadClientProds(); }
   const ok = profileMsg ? `<div class="login-err show" style="max-width:480px;color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)">${profileMsg}</div>` : '';
   const err = profileErr ? `<div class="login-err show" style="max-width:480px">${profileErr}</div>` : '';
   const isEn=LANG==='en';
