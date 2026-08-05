@@ -2122,6 +2122,9 @@ function profilePage(){
         <div class="card"><div class="card-top"><div class="card-name">${t('cambiar_pass')}</div></div>
           <div style="padding:20px">
             ${ok}${err}
+            <div class="field"><label>${isEn?'Current password':'Contraseña actual'}</label><div class="pass-wrap">
+              <input type="password" id="np0" placeholder="${isEn?'Your current password':'Tu contraseña actual'}" autocomplete="current-password">
+              <span class="eye" onclick="toggleEye('np0',this)">${EYE}</span></div></div>
             <div class="field"><label>${t('pass_nueva')}</label><div class="pass-wrap">
               <input type="password" id="np1" placeholder="${isEn?'Your new password':'Tu nueva contraseña'}" autocomplete="new-password">
               <span class="eye" onclick="toggleEye('np1',this)">${EYE}</span></div></div>
@@ -2135,15 +2138,18 @@ function profilePage(){
     </div>`}
 
 async function changePass(){
+  const p0=document.getElementById('np0').value||'';
   const p1=document.getElementById('np1').value||'', p2=document.getElementById('np2').value||'';
   profileMsg='';profileErr='';
-  if(!p1||p1.length<4){profileErr='La contraseña debe tener al menos 4 caracteres.';return render();}
-  if(p1!==p2){profileErr='Las contraseñas no coinciden.';return render();}
-  if(!API_URL){profileMsg='✅ Contraseña cambiada (demo).';return render();}
+  if(!p0){profileErr='Escribe tu contraseña actual.';return render();}
+  if(!p1||p1.length<4){profileErr='La contraseña nueva debe tener al menos 4 caracteres.';return render();}
+  if(p1!==p2){profileErr='Las contraseñas nuevas no coinciden.';return render();}
+  if(p0===p1){profileErr='La nueva no puede ser igual a la actual.';return render();}
   const btn=document.getElementById('cpbtn');btn.textContent='Guardando...';
   try{
-    const r=await apiCall({action:'changepass',email:CLIENT.email,pass:p1});
+    const r=await apiCall({action:'changepass',email:CLIENT.email,oldpass:p0,newpass:p1});
     if(r.ok){profileMsg='✅ ¡Listo! Tu contraseña quedó cambiada.';render();}
+    else if(r.error==='WRONGPASS'){profileErr='La contraseña actual no es correcta.';render();}
     else{profileErr='No se pudo cambiar. Intenta de nuevo.';render();}
   }catch(e){profileErr='Error de conexión. Intenta de nuevo.';render();}
 }
