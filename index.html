@@ -825,6 +825,18 @@
   .prod-click{cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
   .prod-click:hover{transform:translateY(-2px)}
   .card.prod-click:hover{border-color:var(--fire);box-shadow:0 12px 30px -14px rgba(255,107,44,.5)}
+  /* efecto de luz recorriendo el borde de las tarjetas de producto */
+  .card.prod-click{position:relative}
+  .card.prod-click::before{
+    content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;
+    background:conic-gradient(from var(--ang,0deg),transparent 0deg,transparent 70deg,var(--fire) 110deg,#ff9a5c 140deg,transparent 180deg,transparent 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:0;transition:opacity .3s;pointer-events:none;z-index:2;
+  }
+  .card.prod-click:hover::before{opacity:1;animation:bordeGira 2.5s linear infinite}
+  @property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+  @keyframes bordeGira{to{--ang:360deg}}
   /* pista de "toca para ver" */
   .prod-row-more,.card-more{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;
     color:var(--fire-soft);margin-top:6px;opacity:.85;transition:.15s}
@@ -2451,13 +2463,15 @@ function adminProductsPage(){
     return `<div class="page-head"><h1>Productos</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando productos...</div>`; }
   const q=(prodQuery||'').toLowerCase().trim();
   const lista=ADMIN_PRODS.filter(p=>!q||(p.nombre||'').toLowerCase().includes(q)||(p.descripcion||'').toLowerCase().includes(q));
-  const rows = lista.length ? lista.map(p=>{
+  const rows = lista.length ? lista.map((p,idx)=>{
     const tag = p.tipo==='PROXIMO'
       ? `<span class="pill" style="background:rgba(52,179,255,.12);color:var(--cyan);border:1px solid rgba(52,179,255,.28)"><span class="pdot" style="background:var(--cyan)"></span>Próximamente</span>`
       : p.tipo==='PRIVADO'
         ? `<span class="pill pending"><span class="pdot"></span>Privado${p.precio?' · $'+p.precio:''}</span>`
         : `<span class="pill active"><span class="pdot"></span>Público</span>`;
-    return `<div class="trow" style="grid-template-columns:1.6fr 1.2fr auto">
+    return `<div class="trow prod-drag" draggable="${q?'false':'true'}" data-pid="${p.id}" data-idx="${idx}" style="grid-template-columns:auto 1.6fr 1.2fr auto"
+        ondragstart="dragProdStart(event,${idx})" ondragover="dragProdOver(event,${idx})" ondrop="dragProdDrop(event,${idx})" ondragend="dragProdEnd(event)">
+      <div class="drag-handle" title="${q?'Quita el buscador para reordenar':'Arrastra para reordenar'}" style="display:flex;align-items:center;color:var(--text-faint);cursor:${q?'default':'grab'}">${sv(I.grip||I.list,16)}</div>
       <div class="cust-name"><div class="n">${p.nombre||'(sin nombre)'}</div></div>
       <div class="col-hide">${tag}</div>
       <div class="row-act">
@@ -2465,6 +2479,7 @@ function adminProductsPage(){
         <button class="ibtn danger" title="Borrar" onclick="delProd('${p.id}','${(p.nombre||'').replace(/'/g,"")}')">${sv(I.trash,15)}</button>
       </div></div>`;
   }).join('') : `<div style="padding:40px;text-align:center;color:var(--text-faint)">${q?'No hay productos con ese nombre.':'Aún no has añadido productos.'}</div>`;
+  const hint = !q && lista.length>1 ? `<p style="font-size:12.5px;color:var(--cyan);margin:-6px 0 12px;display:flex;align-items:center;gap:6px">${sv(I.list,14)} Arrastra los productos para ordenarlos como quieras.</p>` : '';
   return `<div class="page-head"><h1>Productos</h1><p>Añade tus productos, su video, link de descarga y si son públicos o privados.</p></div>
     <div class="admin-toolbar">
       <div class="search">${sv(I.search,16)}<input id="prodsearch" placeholder="Buscar producto..." value="${(prodQuery||'').replace(/"/g,'&quot;')}"
@@ -2473,10 +2488,36 @@ function adminProductsPage(){
       <button class="btn-ghost" onclick="refreshProds()">${sv(I.refresh,15)} Actualizar</button>
       <button class="btn-add" onclick="openProd(null)">${sv(I.plus,15)} Añadir producto</button></div>
     ${q?`<div class="guide-count">${lista.length} ${lista.length===1?'producto':'productos'}</div>`:''}
-    <div class="table"><div class="trow head" style="grid-template-columns:1.6fr 1.2fr auto">
-      <div>Producto</div><div class="col-hide">Acceso</div><div style="text-align:right">Acciones</div></div>${rows}</div>`;
+    ${hint}
+    <div class="table"><div class="trow head" style="grid-template-columns:auto 1.6fr 1.2fr auto">
+      <div></div><div>Producto</div><div class="col-hide">Acceso</div><div style="text-align:right">Acciones</div></div>${rows}</div>`;
 }
 
+// ── arrastrar productos para reordenar ──
+let _dragProdFrom=null;
+function dragProdStart(e,idx){ _dragProdFrom=idx; e.dataTransfer.effectAllowed='move';
+  e.currentTarget.style.opacity='.4'; }
+function dragProdOver(e,idx){ e.preventDefault(); e.dataTransfer.dropEffect='move';
+  const row=e.currentTarget; row.style.borderTop=(idx<_dragProdFrom)?'2px solid var(--fire)':'';
+  row.style.borderBottom=(idx>_dragProdFrom)?'2px solid var(--fire)':''; }
+function dragProdEnd(e){ document.querySelectorAll('.prod-drag').forEach(r=>{r.style.opacity='';r.style.borderTop='';r.style.borderBottom='';}); }
+async function dragProdDrop(e,idx){
+  e.preventDefault();
+  document.querySelectorAll('.prod-drag').forEach(r=>{r.style.borderTop='';r.style.borderBottom='';});
+  if(_dragProdFrom===null||_dragProdFrom===idx){ _dragProdFrom=null; return; }
+  // mover en el array
+  const arr=ADMIN_PRODS;
+  const [movido]=arr.splice(_dragProdFrom,1);
+  arr.splice(idx,0,movido);
+  _dragProdFrom=null;
+  renderKeep();   // se ve el nuevo orden al instante
+  // guardar el orden en Firebase (campo 'orden' 0,1,2,...)
+  try{
+    await apiCall({action:'reorderproducts', email:SESS.email, pass:SESS.pass,
+      orden: arr.map(p=>p.id).join(',')});
+    toast('Orden guardado');
+  }catch(e){ toast('No se pudo guardar el orden'); }
+}
 function openProd(p){
   const e=p||{id:'',nombre:'',desc:'',video:'',download:'',tipo:'PUBLICO',precio:'',fotos:'',telegram:''};
   const fotosArr=(e.fotos||'').split('|').map(x=>x.trim());
@@ -2971,7 +3012,7 @@ function adminDiscountsPage(){
         <button class="ibtn" onclick='openDisc(${JSON.stringify(d).replace(/'/g,"&#39;")})'>${sv(I.edit,15)}</button>
         <button class="ibtn danger" onclick="delDisc('${d.id}')">${sv(I.trash,15)}</button></div></div>`).join('')
     :`<div style="padding:40px;text-align:center;color:var(--text-faint)">Aún no has agregado descuentos.</div>`;
-  return `<div class="page-head"><h1>Cuentas de Fondeo y Descuentos</h1><p>Agrega prop firms y códigos (usa TUS links de afiliado para ganar comisión). Le salen al cliente en su sección de Descuentos.</p></div>
+  return `<div class="page-head"><h1>Compañías y Descuentos</h1><p>Agrega prop firms y códigos (usa TUS links de afiliado para ganar comisión). Le salen al cliente en su sección de Descuentos.</p></div>
     <div class="admin-toolbar"><button class="btn-ghost" onclick="ADMIN_DISC=null;render()">${sv(I.refresh,15)} Actualizar</button>
       <button class="btn-add" onclick="openDisc(null)">${sv(I.plus,15)} Agregar</button></div>
     <div class="table"><div class="trow head" style="grid-template-columns:1.2fr 0.8fr 0.7fr 1fr auto">
@@ -3114,6 +3155,7 @@ function refrescarTablaLic(){
 async function actualizarLicSuave(){
   if(ALL_LICS_LOADING)return;
   ALL_LICS_LOADING=true;
+  const scrollY=window.scrollY;   // recordar dónde está el scroll
   const frescos=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
     if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
@@ -3123,8 +3165,8 @@ async function actualizarLicSuave(){
   }));
   ALL_LICS=frescos; ALL_LICS_LOADING=false;
   refrescarTablaLic(); actualizarTotalesLic();
+  window.scrollTo(0, scrollY);   // volver a donde estaba
   toast('Licencias actualizadas');
-  // guardar copia nueva
   try{ const guardar=frescos.map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
     await apiCall({action:'saveliccache', data:JSON.stringify(guardar)}); }catch(e){}
 }
@@ -3543,6 +3585,7 @@ window.fbCall = async function(p){
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
       const prods=await getCol('productos');
+      prods.sort((a,b)=>(a.orden!==undefined?a.orden:9999)-(b.orden!==undefined?b.orden:9999));
       const out=prods.map(pr=>{
         const can = (pr.tipo==='PUBLICO') || liberados.includes(pr.id);
         return { id:pr.id, nombre:pr.nombre, descripcion:pr.descripcion, video:pr.video,
@@ -3555,18 +3598,32 @@ window.fbCall = async function(p){
     // ---------- ADMIN: PRODUCTOS ----------
     if(a==='adminproducts'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      return {ok:true, products:await getCol('productos')};
+      const prods=await getCol('productos');
+      prods.sort((a,b)=>(a.orden!==undefined?a.orden:9999)-(b.orden!==undefined?b.orden:9999));
+      return {ok:true, products:prods};
     }
     if(a==='addproduct' || a==='editproduct'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const id = a==='addproduct' ? ('p'+Date.now()) : p.pid;
+      let orden = 9999;
+      if(a==='editproduct'){ const prev=(await getDoc(doc(db,'productos',id))).data(); if(prev&&prev.orden!==undefined)orden=prev.orden; }
+      else { const all=await getCol('productos'); orden=all.length; }
       const obj={ id, nombre:(p.nombre||'').trim(), descripcion:(p.desc||'').trim(),
         video:(p.video||'').trim(), download:(p.download||'').trim(),
         tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), precio:(p.precio||'').trim(),
-        fotos:(p.fotos||'').trim(), telegram:(p.telegram||'').trim() };
+        fotos:(p.fotos||'').trim(), telegram:(p.telegram||'').trim(), orden };
       await setDoc(doc(db,'productos',id), obj);
       if(a==='addproduct'){ await setDoc(doc(db,'config','newprod'),{id,nombre:obj.nombre,ts:Date.now()}); }
       return {ok:true, id};
+    }
+    // guardar el nuevo orden de los productos (por arrastre)
+    if(a==='reorderproducts'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const ids=(p.orden||'').split(',').filter(Boolean);
+      for(let i=0;i<ids.length;i++){
+        try{ await updateDoc(doc(db,'productos',ids[i]),{orden:i}); }catch(e){}
+      }
+      return {ok:true};
     }
     if(a==='deleteproduct'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
