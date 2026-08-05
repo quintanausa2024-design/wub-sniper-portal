@@ -2433,6 +2433,19 @@ function aprobarTodosClientes(n){
     }
   });
 }
+// rechazar (ocultar) todos los pendientes de golpe — para limpiar spam/basura
+function rechazarTodosPendientes(n){
+  confirmAction('Rechazar pendientes',`¿Quitar los ${n} registros pendientes? Se ocultarán de tu lista (no tendrán acceso). Úsalo para limpiar spam o registros basura.`,'Rechazar todos',async()=>{
+    // quitar de la vista al instante
+    if(ADMIN_USERS){ ADMIN_USERS=ADMIN_USERS.filter(u=>(u.aprobado||'').toUpperCase().trim()==='SI' || (u.rol||'').toUpperCase().trim()==='ADMIN'); }
+    renderKeep();
+    try{
+      const r=await apiCall({action:'rechazartodos',email:SESS.email,pass:SESS.pass});
+      if(r.ok){ toast('✓ '+(r.total||0)+' registros limpiados'); ADMIN_USERS=null; loadUsers(); }
+      else{ toast('No se pudo limpiar. Intenta de nuevo.'); ADMIN_USERS=null; loadUsers(); }
+    }catch(e){ toast('Error. Intenta de nuevo.'); ADMIN_USERS=null; loadUsers(); }
+  });
+}
 
 function clientsPage(){
   if(!API_URL){return `<div class="page-head"><h1>Clientes</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para ver tus clientes reales.</div>`;}
@@ -2474,6 +2487,7 @@ function clientsPage(){
       <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
     <div class="admin-toolbar"><div class="search">${sv(I.search,16)}<input id="cfilter" placeholder="Buscar correo o nombre..." oninput="filterRows()"></div>
       ${pend>0?`<button class="btn-add" onclick="aprobarTodosClientes(${pend})">${sv(I.check,15)} Aprobar a todos (${pend})</button>`:''}
+      ${pend>0?`<button class="btn-ghost" style="color:var(--red);border-color:rgba(255,77,94,.3)" onclick="rechazarTodosPendientes(${pend})">${sv(I.trash,15)} Rechazar pendientes (${pend})</button>`:''}
       <button class="btn-ghost" onclick="refreshUsers()">${sv(I.refresh,15)} Actualizar</button></div>
     <div class="table" id="ctable"><div class="trow head"><div>Cliente</div><div class="col-hide">Correo</div>
       <div class="col-hide">Último acceso</div><div class="col-hide">Estado</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
@@ -3690,7 +3704,9 @@ window.fbCall = async function(p){
     if(a==='listusers'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const all=await getAllUsers();   // usa caché (no fuerza lectura de 386 docs cada vez)
-      const users=all.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
+      // ocultar los rechazados (basura/spam marcado)
+      const visibles=all.filter(u=>(u.aprobado||'').toUpperCase()!=='RECHAZADO');
+      const users=visibles.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
         aprobado:u.aprobado, registro:u.fecha_registro, ultimo:u.ultimo_acceso, productos:u.productos||'' }));
       // ordenar: más nuevos primero (por fecha de registro dd/mm/aaaa hh:mm)
       const parseF=s=>{ if(!s)return 0;
@@ -3707,6 +3723,18 @@ window.fbCall = async function(p){
       await updateDoc(doc(db,'usuarios',em),{aprobado: a==='approve'?'SI':'NO'});
       actualizarUserEnCache(em,{aprobado: a==='approve'?'SI':'NO'});
       return {ok:true};
+    }
+    // marcar TODOS los pendientes como rechazados (se ocultan de la lista, no se borran)
+    if(a==='rechazartodos'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const all=await getAllUsers(true);
+      const pendientes=all.filter(u=>(u.aprobado||'').toUpperCase()!=='SI' && (u.rol||'').toUpperCase()!=='ADMIN');
+      let n=0;
+      for(const u of pendientes){
+        try{ await updateDoc(doc(db,'usuarios',u.email),{aprobado:'RECHAZADO'});
+          actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}); n++; }catch(e){}
+      }
+      return {ok:true, total:n};
     }
     if(a==='deleteuser'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
