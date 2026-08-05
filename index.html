@@ -3753,6 +3753,14 @@ window.fbCall = async function(p){
         return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0)).getTime();
       };
       users.sort((x,y)=>parseF(y.registro)-parseF(x.registro));
+      // aprovecha que ya leimos todo: guarda el conteo para que getstats no relea
+      try{
+        const reales=all.filter(u=>(u.rol||'').toUpperCase()!=='ADMIN'
+                                && (u.aprobado||'').toUpperCase()==='SI').length;
+        const sc=await getDoc(doc(db,'config','stats'));
+        const cur=sc.exists()?sc.data():{};
+        if(cur.reales!==reales) await setDoc(doc(db,'config','stats'),{...cur,reales});
+      }catch(e){}
       return {ok:true, users};
     }
     if(a==='approve' || a==='revoke'){
@@ -4001,8 +4009,8 @@ window.fbCall = async function(p){
     if(a==='getstats'){
       const s=await getDoc(doc(db,'config','stats'));
       const d=s.exists()?s.data():{};
-      const all=await getAllUsers();
-      const reales=all.filter(u=>(u.rol||'').toUpperCase()!=='ADMIN' && (u.aprobado||'').toUpperCase()==='SI').length;
+      // usa el numero guardado (1 lectura) en vez de leer toda la coleccion
+      const reales = typeof d.reales==='number' ? d.reales : 0;
       return {ok:true, reales,
         clientes:d.clientes||'', anios:d.anios||'', productos:d.productos||'',
         pay_zelle: d.pay_zelle!==false, pay_paypal: d.pay_paypal!==false };
