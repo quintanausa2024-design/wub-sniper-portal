@@ -1105,8 +1105,19 @@ const API_URL = "https://script.google.com/macros/s/AKfycbxRmcVmyKWd6mTTonNrsIDb
 // servicio de correos (Apps Script solo para enviar emails)
 const MAIL_URL = "https://script.google.com/macros/s/AKfycbwA9nhd7SRlMDDK3hVEU1vjgoy8HlaMQX4UsJEjo5AT0LuOaGPkddCeGOSOLWuW9zUMmQ/exec";
 // manda un correo por detrás (no bloquea; si falla, no rompe nada)
+// freno de correos: máximo unos pocos por minuto, evita disparos en masa/bucle
+let _correosEnviados=[], _correoBloqueado=false;
 function enviarCorreo(params){
   try{
+    const ahora=Date.now();
+    // limpiar registro de más de 1 minuto
+    _correosEnviados=_correosEnviados.filter(t=>ahora-t<60000);
+    // si ya se mandaron 15 en el último minuto, bloquear (señal de bucle/masa)
+    if(_correosEnviados.length>=15){
+      if(!_correoBloqueado){ _correoBloqueado=true; console.warn('Correos bloqueados: demasiados de golpe'); }
+      return;
+    }
+    _correosEnviados.push(ahora);
     const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
     fetch(MAIL_URL+'?'+qs).catch(()=>{});
   }catch(e){}
@@ -2436,12 +2447,14 @@ async function refrescarDesdeFirebase(){
   render();
 }
 function aprobarTodosClientes(n){
-  confirmAction('Aprobar a todos',`¿Aprobar los ${n} clientes pendientes de una vez? Todos tendrán acceso al portal.`,'Aprobar a todos',async()=>{
+  confirmAction('Aprobar a todos',`¿Aprobar los ${n} clientes pendientes de una vez? Todos tendrán acceso (sin correo masivo).`,'Aprobar a todos',async()=>{
     const pend=(ADMIN_USERS||[]).filter(u=>(u.aprobado||'').toUpperCase().trim()!=='SI' && (u.rol||'').toUpperCase().trim()!=='ADMIN');
     pend.forEach(u=>u.aprobado='SI'); renderKeep();   // se ven aprobados al instante
     for(const u of pend){
       try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:u.email}); }catch(e){}
+      // NO se manda correo aquí (evita cientos de correos de golpe)
     }
+    toast('✓ '+pend.length+' clientes aprobados');
   });
 }
 // rechazar (ocultar) todos los pendientes de golpe — para limpiar spam/basura
