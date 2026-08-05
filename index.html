@@ -2450,9 +2450,13 @@ function rechazarTodosPendientes(n){
     renderKeep();
     try{
       const r=await apiCall({action:'rechazartodos',email:SESS.email,pass:SESS.pass});
-      if(r.ok){ toast('✓ '+(r.total||0)+' registros limpiados'); ADMIN_USERS=null; refrescarDesdeFirebase(); }
-      else{ toast('No se pudo limpiar. Intenta de nuevo.'); ADMIN_USERS=null; refrescarDesdeFirebase(); }
-    }catch(e){ toast('Error. Intenta de nuevo.'); ADMIN_USERS=null; refrescarDesdeFirebase(); }
+      if(r.ok){
+        if(r.error){ toast('⚠️ Encontró '+r.pendientesEncontrados+' pero falló: '+r.error.slice(0,40)); }
+        else { toast('✓ '+(r.total||0)+' de '+(r.pendientesEncontrados||0)+' limpiados'); }
+        ADMIN_USERS=null; refrescarDesdeFirebase();
+      }
+      else{ toast('No se pudo: '+(r.error||'error')); ADMIN_USERS=null; refrescarDesdeFirebase(); }
+    }catch(e){ toast('Error: '+((e&&e.message)||e)); ADMIN_USERS=null; refrescarDesdeFirebase(); }
   });
 }
 
@@ -3739,12 +3743,13 @@ window.fbCall = async function(p){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const all=await getAllUsers(true);
       const pendientes=all.filter(u=>(u.aprobado||'').toUpperCase()!=='SI' && (u.rol||'').toUpperCase()!=='ADMIN');
-      let n=0;
+      let n=0, ultimoError='';
       for(const u of pendientes){
         try{ await updateDoc(doc(db,'usuarios',u.email),{aprobado:'RECHAZADO'});
-          actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}); n++; }catch(e){}
+          actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}); n++; }
+        catch(e){ ultimoError=(e&&e.message)||String(e); }
       }
-      return {ok:true, total:n};
+      return {ok:true, total:n, pendientesEncontrados:pendientes.length, error:ultimoError};
     }
     if(a==='deleteuser'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
