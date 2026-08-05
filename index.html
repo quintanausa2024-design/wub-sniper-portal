@@ -3109,9 +3109,14 @@ let LIC_SEL=0, LIC_MODE='pending', ALL_LICS=null, ALL_LICS_LOADING=false;
 async function licCall(url,params){
   const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
   try{
-    const res=await fetch(url+'?'+qs);
-    if(!res.ok){ return {ok:false, error:'HTTP_'+res.status}; }
-    return await res.json();
+    const res=await fetch(url+'?'+qs, {redirect:'follow'});
+    const txt=await res.text();
+    // Apps Script a veces devuelve HTML de error en vez de JSON
+    try{ return JSON.parse(txt); }
+    catch(parseErr){
+      // no era JSON válido → probablemente error del servidor
+      return {ok:false, error:'RESP_NO_JSON'};
+    }
   }catch(e){
     return {ok:false, error:'CONN'};
   }
@@ -3201,12 +3206,28 @@ async function setLic(pi,hwid,valor,maxpcs){
   const api=LICENSE_APIS[pi];
   const d=ALL_LICS&&ALL_LICS[pi];
   const l=d&&d.licencias&&d.licencias.find(x=>x.hwid===hwid);
-  if(l){ l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs); refrescarTablaLic(); actualizarTotalesLic(); }
+  if(!l)return;
+  // marcar "guardando..." mientras esperamos al servidor
+  l._guardando=true; refrescarTablaLic();
   const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
   if(maxpcs)params.maxpcs=maxpcs;
-  try{ const r=await licCall(api.url,params);
-    if(r&&r.ok===false&&l){ l.aprobado=(valor!=='SI'); refrescarTablaLic(); toast('No se pudo guardar, intenta de nuevo'); }
-  }catch(e){ if(l){ l.aprobado=(valor!=='SI'); refrescarTablaLic(); toast('Sin conexión, intenta de nuevo'); } }
+  try{
+    const r=await licCall(api.url,params);
+    l._guardando=false;
+    if(r && r.ok===true){
+      // el servidor CONFIRMÓ el cambio → ahora sí lo mostramos
+      l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs);
+      refrescarTablaLic(); actualizarTotalesLic();
+      toast(valor==='SI'?'✓ Licencia activada':'Licencia desactivada');
+    } else {
+      // el servidor NO guardó → no mentimos, avisamos claro
+      refrescarTablaLic();
+      toast('⚠️ No se guardó en el servidor. Intenta de nuevo.');
+    }
+  }catch(e){
+    l._guardando=false; refrescarTablaLic();
+    toast('⚠️ Sin conexión con el servidor. No se guardó.');
+  }
 }
 function approveLic(pi,hwid){
   const api=LICENSE_APIS[pi];
