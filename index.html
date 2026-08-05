@@ -413,6 +413,11 @@
     .trow .col-hide{display:none}
     .menu-btn{display:grid !important}
   }
+  .top-hi{display:flex;justify-content:flex-end;margin:0 0 4px;animation:hiFade .5s ease}
+  .top-hi-txt{font-size:13.5px;color:var(--text-dim);background:rgba(255,107,44,.07);border:1px solid rgba(255,107,44,.15);padding:7px 15px;border-radius:20px}
+  .top-hi-txt b{color:var(--fire)}
+  @keyframes hiFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+  @media(max-width:820px){.top-hi{margin-top:8px}}
   .menu-btn{display:none;position:fixed;top:14px;left:14px;z-index:55;width:42px;height:42px;
     border-radius:12px;background:var(--surface);border:1px solid var(--line);place-items:center;color:var(--text)}
   .info-btn{position:fixed;top:16px;right:18px;z-index:56;width:42px;height:42px;border-radius:12px;
@@ -1476,11 +1481,12 @@ function footerHTML(){
 }
 
 function shell(nav,content){const u=view==='admin'?{n:'Otoniel Quintana',e:'Admin · CEO',av:'OQ'}:{n:CLIENT.name,e:CLIENT.email,av:'OQ'};
+  const saludo = view==='client' ? `<div class="top-hi"><span class="top-hi-txt">${LANG==='en'?'Hi':'Hola'}, <b>${(CLIENT.name||'').split(' ')[0]||''}</b> 👋</span></div>` : '';
   return `<div class="shell"><aside class="side">${orb()}<nav class="nav">${nav}</nav>
     <div class="side-foot"><div class="side-user"><div class="avatar">${u.av}</div>
       <div class="meta"><div class="n">${u.n}</div><div class="e">${u.e}</div></div></div>
       <button class="logout" onclick="setView('login')">${sv(I.logout)} ${view==='client'?t('logout'):'Cerrar sesión'}</button></div>
-    </aside><main class="main" id="mainSlot">${content}${footerHTML()}</main>
+    </aside><main class="main" id="mainSlot">${saludo}${content}${footerHTML()}</main>
     <button class="scrollbtn" id="scrollBtn" onclick="scrollToggle()" title="Ir abajo">${sv(I.chev,20)}</button></div>`}
 // ── flecha flotante: baja al final / sube al inicio ──
 function scrollToggle(){
@@ -2096,6 +2102,26 @@ function maintCard(){
       <button class="btn-ghost" id="maintSave" style="padding:8px 14px" onclick="saveMaintMsg()">Guardar aviso</button>
     </div></div>`;
 }
+// cuadro con el número de productos disponibles para descargar del cliente
+function prodCountCard(){
+  const isEn=LANG==='en';
+  // asegurar que los productos estén cargados
+  if(CLIENT_PRODS===null){ loadClientProds(); }
+  const disponibles=(CLIENT_PRODS||[]).filter(p=>p.canDownload).length;
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${isEn?'Your products':'Tus productos'}</div>
+      <div class="card-cat">${isEn?'Available to download':'Disponibles para descargar'}</div></div>
+    <div style="padding:20px;display:flex;align-items:center;gap:16px">
+      <div style="display:flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:14px;background:linear-gradient(135deg,rgba(255,107,44,.15),rgba(255,143,90,.08));border:1px solid rgba(255,107,44,.25);flex-shrink:0">
+        <div style="font-size:26px;font-weight:800;color:var(--fire)">${disponibles}</div>
+      </div>
+      <div style="min-width:0">
+        <div style="font-size:14px;color:var(--text);font-weight:600">${disponibles===1?(isEn?'1 product ready':'1 producto listo'):(isEn?disponibles+' products ready':disponibles+' productos listos')}</div>
+        <div style="font-size:12.5px;color:var(--text-dim);margin-top:2px">${disponibles>0?(isEn?'Go to "My Products" to download':'Ve a "Mis Productos" para descargar'):(isEn?'No products yet — contact support':'Aún sin productos — contáctame')}</div>
+      </div>
+      ${disponibles>0?`<button class="btn-ghost" style="margin-left:auto;flex-shrink:0" onclick="setTab('products')">${isEn?'View':'Ver'}</button>`:''}
+    </div></div>`;
+}
 function profilePage(){
   const ok = profileMsg ? `<div class="login-err show" style="max-width:480px;color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)">${profileMsg}</div>` : '';
   const err = profileErr ? `<div class="login-err show" style="max-width:480px">${profileErr}</div>` : '';
@@ -2131,6 +2157,7 @@ function profilePage(){
         <div class="card"><div class="card-top" style="display:flex;align-items:center;gap:13px">
           <div class="avatar" style="width:44px;height:44px;font-size:15px">${(CLIENT.name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
           <div style="min-width:0"><div class="card-name">${CLIENT.name}</div><div class="card-cat">${CLIENT.email}</div></div></div></div>
+        ${prodCountCard()}
         <div class="card"><div class="card-top"><div class="card-name">${t('cambiar_pass')}</div></div>
           <div style="padding:20px">
             ${ok}${err}
