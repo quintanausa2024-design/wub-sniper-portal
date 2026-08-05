@@ -1085,6 +1085,15 @@ const orb=(big)=> big
    Si la dejas vacía, el portal funciona en modo DEMO.
    ============================================================ */
 const API_URL = "https://script.google.com/macros/s/AKfycbxRmcVmyKWd6mTTonNrsIDbG1PZSoz6dGgO5FUMWylW80FcOD4PyyKyLB03Fuy8It-jdQ/exec";
+// servicio de correos (Apps Script solo para enviar emails)
+const MAIL_URL = "https://script.google.com/macros/s/AKfycbwA9nhd7SRlMDDK3hVEU1vjgoy8HlaMQX4UsJEjo5AT0LuOaGPkddCeGOSOLWuW9zUMmQ/exec";
+// manda un correo por detrás (no bloquea; si falla, no rompe nada)
+function enviarCorreo(params){
+  try{
+    const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
+    fetch(MAIL_URL+'?'+qs).catch(()=>{});
+  }catch(e){}
+}
 
 /* ============================================================
    👇 LICENCIAS DE PRODUCTOS (las de HWID, cada una en su hoja)
@@ -1422,13 +1431,25 @@ function showBienvenida(email){
 async function doReset(){
   const email=(document.getElementById('remail').value||'').trim().toLowerCase();
   if(!email||!email.includes('@')){authMsg='Escribe un correo válido.';return render();}
-  if(!API_URL){authMsg='✅ Te mandé una contraseña nueva (demo).';tab='auth_login';return render();}
   const btn=document.getElementById('rbtn');btn.textContent='Enviando...';
   try{
-    const r=await apiCall({action:'reset',email});
-    if(r.ok){authMsg='✅ Te mandé una contraseña nueva a tu correo. Revísalo y entra con ella.';tab='auth_login';render();}
+    // generar contraseña temporal, guardarla en Firebase
+    const temp=genTempPass();
+    const r=await apiCall({action:'reset',email,newpass:temp});
+    if(r.ok){
+      // mandar el correo con la temporal
+      enviarCorreo({accion:'temporal', email, nombre:r.nombre||'Trader', temppass:temp});
+      authMsg='✅ Te mandé una contraseña temporal a tu correo. Revísalo (y la carpeta de spam) y entra con ella.';
+      tab='auth_login';render();
+    }
     else{authMsg = r.error==='NOTFOUND'?'Ese correo no está registrado.':'No se pudo enviar. Intenta de nuevo.';render();}
   }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
+}
+// genera una contraseña temporal fácil de leer
+function genTempPass(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];
+  return s;
 }
 
 function footerHTML(){
@@ -2337,6 +2358,8 @@ async function approveUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
   if(u){ u.aprobado='SI'; renderKeep(); }          // se ve el cambio al instante
   try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
+  // correo de bienvenida
+  enviarCorreo({accion:'bienvenida', email:em, nombre:(u&&u.nombre)||'Trader'});
 }
 async function revokeUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
@@ -3483,8 +3506,26 @@ window.fbCall = async function(p){
       return {ok:true};
     }
     if(a==='reset'){
-      // el admin puede resetear; aquí solo marca (mantener simple)
-      return {ok:true};
+      // recuperar contraseña: guarda la clave temporal que manda el portal
+      const em=(p.email||'').toLowerCase().trim();
+      const u=await getUser(em);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      if(!p.newpass || p.newpass.length<4) return {ok:false,error:'PASS_CORTA'};
+      const nh=await hashPass(p.newpass);
+      await updateDoc(doc(db,'usuarios',em),{pass_hash:nh});
+      actualizarUserEnCache(em,{pass_hash:nh});
+      return {ok:true, nombre:u.nombre||''};
+    }
+    // el admin resetea la clave de un cliente
+    if(a==='adminreset'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const em=(p.target||'').toLowerCase().trim();
+      const u=await getUser(em);
+      if(!u) return {ok:false,error:'NOTFOUND'};
+      const nh=await hashPass(p.newpass);
+      await updateDoc(doc(db,'usuarios',em),{pass_hash:nh});
+      actualizarUserEnCache(em,{pass_hash:nh});
+      return {ok:true, nombre:u.nombre||''};
     }
 
     // ---------- LISTAR PRODUCTOS (cliente) ----------
