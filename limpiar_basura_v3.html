@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Limpiar basura — Sniper Portal</title>
+<style>
+  body{background:#0d1117;color:#e6edf3;font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+       max-width:760px;margin:0 auto;padding:28px 18px}
+  h1{color:#ff6b35;font-size:22px;margin:0 0 6px}
+  .sub{color:#8b949e;font-size:14px;margin:0 0 22px}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:16px}
+  button{background:#ff6b35;color:#fff;border:0;border-radius:9px;padding:13px 22px;
+         font-size:15px;font-weight:700;cursor:pointer;margin-right:10px}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.gris{background:#30363d}
+  #log{background:#010409;border:1px solid #30363d;border-radius:9px;padding:14px;
+       font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;
+       height:340px;overflow-y:auto;white-space:pre-wrap}
+  .ok{color:#3fb950}.err{color:#f85149}.warn{color:#d29922}.info{color:#58a6ff}
+  .big{font-size:30px;font-weight:800;color:#ff6b35}
+  .nota{background:rgba(210,153,34,.08);border:1px solid rgba(210,153,34,.3);
+        border-radius:9px;padding:12px 14px;font-size:13.5px;color:#d29922;margin-bottom:16px}
+</style>
+</head>
+<body>
+
+<h1>Limpiar registros basura</h1>
+<p class="sub">Borra únicamente los documentos cuyo nombre sea exactamente <b>Hacked By Ghost</b>.</p>
+
+<div class="nota">
+  Antes de usar esta página, publica en Firestore la regla:<br>
+  <code>allow delete: if resource.data.nombre == "Hacked By Ghost";</code><br>
+  Sin esa regla, Firestore rechazará todos los borrados.
+</div>
+
+<div class="card">
+  <button id="btnCandado">0 · Probar candado</button>
+  <button id="btnContar">1 · Contar</button>
+  <button id="btnBorrar" class="gris" disabled>2 · Borrar</button>
+  <div id="resumen" style="margin-top:16px"></div>
+</div>
+
+<div class="card">
+  <div id="log">Listo. Empieza por "Contar".\n</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, writeBatch, setDoc, deleteDoc }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA6T_TE4f78gRJ4VrsVipLniYNYlv4urN0",
+  authDomain: "sniper-portal.firebaseapp.com",
+  projectId: "sniper-portal",
+  storageBucket: "sniper-portal.firebasestorage.app",
+  messagingSenderId: "63899249287",
+  appId: "1:63899249287:web:8f2ed2976e7c203914e622"
+};
+
+const NOMBRE_BASURA = "Hacked By Ghost";
+const TAM_LOTE = 400;
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const $log = document.getElementById('log');
+const $res = document.getElementById('resumen');
+const $c   = document.getElementById('btnContar');
+const $b   = document.getElementById('btnBorrar');
+
+function log(txt, clase){
+  $log.innerHTML += `<span class="${clase||''}">${txt}</span>\n`;
+  $log.scrollTop = $log.scrollHeight;
+}
+
+let basura = [];
+
+document.getElementById('btnCandado').onclick = async () => {
+  const btn = document.getElementById('btnCandado');
+  btn.disabled = true;
+  const idPrueba = 'ZZZ_PRUEBA_CANDADO_' + Date.now() + '@test.local';
+  log('\n─── PRUEBA DEL CANDADO ───', 'info');
+  log('Intentando crear un documento en usuarios...', 'info');
+  try {
+    await setDoc(doc(db,'usuarios',idPrueba), { nombre:'Hacked By Ghost', prueba:true });
+    log('RESULTADO: CREADO. El candado NO está puesto.', 'err');
+    log('→ Las reglas no se publicaron o no se aplicaron.', 'err');
+    try {
+      await deleteDoc(doc(db,'usuarios',idPrueba));
+      log('(documento de prueba borrado)', 'info');
+    } catch(e2) {
+      log('No se pudo borrar la prueba: ' + idPrueba, 'warn');
+    }
+  } catch(e) {
+    if (String(e.code||e.message).toLowerCase().includes('permission')) {
+      log('RESULTADO: RECHAZADO. El candado SI está puesto.', 'ok');
+      log('→ Las reglas funcionan. Los documentos entran por otra vía', 'warn');
+      log('   (clave de cuenta de servicio, que ignora las reglas).', 'warn');
+    } else {
+      log('Error inesperado: ' + (e.code || e.message), 'err');
+    }
+  }
+  btn.disabled = false;
+};
+
+$c.onclick = async () => {
+  $c.disabled = true;
+  basura = [];
+  log('Leyendo la colección usuarios...', 'info');
+  try {
+    const snap = await getDocs(collection(db,'usuarios'));
+    let reales = 0, otros = 0;
+    snap.docs.forEach(d => {
+      const n = (d.data().nombre || '').trim();
+      if (n === NOMBRE_BASURA) basura.push(d.id);
+      else if (n) reales++;
+      else otros++;
+    });
+
+    log(`Total de documentos: ${snap.size}`, 'info');
+    log(`Basura ("${NOMBRE_BASURA}"): ${basura.length}`, 'warn');
+    log(`Con otro nombre: ${reales}`, 'ok');
+    log(`Sin nombre: ${otros}`, otros ? 'warn' : 'ok');
+
+    $res.innerHTML = `<div class="big">${basura.length}</div>
+      <div style="color:#8b949e;font-size:13.5px">documentos basura detectados ·
+      quedarán <b style="color:#3fb950">${reales + otros}</b> documentos</div>`;
+
+    if (otros > 0)
+      log(`\nAviso: hay ${otros} documentos sin nombre. NO se tocan. Revísalos aparte.`, 'warn');
+
+    if (basura.length) { $b.disabled = false; $b.className = ''; }
+    else log('\nNo hay nada que borrar.', 'ok');
+
+  } catch(e) {
+    log('ERROR al leer: ' + e.message, 'err');
+  }
+  $c.disabled = false;
+};
+
+$b.onclick = async () => {
+  if (!confirm(`Se borrarán ${basura.length} documentos "${NOMBRE_BASURA}". Los clientes reales no se tocan. ¿Continuar?`)) return;
+  $b.disabled = true; $c.disabled = true;
+
+  let hechos = 0, fallos = 0;
+  const t0 = Date.now();
+  log(`\nBorrando en lotes de ${TAM_LOTE}...`, 'info');
+
+  for (let i = 0; i < basura.length; i += TAM_LOTE) {
+    const trozo = basura.slice(i, i + TAM_LOTE);
+    const batch = writeBatch(db);
+    trozo.forEach(id => batch.delete(doc(db,'usuarios',id)));
+    try {
+      await batch.commit();
+      hechos += trozo.length;
+      log(`  ✓ ${hechos} / ${basura.length}`, 'ok');
+    } catch(e) {
+      fallos += trozo.length;
+      log(`  ✗ lote ${Math.floor(i/TAM_LOTE)+1} falló: ${e.code || e.message}`, 'err');
+      if (String(e.code||'').includes('permission')) {
+        log('\nFirestore rechazó el borrado. Falta publicar la regla de delete. Deteniendo.', 'err');
+        break;
+      }
+    }
+    await new Promise(r => setTimeout(r, 150));
+  }
+
+  const seg = ((Date.now()-t0)/1000).toFixed(1);
+  log(`\nTerminado en ${seg}s — borrados: ${hechos} · fallidos: ${fallos}`, fallos ? 'warn' : 'ok');
+  if (!fallos && hechos) {
+    log('\nAhora vuelve a Firestore y cambia la regla a: allow delete: if false;', 'warn');
+    log('Y en el portal: Ctrl+Shift+R para limpiar la caché.', 'warn');
+  }
+  $c.disabled = false;
+};
+</script>
+</body>
+</html>
