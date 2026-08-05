@@ -2436,15 +2436,23 @@ function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usu
   renderKeep();
   try{ await apiCall({action:'deleteuser',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
 }); }
-function refreshUsers(){ ADMIN_USERS=null; refrescarDesdeFirebase(); }
-// fuerza leer lo REAL de Firebase (ignora caché) — para ver cambios recién hechos
+function refreshUsers(){ refrescarDesdeFirebase(); }
+// lee lo REAL de Firebase por detras, SIN borrar la lista (evita el parpadeo)
+let REFRESCANDO=false;
 async function refrescarDesdeFirebase(){
-  render();  // muestra "cargando"
+  if(REFRESCANDO) return; REFRESCANDO=true;
+  // marcar el boton como "cargando" sin tocar el resto de la pagina
+  const btns=[...document.querySelectorAll('.admin-toolbar .btn-ghost')]
+    .filter(b=>/Actualizar/i.test(b.textContent));
+  const orig=btns.map(b=>b.innerHTML);
+  btns.forEach(b=>{ b.innerHTML='Actualizando...'; b.style.opacity='.6'; });
   try{
     const r=await apiCall({action:'listusersfresh',email:SESS.email,pass:SESS.pass});
     if(r.ok) ADMIN_USERS=r.users;
   }catch(e){}
-  render();
+  REFRESCANDO=false;
+  btns.forEach((b,i)=>{ b.innerHTML=orig[i]; b.style.opacity=''; });
+  renderKeep();   // un solo repintado, conservando la posicion
 }
 function aprobarTodosClientes(n){
   confirmAction('Aprobar a todos',`¿Aprobar los ${n} clientes pendientes de una vez? Todos tendrán acceso (sin correo masivo).`,'Aprobar a todos',async()=>{
