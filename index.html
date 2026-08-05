@@ -3564,7 +3564,7 @@ async function getAllUsers(force){
       }
     }catch(e){}
   }
-  const snap=await getDocs(collection(db,'usuarios'));
+  const snap=await getDocs(collection(db,'clientes'));
   _usersCache=snap.docs.map(d=>d.data());
   _usersCacheT=now;
   try{ localStorage.setItem('sp_users_cache', JSON.stringify(_usersCache));
@@ -3591,7 +3591,7 @@ function borrarUserDeCache(email){
 }
 
 async function getUser(email){
-  const ref=doc(db,'usuarios',email.toLowerCase().trim());
+  const ref=doc(db,'clientes',email.toLowerCase().trim());
   const s=await getDoc(ref);
   return s.exists()? s.data() : null;
 }
@@ -3626,7 +3626,7 @@ window.fbCall = async function(p){
       // último acceso (una vez al día) — sin invalidar todo el caché
       const hoy=nowStr().slice(0,10);
       if((u.ultimo_acceso||'').slice(0,10)!==hoy){
-        try{ await updateDoc(doc(db,'usuarios',u.email),{ultimo_acceso:nowStr()}); }catch(e){}
+        try{ await updateDoc(doc(db,'clientes',u.email),{ultimo_acceso:nowStr()}); }catch(e){}
       }
       return {ok:true, role:(u.rol||'CLIENTE').toUpperCase(), name:u.nombre||''};
     }
@@ -3644,7 +3644,7 @@ window.fbCall = async function(p){
       }
       const nuevo={ email, pass_hash:h, nombre:p.nombre||'', rol:'CLIENTE', aprobado:'NO',
         fecha_registro:nowStr(), ultimo_acceso:'', productos:'', mi_codigo:genCodigo(), referido_por:refValido };
-      await setDoc(doc(db,'usuarios',email), nuevo);
+      await setDoc(doc(db,'clientes',email), nuevo);
       invalidateUsers();
       return {ok:true};
     }
@@ -3656,7 +3656,7 @@ window.fbCall = async function(p){
       const h=await hashPass(p.oldpass||p.pass||'');
       if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
       const nh=await hashPass(p.newpass);
-      await updateDoc(doc(db,'usuarios',u.email),{pass_hash:nh}); invalidateUsers();
+      await updateDoc(doc(db,'clientes',u.email),{pass_hash:nh}); invalidateUsers();
       return {ok:true};
     }
     if(a==='reset'){
@@ -3666,7 +3666,7 @@ window.fbCall = async function(p){
       if(!u) return {ok:false,error:'NOTFOUND'};
       if(!p.newpass || p.newpass.length<4) return {ok:false,error:'PASS_CORTA'};
       const nh=await hashPass(p.newpass);
-      await updateDoc(doc(db,'usuarios',em),{pass_hash:nh});
+      await updateDoc(doc(db,'clientes',em),{pass_hash:nh});
       actualizarUserEnCache(em,{pass_hash:nh});
       return {ok:true, nombre:u.nombre||''};
     }
@@ -3677,7 +3677,7 @@ window.fbCall = async function(p){
       const u=await getUser(em);
       if(!u) return {ok:false,error:'NOTFOUND'};
       const nh=await hashPass(p.newpass);
-      await updateDoc(doc(db,'usuarios',em),{pass_hash:nh});
+      await updateDoc(doc(db,'clientes',em),{pass_hash:nh});
       actualizarUserEnCache(em,{pass_hash:nh});
       return {ok:true, nombre:u.nombre||''};
     }
@@ -3758,7 +3758,7 @@ window.fbCall = async function(p){
     if(a==='approve' || a==='revoke'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
-      await updateDoc(doc(db,'usuarios',em),{aprobado: a==='approve'?'SI':'NO'});
+      await updateDoc(doc(db,'clientes',em),{aprobado: a==='approve'?'SI':'NO'});
       actualizarUserEnCache(em,{aprobado: a==='approve'?'SI':'NO'});
       return {ok:true};
     }
@@ -3769,7 +3769,7 @@ window.fbCall = async function(p){
       const pendientes=all.filter(u=>(u.aprobado||'').toUpperCase()!=='SI' && (u.rol||'').toUpperCase()!=='ADMIN');
       let n=0, ultimoError='';
       for(const u of pendientes){
-        try{ await updateDoc(doc(db,'usuarios',u.email),{aprobado:'RECHAZADO'});
+        try{ await updateDoc(doc(db,'clientes',u.email),{aprobado:'RECHAZADO'});
           actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}); n++; }
         catch(e){ ultimoError=(e&&e.message)||String(e); }
       }
@@ -3778,14 +3778,14 @@ window.fbCall = async function(p){
     if(a==='deleteuser'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
-      await deleteDoc(doc(db,'usuarios',em));
+      await deleteDoc(doc(db,'clientes',em));
       borrarUserDeCache(em);
       return {ok:true};
     }
     if(a==='setclientproducts'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
-      await updateDoc(doc(db,'usuarios',em),{productos:p.productos||''});
+      await updateDoc(doc(db,'clientes',em),{productos:p.productos||''});
       actualizarUserEnCache(em,{productos:p.productos||''});
       return {ok:true};
     }
