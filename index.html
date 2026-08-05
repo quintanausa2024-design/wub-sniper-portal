@@ -2423,7 +2423,16 @@ function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usu
   renderKeep();
   try{ await apiCall({action:'deleteuser',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
 }); }
-function refreshUsers(){ ADMIN_USERS=null; render(); }
+function refreshUsers(){ ADMIN_USERS=null; refrescarDesdeFirebase(); }
+// fuerza leer lo REAL de Firebase (ignora caché) — para ver cambios recién hechos
+async function refrescarDesdeFirebase(){
+  render();  // muestra "cargando"
+  try{
+    const r=await apiCall({action:'listusersfresh',email:SESS.email,pass:SESS.pass});
+    if(r.ok) ADMIN_USERS=r.users;
+  }catch(e){}
+  render();
+}
 function aprobarTodosClientes(n){
   confirmAction('Aprobar a todos',`¿Aprobar los ${n} clientes pendientes de una vez? Todos tendrán acceso al portal.`,'Aprobar a todos',async()=>{
     const pend=(ADMIN_USERS||[]).filter(u=>(u.aprobado||'').toUpperCase().trim()!=='SI' && (u.rol||'').toUpperCase().trim()!=='ADMIN');
@@ -2441,9 +2450,9 @@ function rechazarTodosPendientes(n){
     renderKeep();
     try{
       const r=await apiCall({action:'rechazartodos',email:SESS.email,pass:SESS.pass});
-      if(r.ok){ toast('✓ '+(r.total||0)+' registros limpiados'); ADMIN_USERS=null; loadUsers(); }
-      else{ toast('No se pudo limpiar. Intenta de nuevo.'); ADMIN_USERS=null; loadUsers(); }
-    }catch(e){ toast('Error. Intenta de nuevo.'); ADMIN_USERS=null; loadUsers(); }
+      if(r.ok){ toast('✓ '+(r.total||0)+' registros limpiados'); ADMIN_USERS=null; refrescarDesdeFirebase(); }
+      else{ toast('No se pudo limpiar. Intenta de nuevo.'); ADMIN_USERS=null; refrescarDesdeFirebase(); }
+    }catch(e){ toast('Error. Intenta de nuevo.'); ADMIN_USERS=null; refrescarDesdeFirebase(); }
   });
 }
 
@@ -3701,9 +3710,10 @@ window.fbCall = async function(p){
     }
 
     // ---------- USUARIOS (admin) ----------
-    if(a==='listusers'){
+    if(a==='listusers' || a==='listusersfresh'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      const all=await getAllUsers();   // usa caché (no fuerza lectura de 386 docs cada vez)
+      if(a==='listusersfresh') invalidateUsers();   // forzar lectura fresca de Firebase
+      const all=await getAllUsers(a==='listusersfresh');   // usa caché (no fuerza lectura de 386 docs cada vez)
       // ocultar los rechazados (basura/spam marcado)
       const visibles=all.filter(u=>(u.aprobado||'').toUpperCase()!=='RECHAZADO');
       const users=visibles.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
