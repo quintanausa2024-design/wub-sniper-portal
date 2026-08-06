@@ -2420,7 +2420,27 @@ async function loadUsers(){
   ADMIN_LOADING=false; render();
 }
 // ── vuelve a dibujar sin perder el lugar donde estabas ──
-function renderKeep(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
+let _lastView=null;
+// repinta SOLO la zona central (no el menu lateral) -> sin parpadeo
+function renderKeep(){
+  const y=window.scrollY;
+  const slot=document.getElementById('mainSlot');
+  if(slot && _lastView===view && (view==='admin'||view==='client')){
+    try{
+      const html = view==='admin' ? adminView() : clientView();
+      const tmp=document.createElement('div'); tmp.innerHTML=html;
+      const nuevo=tmp.querySelector('#mainSlot');
+      if(nuevo){
+        // si no cambio nada, ni tocamos el DOM (evita destellos innecesarios)
+        if(slot.innerHTML!==nuevo.innerHTML) slot.innerHTML=nuevo.innerHTML;
+        window.scrollTo(0,y);
+        setTimeout(updateScrollBtn,0);
+        return;
+      }
+    }catch(e){}
+  }
+  render(); window.scrollTo(0,y);
+}
 // ── refresca la lista por detrás, sin mostrar "Cargando..." ──
 async function refreshUsersSilent(){
   try{ const r=await apiCall({action:'listusers',email:SESS.email,pass:SESS.pass});
@@ -3241,6 +3261,13 @@ async function loadAllData(silent){
     await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
   }catch(e){}
 }
+// guarda la copia rapida en Firebase con el estado actual (para que al reabrir no salga viejo)
+async function guardarCacheLic(){
+  try{
+    const guardar=(ALL_LICS||[]).map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
+  }catch(e){}
+}
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
   (ALL_LICS||[]).forEach(d=>{ if(d&&d.licencias){conn++;tot+=d.licencias.length;apr+=d.licencias.filter(l=>l.aprobado).length;pend+=d.licencias.filter(l=>!l.aprobado).length;} });
@@ -3285,6 +3312,7 @@ async function setLic(pi,hwid,valor,maxpcs){
       // el servidor CONFIRMÓ el cambio → ahora sí lo mostramos
       l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs);
       refrescarTablaLic(); actualizarTotalesLic();
+      guardarCacheLic();   // <-- que la copia rapida quede al dia
       toast(valor==='SI'?'✓ Licencia activada':'Licencia desactivada');
     } else {
       // el servidor NO guardó → no mentimos, avisamos claro
@@ -3316,6 +3344,7 @@ function aprobarTodasLic(){
       if(api.pcs)params.maxpcs=(l.maxpcs&&l.maxpcs>0)?l.maxpcs:1;
       try{ await licCall(api.url,params); }catch(e){}
     }
+    await guardarCacheLic();
     toast('Listo, licencias aprobadas');
   });
 }
@@ -3489,6 +3518,7 @@ function render(){
   if(_renderCount>40){ console.warn('render throttled'); return; }  // corta bucles
   const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
+  _lastView=view;
   pintarMaint();
   if(!MAINT_LOADED && !MAINT_LOADING) loadMaint();
   if(view==='login'){ if(REVIEWS===null && !REVIEWS_LOADING) loadReviews(); if(SRV_STATS===null && !SRV_STATS_LOADING) loadStats(); }
