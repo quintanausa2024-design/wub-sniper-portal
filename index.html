@@ -1403,7 +1403,7 @@ async function doLogin(){
   const email=(document.getElementById('lemail').value||'').trim().toLowerCase();
   const pass=document.getElementById('lpass').value||'';
   const remember=document.getElementById('lremember')?document.getElementById('lremember').checked:false;
-  if(!email||!pass){authMsg='Escribe tu correo y contraseña.';return render();}
+  if(!email||!pass){return errAuth('Escribe tu correo y contraseña.', !email?'lemail':'lpass');}
   try{
     if(remember){ localStorage.setItem('sp_remember',JSON.stringify({email,pass:btoa(pass)})); REMEMBER={email,pass,on:true}; }
     else{ localStorage.removeItem('sp_remember'); REMEMBER={email:'',pass:'',on:false}; }
@@ -1424,22 +1424,37 @@ async function doLogin(){
   }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
 }
 
+// muestra un error en el formulario sin borrar lo que el cliente ya escribio
+function errAuth(msg, focoId){
+  authMsg=msg;
+  const card=document.querySelector('.login-card');
+  let box=card?card.querySelector('.login-err'):null;
+  if(!box && card){
+    box=document.createElement('div'); box.className='login-err show';
+    const p=card.querySelector('.login-p');
+    if(p) p.insertAdjacentElement('afterend', box); else card.prepend(box);
+  }
+  if(box){ box.className='login-err show'; box.textContent=msg; }
+  else { return render(); }
+  if(focoId){ const el=document.getElementById(focoId); if(el){ el.focus(); el.select&&el.select(); } }
+}
 async function doSignup(){
   const nombre=(document.getElementById('sname').value||'').trim();
   const email=(document.getElementById('semail').value||'').trim().toLowerCase();
   const pass=document.getElementById('spass').value||'';
   const pass2=document.getElementById('spass2').value||'';
-  if(!nombre||!email||!pass){authMsg='Llena todos los campos.';return render();}
-  if(!email.includes('@')){authMsg='Escribe un correo válido.';return render();}
-  if(pass.length<4){authMsg='La contraseña debe tener al menos 4 caracteres.';return render();}
-  if(pass!==pass2){authMsg='Las contraseñas no coinciden. Toca el ojito 👁 para verlas.';return render();}
+  if(!nombre||!email||!pass){return errAuth('Llena todos los campos.', !nombre?'sname':(!email?'semail':'spass'));}
+  if(!email.includes('@')){return errAuth('Escribe un correo válido.','semail');}
+  if(pass.length<4){return errAuth('La contraseña debe tener al menos 4 caracteres.','spass');}
+  if(pass!==pass2){return errAuth('Las contraseñas no coinciden. Toca el ojito 👁 para verlas y corrige.','spass2');}
   if(!API_URL){authMsg='✅ ¡Cuenta creada! (demo)';tab='auth_login';return render();}
   const btn=document.getElementById('sbtn');btn.textContent='Creando...';
   try{
     const r=await apiCall({action:'signup',email,pass,nombre,ref:REF_CODE});
     if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(email); }
-    else{authMsg = r.error==='EXISTS'?'Ese correo ya está registrado. Inicia sesión.':'No se pudo crear la cuenta.';render();}
-  }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
+    else{ btn.textContent=t('crear_cuenta');
+      errAuth(r.error==='EXISTS'?'Ese correo ya está registrado. Inicia sesión.':'No se pudo crear la cuenta.','semail'); }
+  }catch(e){ btn.textContent=t('crear_cuenta'); errAuth('Error de conexión. Intenta de nuevo.'); }
 }
 // ── ventana de "cuenta creada" con el aviso del correo y el spam ──
 function showBienvenida(email){
