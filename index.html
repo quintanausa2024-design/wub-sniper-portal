@@ -1119,8 +1119,16 @@ function enviarCorreo(params){
     }
     _correosEnviados.push(ahora);
     const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
-    fetch(MAIL_URL+'?'+qs).catch(()=>{});
-  }catch(e){}
+    const url=MAIL_URL+'?'+qs;
+    console.log('[CORREO] enviando ->', params.accion, params.email);
+    // no-cors: el navegador no bloquea el envio aunque no pueda leer la respuesta
+    fetch(url,{mode:'no-cors'})
+      .then(()=>console.log('[CORREO] pedido enviado', params.email))
+      .catch(err=>{
+        console.warn('[CORREO] fetch fallo, reintento por imagen', err);
+        try{ const im=new Image(); im.src=url; }catch(e){}
+      });
+  }catch(e){ console.warn('[CORREO] error', e); }
 }
 
 /* ============================================================
