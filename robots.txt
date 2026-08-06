@@ -1,4 +1,3 @@
 User-agent: *
 Allow: /
 Sitemap: https://sniperportaltrading.com/sitemap.xml
-sniperportaltrading.com/respaldo.html
