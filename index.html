@@ -3576,7 +3576,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebas
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc,
-  deleteDoc, query, where
+  deleteDoc, query, where, writeBatch
 } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -3850,11 +3850,22 @@ window.fbCall = async function(p){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const all=await getAllUsers(true);
       const pendientes=all.filter(u=>(u.aprobado||'').toUpperCase()!=='SI' && (u.rol||'').toUpperCase()!=='ADMIN');
+      // en LOTES de 400 (antes iba de uno en uno y con miles se cortaba a medias)
       let n=0, ultimoError='';
-      for(const u of pendientes){
-        try{ await updateDoc(doc(db,'clientes',u.email),{aprobado:'RECHAZADO'});
-          actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}); n++; }
-        catch(e){ ultimoError=(e&&e.message)||String(e); }
+      const TAM=400;
+      for(let i=0;i<pendientes.length;i+=TAM){
+        const trozo=pendientes.slice(i,i+TAM);
+        try{
+          const batch=writeBatch(db);
+          trozo.forEach(u=>batch.update(doc(db,'clientes',u.email),{aprobado:'RECHAZADO'}));
+          await batch.commit();
+          trozo.forEach(u=>actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}));
+          n+=trozo.length;
+          console.log('[RECHAZAR] '+n+' / '+pendientes.length);
+        }catch(e){
+          ultimoError=(e&&e.message)||String(e);
+          console.warn('[RECHAZAR] lote fallo:', ultimoError);
+        }
       }
       return {ok:true, total:n, pendientesEncontrados:pendientes.length, error:ultimoError};
     }
