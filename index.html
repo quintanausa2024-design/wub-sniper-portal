@@ -1453,7 +1453,17 @@ async function doSignup(){
     const r=await apiCall({action:'signup',email,pass,nombre,ref:REF_CODE});
     if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(email); }
     else{ btn.textContent=t('crear_cuenta');
-      errAuth(r.error==='EXISTS'?'Ese correo ya está registrado. Inicia sesión.':'No se pudo crear la cuenta.','semail'); }
+      const msgs={
+        EXISTS:'Ese correo ya está registrado. Inicia sesión.',
+        EMAIL_INVALIDO:'Ese correo no parece válido. Revísalo.',
+        DOMINIO_NO_PERMITIDO:'Usa un correo real (Gmail, Hotmail, Yahoo...).',
+        TYPO: r.sugerencia ? ('¿Quisiste decir '+r.sugerencia+'? Corrige el correo.') : 'Revisa cómo escribiste el correo.',
+        PASS_CORTA:'La contraseña debe tener al menos 4 caracteres.',
+        LIMITE_ALCANZADO:'Hay muchos registros ahora mismo. Intenta en un rato o escríbeme por WhatsApp.',
+        FALTAN_DATOS:'Llena todos los campos.',
+        CONN:'Error de conexión. Intenta de nuevo.'
+      };
+      errAuth(msgs[r.error] || 'No se pudo crear la cuenta.','semail'); }
   }catch(e){ btn.textContent=t('crear_cuenta'); errAuth('Error de conexión. Intenta de nuevo.'); }
 }
 // ── ventana de "cuenta creada" con el aviso del correo y el spam ──
@@ -3693,21 +3703,25 @@ window.fbCall = async function(p){
     }
 
     // ---------- SIGNUP ----------
+    // El registro YA NO escribe en Firebase desde el navegador.
+    // Va al PORTERO (Apps Script), que valida y escribe con clave de servidor.
     if(a==='signup'){
-      const email=(p.email||'').toLowerCase().trim();
-      const ya=await getUser(email);
-      if(ya) return {ok:false,error:'EXISTS'};
-      const h=await hashPass(p.pass);
-      let refValido='';
-      if(p.ref){
-        const all=await getAllUsers();
-        if(all.some(x=>(x.mi_codigo||'').toUpperCase()===p.ref.toUpperCase())) refValido=p.ref.toUpperCase();
+      const qs = new URLSearchParams({
+        accion:'signup',
+        email:(p.email||'').toLowerCase().trim(),
+        pass:p.pass||'',
+        nombre:p.nombre||'',
+        ref:p.ref||''
+      }).toString();
+      try{
+        const res = await fetch(MAIL_URL+'?'+qs);
+        const r = await res.json();
+        invalidateUsers();
+        return r;
+      }catch(e){
+        console.warn('[PORTERO] signup fallo', e);
+        return {ok:false, error:'CONN'};
       }
-      const nuevo={ email, pass_hash:h, nombre:p.nombre||'', rol:'CLIENTE', aprobado:'NO',
-        fecha_registro:nowStr(), ultimo_acceso:'', productos:'', mi_codigo:genCodigo(), referido_por:refValido };
-      await setDoc(doc(db,'clientes',email), nuevo);
-      invalidateUsers();
-      return {ok:true};
     }
 
     // ---------- CAMBIAR / RESET PASSWORD ----------
