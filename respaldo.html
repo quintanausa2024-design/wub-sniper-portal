@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Respaldo de clientes — Sniper Portal</title>
+<style>
+  body{background:#0d1117;color:#e6edf3;font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+       max-width:760px;margin:0 auto;padding:28px 18px}
+  h1{color:#ff6b35;font-size:22px;margin:0 0 6px}
+  .sub{color:#8b949e;font-size:14px;margin:0 0 22px}
+  .card{background:#161b22;border:1px solid #30363d;border-radius:12px;padding:18px;margin-bottom:16px}
+  button{background:#ff6b35;color:#fff;border:0;border-radius:9px;padding:13px 22px;
+         font-size:15px;font-weight:700;cursor:pointer;margin-right:10px}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  button.gris{background:#30363d}
+  #log{background:#010409;border:1px solid #30363d;border-radius:9px;padding:14px;
+       font-family:ui-monospace,Consolas,monospace;font-size:12.5px;line-height:1.7;
+       height:300px;overflow-y:auto;white-space:pre-wrap}
+  .ok{color:#3fb950}.err{color:#f85149}.warn{color:#d29922}.info{color:#58a6ff}
+  .big{font-size:30px;font-weight:800;color:#ff6b35}
+</style>
+</head>
+<body>
+
+<h1>Respaldo de clientes</h1>
+<p class="sub">Descarga un archivo con tus clientes reales. No modifica nada en Firebase.</p>
+
+<div class="card">
+  <button id="b1">1 · Leer</button>
+  <button id="b2" class="gris" disabled>2 · Descargar respaldo</button>
+  <button id="b3" class="gris" disabled>3 · Descargar TODO (por si acaso)</button>
+  <div id="resumen" style="margin-top:16px"></div>
+</div>
+
+<div class="card"><div id="log">Empieza por "Leer".
+</div></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
+import { getFirestore, collection, getDocs }
+  from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA6T_TE4f78gRJ4VrsVipLniYNYlv4urN0",
+  authDomain: "sniper-portal.firebaseapp.com",
+  projectId: "sniper-portal",
+  storageBucket: "sniper-portal.firebasestorage.app",
+  messagingSenderId: "63899249287",
+  appId: "1:63899249287:web:8f2ed2976e7c203914e622"
+};
+
+self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+const app = initializeApp(firebaseConfig);
+try {
+  initializeAppCheck(app, {
+    provider: new ReCaptchaV3Provider("6LfUe3QtAAAAAHI4n-BSMMf1BUkyqSKY7rdgL3Ud"),
+    isTokenAutoRefreshEnabled: true
+  });
+} catch(e) {}
+const db = getFirestore(app);
+
+const $log=document.getElementById('log'), $res=document.getElementById('resumen');
+const $b1=document.getElementById('b1'), $b2=document.getElementById('b2'), $b3=document.getElementById('b3');
+function log(t,c){ $log.innerHTML += `<span class="${c||''}">${t}</span>\n`; $log.scrollTop=$log.scrollHeight; }
+
+let reales = [], todo = { clientes: [], usuarios: [] };
+
+function bajar(nombre, obj){
+  const blob = new Blob([JSON.stringify(obj,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+}
+
+$b1.onclick = async () => {
+  $b1.disabled = true; reales = []; todo = { clientes: [], usuarios: [] };
+  try {
+    log('Leyendo coleccion clientes...', 'info');
+    const snap = await getDocs(collection(db,'clientes'));
+    snap.docs.forEach(d => {
+      const data = d.data();
+      todo.clientes.push({ id: d.id, data });
+      if (String(data.aprobado||'').toUpperCase().trim() === 'SI') reales.push({ id: d.id, data });
+    });
+    log(`  total en clientes: ${snap.size}`, 'info');
+    log(`  con acceso (aprobado=SI): ${reales.length}`, 'ok');
+
+    const admins = reales.filter(u => String(u.data.rol||'').toUpperCase().trim()==='ADMIN').length;
+    log(`  de esos, admins: ${admins}`, 'ok');
+
+    try {
+      log('Leyendo coleccion usuarios (respaldo viejo)...', 'info');
+      const s2 = await getDocs(collection(db,'usuarios'));
+      s2.docs.forEach(d => todo.usuarios.push({ id: d.id, data: d.data() }));
+      log(`  total en usuarios: ${s2.size}`, 'info');
+    } catch(e) { log('  (no se pudo leer usuarios, no pasa nada)', 'warn'); }
+
+    $res.innerHTML = `<div class="big">${reales.length}</div>
+      <div style="color:#8b949e;font-size:13.5px">clientes reales listos para respaldar</div>`;
+
+    if (reales.length) { $b2.disabled=false; $b2.className=''; }
+    $b3.disabled=false; $b3.className='';
+    log('\nListo. Ahora descarga el respaldo y guardalo en tu PC.', 'ok');
+  } catch(e) {
+    log('ERROR: ' + (e.code || e.message), 'err');
+  }
+  $b1.disabled = false;
+};
+
+$b2.onclick = () => {
+  const f = new Date().toISOString().slice(0,10);
+  bajar(`clientes_reales_${f}.json`, { fecha:new Date().toISOString(), cantidad:reales.length, clientes:reales });
+  log(`Descargado: clientes_reales_${f}.json (${reales.length} clientes)`, 'ok');
+};
+
+$b3.onclick = () => {
+  const f = new Date().toISOString().slice(0,10);
+  bajar(`respaldo_completo_${f}.json`, { fecha:new Date().toISOString(), ...todo });
+  log(`Descargado: respaldo_completo_${f}.json`, 'ok');
+};
+</script>
+</body>
+</html>
