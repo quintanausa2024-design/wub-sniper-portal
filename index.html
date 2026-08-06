@@ -1148,6 +1148,7 @@ const LICENSE_APIS = [
 ];
 
 let view='login',tab='auth_login',authMsg='',profileMsg='',profileErr='';
+let VERIF_EMAIL='';   // correo pendiente de confirmar con codigo
 let REMEMBER={email:'',pass:'',on:false};
 let CONTACT_TEL='';
 try{CONTACT_TEL=localStorage.getItem('sp_tel')||'';}catch(e){}
@@ -1285,6 +1286,20 @@ function loginView(){
       <div class="field"><label>${t('correo')}</label><input type="email" id="remail" placeholder="tucorreo@gmail.com"></div>
       <button class="btn-primary" id="rbtn" onclick="doReset()">${t('enviar_pass')}</button>
       <div class="login-note"><a href="#" onclick="goAuth('auth_login');return false">${t('volver_entrar')}</a></div>
+    </div>`;
+  }
+  else if(tab==='auth_codigo'){
+    card = `<div class="login-card"><div class="scan"></div>
+      ${orb(true)}
+      <h2 class="login-h">Confirma tu correo</h2>
+      <p class="login-p">Te mandé un código de 6 dígitos a <b>${VERIF_EMAIL}</b>. Revisa también la carpeta de spam.</p>
+      ${err}
+      <div class="field"><label>Código</label>
+        <input type="text" id="vcod" placeholder="123456" inputmode="numeric" maxlength="6"
+               autocomplete="one-time-code" style="text-align:center;font-size:26px;letter-spacing:8px"></div>
+      <button class="btn-primary" id="vbtn" onclick="doVerificar()">Confirmar</button>
+      <div class="login-note"><a href="#" onclick="doReenviar();return false">Reenviar código</a></div>
+      <div class="login-note"><a href="#" onclick="goAuth('auth_signup');return false">Volver</a></div>
     </div>`;
   }
   else if(tab==='auth_signup'){
@@ -1451,6 +1466,7 @@ async function doSignup(){
   const btn=document.getElementById('sbtn');btn.textContent='Creando...';
   try{
     const r=await apiCall({action:'signup',email,pass,nombre,ref:REF_CODE});
+    if(r.ok && r.verificar){ authMsg=''; VERIF_EMAIL=email; tab='auth_codigo'; return render(); }
     if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(email); }
     else{ btn.textContent=t('crear_cuenta');
       const msgs={
@@ -1466,6 +1482,35 @@ async function doSignup(){
       errAuth(msgs[r.error] || 'No se pudo crear la cuenta.','semail'); }
   }catch(e){ btn.textContent=t('crear_cuenta'); errAuth('Error de conexión. Intenta de nuevo.'); }
 }
+// ── confirmar el codigo que le llego por correo ──
+async function doVerificar(){
+  const codigo=(document.getElementById('vcod').value||'').trim();
+  if(codigo.length!==6) return errAuth('Escribe los 6 dígitos del código.','vcod');
+  const btn=document.getElementById('vbtn'); btn.textContent='Comprobando...';
+  try{
+    const qs=new URLSearchParams({accion:'verificar',email:VERIF_EMAIL,codigo}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(VERIF_EMAIL); return; }
+    btn.textContent='Confirmar';
+    const msgs={
+      CODIGO_MALO: 'Código incorrecto.' + (r.restantes!=null?(' Te quedan '+r.restantes+' intentos.'):''),
+      CADUCADO:'El código caducó. Vuelve a registrarte.',
+      MUCHOS_INTENTOS:'Demasiados intentos. Vuelve a registrarte.',
+      EXISTS:'Ese correo ya está registrado. Inicia sesión.'
+    };
+    errAuth(msgs[r.error]||'No se pudo confirmar el código.','vcod');
+  }catch(e){ btn.textContent='Confirmar'; errAuth('Error de conexión. Intenta de nuevo.','vcod'); }
+}
+
+async function doReenviar(){
+  try{
+    const qs=new URLSearchParams({accion:'reenviar',email:VERIF_EMAIL}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    errAuth(r.ok?'Te reenvié el código. Revisa tu correo y el spam.'
+                :'El código caducó. Vuelve a registrarte.','vcod');
+  }catch(e){ errAuth('No se pudo reenviar. Intenta de nuevo.','vcod'); }
+}
+
 // ── ventana de "cuenta creada" con el aviso del correo y el spam ──
 function showBienvenida(email){
   const isEn=LANG==='en';
