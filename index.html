@@ -2969,7 +2969,10 @@ function adminMessagesPage(){
       <div class="admin-toolbar"><button class="btn-ghost" onclick="MSGS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>
       <div class="empty-state"><div class="empty-ic">${sv(I.mail,28)}</div><h3>Sin mensajes</h3><p>Cuando un cliente te escriba, aparecerá aquí.</p></div>`;
   const items=MSGS.map(m=>{
-    const init=(m.nombre||m.email).split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase();
+    m=m||{};
+    // si un mensaje viene sin nombre NI correo, no debe tumbar toda la pagina
+    const base=String(m.nombre||m.email||'?').trim()||'?';
+    const init=base.split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase()||'?';
     const wamsg=encodeURIComponent('Hola '+(m.nombre||'')+', sobre tu mensaje: ');
     const num=(m.telefono||'').replace(/[^0-9]/g,'');
     const waBtn = num
@@ -2982,7 +2985,7 @@ function adminMessagesPage(){
     return `<div class="msg-card">
       <div class="msg-head"><div class="avatar" style="width:34px;height:34px;font-size:12px">${init}</div>
         <div style="flex:1;min-width:0"><div class="msg-name">${m.nombre||'—'}</div>
-          <div class="msg-email">${m.email}</div>${telLine}</div>
+          <div class="msg-email">${m.email||'—'}</div>${telLine}</div>
         <div class="msg-date">${m.fecha}</div></div>
       <div class="msg-body">${m.mensaje}</div>
       <div class="msg-actions">
