@@ -2712,13 +2712,15 @@ async function dragProdDrop(e,idx){
   }catch(e){ toast('No se pudo guardar el orden'); }
 }
 function openProd(p){
-  const e=p||{id:'',nombre:'',desc:'',video:'',download:'',tipo:'PUBLICO',precio:'',fotos:'',telegram:''};
+  const e=p||{id:'',descripcion:'',nombre:'',video:'',download:'',tipo:'PUBLICO',precio:'',fotos:'',telegram:''};
+  // en Firebase el campo se llama 'descripcion'; 'desc' se deja por compatibilidad
+  const descActual = e.descripcion || e.desc || '';
   const fotosArr=(e.fotos||'').split('|').map(x=>x.trim());
   document.getElementById('prodTitle').textContent = p?'Editar producto':'Añadir producto';
   document.getElementById('prodBody').innerHTML = `
     <input type="hidden" id="pid" value="${e.id}">
     <div class="mfield"><label>Nombre del producto</label><input id="pnombre" value="${(e.nombre||'').replace(/"/g,'&quot;')}" placeholder="Ej: SNIPEROCKET HISTORIAL"></div>
-    <div class="mfield"><label>Descripción</label><textarea id="pdesc" placeholder="Qué hace el producto...">${e.desc||''}</textarea></div>
+    <div class="mfield"><label>Descripción</label><textarea id="pdesc" placeholder="Qué hace el producto...">${descActual.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea></div>
     <div class="mfield"><label>Link del video (YouTube o Drive)</label><input id="pvideo" value="${(e.video||'').replace(/"/g,'&quot;')}" placeholder="https://youtu.be/..."></div>
     <div class="mfield"><label>Link de descarga (GitHub/Drive)</label><input id="pdownload" value="${(e.download||'').replace(/"/g,'&quot;')}" placeholder="https://..."></div>
     <div class="mfield"><label>${sv(I.send,13)} Link de Telegram del producto <span style="color:var(--text-faint);font-weight:400">(opcional)</span></label>
@@ -3896,7 +3898,13 @@ window.fbCall = async function(p){
       let orden = 9999;
       if(a==='editproduct'){ const prev=(await getDoc(doc(db,'productos',id))).data(); if(prev&&prev.orden!==undefined)orden=prev.orden; }
       else { const all=await getCol('productos'); orden=all.length; }
-      const obj={ id, nombre:(p.nombre||'').trim(), descripcion:(p.desc||'').trim(),
+      // si al editar llega vacia, se conserva la que ya estaba (evita borrados accidentales)
+      let descFinal=(p.desc||'').trim();
+      if(a==='editproduct' && !descFinal){
+        try{ const ant=(await getDoc(doc(db,'productos',id))).data();
+             if(ant && ant.descripcion) descFinal=ant.descripcion; }catch(e){}
+      }
+      const obj={ id, nombre:(p.nombre||'').trim(), descripcion:descFinal,
         video:(p.video||'').trim(), download:(p.download||'').trim(),
         tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), precio:(p.precio||'').trim(),
         fotos:(p.fotos||'').trim(), telegram:(p.telegram||'').trim(), orden };
