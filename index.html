@@ -3418,6 +3418,31 @@ function aprobarTodasLic(){
     toast('Listo, licencias aprobadas');
   });
 }
+// ── Borrar TODAS las licencias pendientes (las que no estan aprobadas) ──
+function borrarTodasLicPend(){
+  let pend=[];
+  (ALL_LICS||[]).forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
+  if(!pend.length){ toast('No hay pendientes'); return; }
+  confirmAction('Borrar pendientes',
+    `¿Borrar las ${pend.length} licencias pendientes? Se eliminan de las hojas. Las APROBADAS no se tocan.`,
+    'Borrar todas', async()=>{
+    // quitar de la vista al momento
+    (ALL_LICS||[]).forEach(d=>{ if(d&&d.licencias) d.licencias=d.licencias.filter(l=>l.aprobado); });
+    renderKeep();
+    let n=0, fallos=0;
+    for(const {l,pi} of pend){
+      const api=LICENSE_APIS[pi];
+      try{
+        const r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid});
+        if(r&&r.ok) n++; else fallos++;
+      }catch(e){ fallos++; }
+      if(n%25===0) console.log('[BORRAR LIC] '+n+' / '+pend.length);
+    }
+    await guardarCacheLic();
+    toast(fallos? `Borradas ${n}, fallaron ${fallos}` : `Listo, ${n} pendientes borradas`);
+  });
+}
+
 function openPcs(pi,hwid){
   document.getElementById('pcsBody').innerHTML=`
     <p style="font-size:13.5px;color:var(--text-dim);margin-bottom:16px">¿Para cuántas PCs apruebas esta licencia?</p>
@@ -3528,6 +3553,7 @@ function adminLicensesPage(){
       <button class="search-x" id="licX" style="${licQuery?'':'display:none'}" onclick="licQuery='';document.getElementById('licsearch').value='';filtrarLicPend()" title="Limpiar">✕</button></div>`;
     const toolbar=`<div class="admin-toolbar">${modeToggle}<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">${buscador}
       ${pend.length?`<button class="btn-add" onclick="aprobarTodasLic()">${sv(I.check,15)} Aprobar todas (${pend.length})</button>`:''}
+      ${pend.length?`<button class="btn-ghost" style="color:var(--danger,#f85149);border-color:rgba(248,81,73,.4)" onclick="borrarTodasLicPend()">${sv(I.trash||I.close,15)} Borrar pendientes (${pend.length})</button>`:''}
       <button class="btn-ghost" onclick="actualizarLicSuave()">${sv(I.refresh,15)} Actualizar</button></div></div>`;
     if(!pend.length) return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.check,28)}</div><h3>No hay pendientes 🎉</h3><p>Todas las licencias están al día. Nada por aprobar.</p></div>`;
     return head+toolbar+`<div id="licTablaWrap">${filasPendHTML()}</div>`;
