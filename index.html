@@ -3437,20 +3437,45 @@ function borrarTodasLicPend(){
   confirmAction('Borrar pendientes',
     `¿Borrar las ${pend.length} licencias pendientes? Se eliminan de las hojas. Las APROBADAS no se tocan.`,
     'Borrar todas', async()=>{
-    // quitar de la vista al momento
-    (ALL_LICS||[]).forEach(d=>{ if(d&&d.licencias) d.licencias=d.licencias.filter(l=>l.aprobado); });
-    renderKeep();
-    let n=0, fallos=0;
-    for(const {l,pi} of pend){
+    let n=0, fallos=0, errores={};
+    const total=pend.length;
+    toast(`Borrando ${total}... no cierres esta pestaña`);
+
+    for(let i=0;i<pend.length;i++){
+      const {l,pi}=pend[i];
       const api=LICENSE_APIS[pi];
-      try{
-        const r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid});
-        if(r&&r.ok) n++; else fallos++;
-      }catch(e){ fallos++; }
-      if(n%25===0) console.log('[BORRAR LIC] '+n+' / '+pend.length);
+      if(!api){ fallos++; errores['SIN_API']=(errores['SIN_API']||0)+1; continue; }
+
+      let r=null;
+      for(let intento=0;intento<2;intento++){
+        r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid});
+        // NO_ENCONTRADO tambien vale: ya no esta en la hoja
+        if(r && (r.ok || r.error==='NO_ENCONTRADO')) break;
+        await new Promise(res=>setTimeout(res,600));   // esperar antes de reintentar
+      }
+
+      if(r && (r.ok || r.error==='NO_ENCONTRADO')){
+        n++;
+        // quitar de la vista solo lo que de verdad se borro
+        const d=ALL_LICS&&ALL_LICS[pi];
+        if(d&&d.licencias) d.licencias=d.licencias.filter(x=>x.hwid!==l.hwid);
+      } else {
+        fallos++;
+        const cod=(r&&r.error)||'DESCONOCIDO';
+        errores[cod]=(errores[cod]||0)+1;
+      }
+
+      if(i%10===0){
+        console.log('[BORRAR LIC] '+(i+1)+' / '+total+'  ok:'+n+'  fallos:'+fallos);
+        renderKeep();
+      }
+      await new Promise(res=>setTimeout(res,250));   // pausa: Apps Script corta si vas muy rapido
     }
+
     await guardarCacheLic();
-    toast(fallos? `Borradas ${n}, fallaron ${fallos}` : `Listo, ${n} pendientes borradas`);
+    renderKeep();
+    if(fallos) console.warn('[BORRAR LIC] errores:', errores);
+    toast(fallos ? `Borradas ${n}, fallaron ${fallos} (mira F12)` : `Listo, ${n} pendientes borradas`);
   });
 }
 
