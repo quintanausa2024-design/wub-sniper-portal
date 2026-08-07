@@ -853,8 +853,10 @@
   .prod-row-arrow svg{transform:rotate(-90deg)}
   .prod-row:hover .prod-row-arrow{color:var(--fire-soft);transform:translateX(3px)}
   @media(max-width:640px){.prod-row-arrow{display:none}}
-  .card-thumb{height:150px;border-radius:12px;background-size:cover;background-position:center;margin-bottom:14px;border:1px solid var(--line-soft)}
-  .prod-row-thumb{width:58px;height:58px;border-radius:10px;background-size:cover;background-position:center;flex-shrink:0;border:1px solid var(--line-soft)}
+  .card-thumb{height:150px;border-radius:12px;background-size:contain;background-position:center;
+    background-repeat:no-repeat;background-color:var(--bg-2);margin-bottom:14px;border:1px solid var(--line-soft)}
+  .prod-row-thumb{width:58px;height:58px;border-radius:10px;background-size:contain;background-position:center;
+    background-repeat:no-repeat;background-color:var(--bg-2);flex-shrink:0;border:1px solid var(--line-soft)}
   .back-btn{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
     color:var(--text);border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:600;cursor:pointer;margin-bottom:20px;transition:.13s}
   .back-btn:hover{border-color:var(--fire);color:var(--fire-soft)}
@@ -863,12 +865,12 @@
   .pd-left{flex:1;min-width:300px;max-width:560px}
   .pd-right{flex:1;min-width:280px}
   .pd-gallery{display:flex;flex-direction:column;gap:12px}
-  .pd-main{width:100%;aspect-ratio:16/10;border-radius:16px;background-size:cover;background-position:center;
-    border:1px solid var(--line);cursor:zoom-in;background-color:var(--surface)}
+  .pd-main{width:100%;aspect-ratio:16/10;border-radius:16px;background-size:contain;background-position:center;
+    background-repeat:no-repeat;border:1px solid var(--line);cursor:zoom-in;background-color:var(--bg-2)}
   .pd-noimg{display:grid;place-items:center;color:var(--text-faint);cursor:default}
   .pd-thumbs{display:flex;gap:10px;flex-wrap:wrap}
-  .pd-thumb{width:70px;height:56px;border-radius:10px;background-size:cover;background-position:center;
-    border:2px solid transparent;cursor:pointer;opacity:.65;transition:.13s}
+  .pd-thumb{width:70px;height:56px;border-radius:10px;background-size:contain;background-position:center;
+    border:2px solid transparent;cursor:pointer;opacity:.65;transition:.13s;background-repeat:no-repeat;background-color:var(--bg-2)}
   .pd-thumb:hover{opacity:1}
   .pd-thumb.on{border-color:var(--fire);opacity:1}
   .pd-cat{font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
