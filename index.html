@@ -3091,7 +3091,8 @@ function adminMessagesPage(){
   }).join('');
   return `<div class="page-head"><h1>Mensajes</h1><p>Mensajes que te envían tus clientes desde el portal.</p></div>
     <div class="admin-toolbar"><div style="font-size:13px;color:var(--text-dim)">${MSGS.length} mensaje${MSGS.length!==1?'s':''}</div>
-      ${(MSGS||[]).some(m=>!m.nombre&&!m.email&&!m.mensaje)
+      ${(MSGS||[]).some(m=>{const vc=x=>!String(x||'').trim()||String(x).trim()==='undefined';
+                            return vc(m.mensaje)||(vc(m.nombre)&&vc(m.email));})
         ? `<button class="btn-ghost" style="color:var(--danger,#f85149);border-color:rgba(248,81,73,.4)" onclick="borrarMsgsBasura()">${sv(I.trash,15)} Borrar basura</button>` : ''}
       <button class="btn-ghost" onclick="MSGS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>
     <div class="msg-list">${items}</div>`;
@@ -3109,7 +3110,10 @@ function delMsg(id){
 
 // ── Borrar TODOS los mensajes basura (sin nombre, correo ni texto) ──
 function borrarMsgsBasura(){
-  const basura=(MSGS||[]).filter(m=>!m.nombre && !m.email && !m.mensaje);
+  // basura = sin texto de mensaje, o sin nombre Y sin correo
+  const vacio=x=>!String(x||'').trim() || String(x).trim()==='undefined';
+  const basura=(MSGS||[]).filter(m=> vacio(m.mensaje) || (vacio(m.nombre) && vacio(m.email)) );
+  console.log('[MSG] basura detectada:', basura.length, 'de', (MSGS||[]).length, basura);
   if(!basura.length){ toast('No hay mensajes basura'); return; }
   confirmAction('Borrar basura',
     `¿Borrar los ${basura.length} mensajes vacíos? Los mensajes reales no se tocan.`,
