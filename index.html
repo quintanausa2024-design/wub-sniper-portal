@@ -888,6 +888,43 @@
     color:#27d796;border:2px solid #27d796;background:rgba(39,215,150,.09);
     box-shadow:0 0 22px rgba(39,215,150,.28)}
   .otp-ok-t{color:#27d796;font-size:13.5px;font-weight:700}
+
+  /* ── Separador "O" con brillo ── */
+  .or-sep{display:flex;align-items:center;gap:14px;margin:18px 0;color:var(--text-dim);
+    font-size:11px;font-weight:600;letter-spacing:2px}
+  .or-sep::before,.or-sep::after{content:'';flex:1;height:1px;
+    background:linear-gradient(90deg,transparent,var(--line-soft),transparent)}
+
+  /* ── Botón Google premium ── */
+  .btn-google{position:relative;width:100%;display:flex;align-items:center;justify-content:center;
+    gap:11px;padding:14px;font-size:14.5px;font-weight:600;cursor:pointer;overflow:hidden;
+    color:var(--text);border-radius:13px;border:1.5px solid var(--line);
+    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
+    transition:transform .18s cubic-bezier(.34,1.56,.64,1),border-color .25s,box-shadow .25s}
+  /* borde con gradiente de la marca al pasar el mouse */
+  .btn-google::before{content:'';position:absolute;inset:0;border-radius:13px;padding:1.5px;
+    background:linear-gradient(120deg,#4285F4,#EA4335,#FBBC05,#34A853,#4285F4);
+    background-size:300% 100%;
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;
+    opacity:0;transition:opacity .3s}
+  /* barrido de luz que cruza el botón */
+  .btn-google::after{content:'';position:absolute;top:0;left:-120%;width:70%;height:100%;
+    background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);
+    transform:skewX(-18deg);transition:none}
+  .btn-google:hover{transform:translateY(-2px);
+    box-shadow:0 10px 26px rgba(66,133,244,.20),0 2px 8px rgba(0,0,0,.3)}
+  .btn-google:hover::before{opacity:1;animation:gborde 4s linear infinite}
+  .btn-google:hover::after{animation:gbarrido .9s ease}
+  .btn-google:active{transform:translateY(0) scale(.985)}
+  .btn-google svg{position:relative;z-index:1;transition:transform .25s}
+  .btn-google:hover svg{transform:rotate(-8deg) scale(1.08)}
+  .btn-google span{position:relative;z-index:1}
+  .btn-google.loading{opacity:.7;pointer-events:none}
+  .btn-google.loading svg{animation:gspin 1s linear infinite}
+  @keyframes gborde{to{background-position:300% 0}}
+  @keyframes gbarrido{0%{left:-120%}100%{left:130%}}
+  @keyframes gspin{to{transform:rotate(360deg)}}
   @media(max-width:420px){ .otp-box{width:40px;height:50px;font-size:21px} .otp-grid{gap:7px} }
   .pd-thumbs{display:flex;gap:10px;flex-wrap:wrap}
   .pd-thumb{width:70px;height:56px;border-radius:10px;background-size:contain;background-position:center;
@@ -1348,6 +1385,7 @@ function loginView(){
         <input type="password" id="spass2" placeholder="${t('escribela')}" autocomplete="new-password" autocapitalize="off" autocorrect="off" spellcheck="false">
         <span class="eye" onclick="toggleEye('spass2',this)">${EYE}</span></div></div>
       <button class="btn-primary" id="sbtn" onclick="doSignup()">${t('crear_cuenta')}</button>
+      ${btnGoogle()}
       <div class="login-note">${t('ya_cuenta')} <a href="#" onclick="goAuth('auth_login');return false">${t('entrar')}</a></div>
     </div>`;
   }
@@ -1367,6 +1405,7 @@ function loginView(){
       <a href="#" onclick="goAuth('auth_reset');return false">${t('olvidaste')}</a>
     </div>
     <button class="btn-primary" id="lbtn" onclick="doLogin()">${t('entrar')}</button>
+    ${btnGoogle()}
     <div class="login-note">${t('no_cuenta')} <a href="#" onclick="goAuth('auth_signup');return false">${t('crear_cuenta')}</a></div>
   </div>`;
   }
@@ -1443,6 +1482,47 @@ async function apiCall(params){
   if(typeof window.fbCall==='function'){ return await window.fbCall(params); }
   // si por lo que sea Firebase no cargó, error claro
   return {ok:false, error:'FIREBASE_NO_CARGO'};
+}
+
+// ── Botón "Continuar con Google" ──
+function btnGoogle(){
+  const txt = LANG==='en' ? 'Continue with Google' : 'Continuar con Google';
+  return `<div class="or-sep"><span>${LANG==='en'?'OR':'O'}</span></div>
+    <button class="btn-google" id="gbtn" onclick="doGoogle()">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 4.5 29.5 2.5 24 2.5 12.1 2.5 2.5 12.1 2.5 24S12.1 45.5 24 45.5 45.5 35.9 45.5 24c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="M4.3 13.7l6.6 4.8C12.7 15 18 12.5 24 12.5c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 4.5 29.5 2.5 24 2.5 16 2.5 9 6.9 4.3 13.7z"/><path fill="#4CAF50" d="M24 45.5c5.4 0 10.3-2.1 14-5.5l-6.4-5.4c-2 1.5-4.6 2.4-7.6 2.4-5.2 0-9.6-3.3-11.2-8l-6.5 5C8.9 41 15.9 45.5 24 45.5z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.5l6.4 5.4c-.5.4 6.8-4.9 6.8-14.9 0-1.2-.1-2.3-.4-3.5z"/></svg>
+      <span>${txt}</span>
+    </button>`;
+}
+
+async function doGoogle(){
+  const btn=document.getElementById('gbtn');
+  if(btn){ btn.classList.add('loading'); btn.querySelector('span').textContent=LANG==='en'?'Opening...':'Abriendo...'; }
+  try{
+    const res=await signInWithPopup(fbAuth, googleProvider);
+    const email=(res.user.email||'').toLowerCase().trim();
+    const nombre=res.user.displayName||email;
+    if(!email){ throw new Error('sin correo'); }
+
+    const qs=new URLSearchParams({accion:'google',email,nombre}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+
+    if(!r.ok){ authMsg='No se pudo entrar con Google. Intenta de nuevo.'; return render(); }
+
+    if(!r.aprobado){
+      authMsg='✅ Cuenta creada con Google. Aún no está aprobada — te aviso en cuanto te active.';
+      tab='auth_login'; return render();
+    }
+    // aprobado: entra directo (sin contraseña, marcamos GOOGLE)
+    CLIENT.name=r.nombre||nombre; CLIENT.email=email;
+    SESS={email, pass:'GOOGLE'};
+    saveSession(r.rol);
+    setView(r.rol==='ADMIN'?'admin':'client');
+  }catch(e){
+    const cerrado = String(e&&e.code||'').includes('popup-closed') || String(e&&e.code||'').includes('cancelled');
+    if(!cerrado) authMsg='No se pudo entrar con Google. Intenta de nuevo.';
+    render();
+    console.warn('[GOOGLE]', e);
+  }
 }
 
 async function doLogin(){
@@ -3811,6 +3891,7 @@ render();
 // ═══════════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 import {
   getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc,
   deleteDoc, query, where, writeBatch
@@ -3835,6 +3916,8 @@ try {
 } catch(e){ console.warn('AppCheck init', e); }
 
 const db = getFirestore(fbApp);
+const fbAuth = getAuth(fbApp);
+const googleProvider = new GoogleAuthProvider();
 
 const SALT = "SNIPER_PORTAL_2026";
 
