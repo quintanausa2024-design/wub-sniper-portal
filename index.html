@@ -3110,26 +3110,18 @@ function delMsg(id){
 
 // ── Borrar TODOS los mensajes basura (sin nombre, correo ni texto) ──
 function borrarMsgsBasura(){
-  // basura = sin texto de mensaje, o sin nombre Y sin correo
   const vacio=x=>!String(x||'').trim() || String(x).trim()==='undefined';
   const basura=(MSGS||[]).filter(m=> vacio(m.mensaje) || (vacio(m.nombre) && vacio(m.email)) );
-  console.log('[MSG] basura detectada:', basura.length, 'de', (MSGS||[]).length, basura);
   if(!basura.length){ toast('No hay mensajes basura'); return; }
   confirmAction('Borrar basura',
     `¿Borrar los ${basura.length} mensajes vacíos? Los mensajes reales no se tocan.`,
     'Borrar', async()=>{
-    let n=0, fallos=0;
-    for(const m of basura){
-      const id=m._docid||m.id;
-      if(!id){ fallos++; continue; }
-      try{
-        const r=await apiCall({action:'deletemessage',email:SESS.email,pass:SESS.pass,mid:id});
-        if(r&&r.ok===false) fallos++; else n++;
-      }catch(e){ fallos++; }
-      await new Promise(res=>setTimeout(res,120));
-    }
-    MSGS=null; render();
-    toast(fallos? `Borrados ${n}, fallaron ${fallos}` : `Listo, ${n} borrados`);
+    try{
+      // el servidor los busca y borra todos de una vez (no depende del id del cliente)
+      const r=await apiCall({action:'deletebasura',email:SESS.email,pass:SESS.pass});
+      MSGS=null; render();
+      toast(r&&r.ok ? `Listo, ${r.borrados} borrados` : 'No se pudo borrar');
+    }catch(e){ toast('No se pudo borrar'); console.warn('[MSG]',e); }
   });
 }
 
@@ -4296,8 +4288,25 @@ window.fbCall = async function(p){
     }
     if(a==='deletemessage'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'mensajes',p.mid));
-      return {ok:true};
+      const mid=String(p.mid||'').trim();
+      if(!mid || mid==='undefined') return {ok:false,error:'SIN_ID'};
+      try{ await deleteDoc(doc(db,'mensajes',mid)); return {ok:true}; }
+      catch(e){ return {ok:false,error:String(e.message||e)}; }
+    }
+    // borra de golpe todos los mensajes basura (sin tener que pasar cada id)
+    if(a==='deletebasura'){
+      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      const snap=await getDocs(collection(db,'mensajes'));
+      let n=0;
+      for(const d of snap.docs){
+        const m=d.data();
+        const vacio=x=>!String(x||'').trim();
+        const esBasura = vacio(m.mensaje) || (vacio(m.nombre)&&vacio(m.email))
+                       || ('_persistent' in m) || ('_backup' in m)
+                       || String(m.remitente||'').includes('persistence');
+        if(esBasura){ try{ await deleteDoc(doc(db,'mensajes',d.id)); n++; }catch(e){} }
+      }
+      return {ok:true, borrados:n};
     }
 
     // ---------- REFERIDOS ----------
