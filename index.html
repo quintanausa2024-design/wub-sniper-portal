@@ -2720,10 +2720,24 @@ async function revokeUser(em){
   if(u){ u.aprobado='NO'; renderKeep(); }
   try{ await apiCall({action:'revoke',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
 }
-function deleteUser(em){ confirmAction('Eliminar usuario','¿Eliminar a este usuario? Se borra del portal.','Eliminar',async()=>{
-  if(ADMIN_USERS) ADMIN_USERS=ADMIN_USERS.filter(x=>x.email!==em);
-  renderKeep();
-  try{ await apiCall({action:'deleteuser',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
+function deleteUser(em){ confirmAction('Eliminar usuario',
+  `¿Eliminar a <b>${em}</b>? Se borra del portal de forma permanente.`,'Eliminar',async()=>{
+  try{
+    // el borrado va por el PORTERO (clave de servidor); las reglas siguen cerradas
+    const qs=new URLSearchParams({accion:'borrarcliente',padmin:SESS.email,ppass:SESS.pass,email:em}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    if(r&&r.ok){
+      if(ADMIN_USERS) ADMIN_USERS=ADMIN_USERS.filter(x=>x.email!==em);
+      renderKeep();
+      guardarCacheLic && null;   // no aplica aqui
+      toast('Usuario eliminado');
+    }else{
+      const msg=r&&r.error==='NO_TE_BORRES'?'No puedes eliminar tu propia cuenta de admin'
+              : r&&r.error==='NO_ADMIN'?'Solo el admin puede eliminar'
+              : 'No se pudo eliminar';
+      toast(msg);
+    }
+  }catch(e){ toast('Error de conexión'); console.warn('[DEL]',e); }
 }); }
 function refreshUsers(){ refrescarDesdeFirebase(); }
 // lee lo REAL de Firebase por detras, SIN borrar la lista (evita el parpadeo)
