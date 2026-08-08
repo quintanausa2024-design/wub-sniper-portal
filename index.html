@@ -868,6 +868,27 @@
   .pd-main{width:100%;aspect-ratio:16/10;border-radius:16px;background-size:contain;background-position:center;
     background-repeat:no-repeat;border:1px solid var(--line);cursor:zoom-in;background-color:var(--bg-2)}
   .pd-noimg{display:grid;place-items:center;color:var(--text-faint);cursor:default}
+
+  /* ── Verificación por código (6 cajitas) ── */
+  .otp-wrap{position:relative;margin:22px 0 6px}
+  .otp-grid{display:flex;gap:9px;justify-content:center;transition:opacity .3s}
+  .otp-box{width:46px;height:56px;text-align:center;font-size:24px;font-weight:700;
+    color:var(--text);background:var(--bg-2);border:1.5px solid var(--line);border-radius:12px;
+    outline:none;transition:border-color .18s,box-shadow .18s,transform .18s;caret-color:transparent}
+  .otp-box:focus{border-color:#4d8cff;box-shadow:0 0 0 3px rgba(77,140,255,.16),0 0 16px rgba(77,140,255,.30);
+    transform:translateY(-2px)}
+  .otp-box.lleno{border-color:#4d8cff;color:#9dc0ff;box-shadow:0 0 12px rgba(77,140,255,.22)}
+  .otp-box.error{border-color:#f85149;color:#f85149;animation:otpShake .35s}
+  @keyframes otpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+  .otp-ok{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;gap:8px}
+  .otp-ok.on{display:flex;animation:otpIn .4s ease}
+  @keyframes otpIn{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
+  .otp-check{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;
+    color:#27d796;border:2px solid #27d796;background:rgba(39,215,150,.09);
+    box-shadow:0 0 22px rgba(39,215,150,.28)}
+  .otp-ok-t{color:#27d796;font-size:13.5px;font-weight:700}
+  @media(max-width:420px){ .otp-box{width:40px;height:50px;font-size:21px} .otp-grid{gap:7px} }
   .pd-thumbs{display:flex;gap:10px;flex-wrap:wrap}
   .pd-thumb{width:70px;height:56px;border-radius:10px;background-size:contain;background-position:center;
     border:2px solid transparent;cursor:pointer;opacity:.65;transition:.13s;background-repeat:no-repeat;background-color:var(--bg-2)}
@@ -1296,9 +1317,17 @@ function loginView(){
       <h2 class="login-h">Confirma tu correo</h2>
       <p class="login-p">Te mandé un código de 6 dígitos a <b>${VERIF_EMAIL}</b>. Revisa también la carpeta de spam.</p>
       ${err}
-      <div class="field"><label>Código</label>
-        <input type="text" id="vcod" placeholder="123456" inputmode="numeric" maxlength="6"
-               autocomplete="one-time-code" style="text-align:center;font-size:26px;letter-spacing:8px"></div>
+      <div class="otp-wrap" id="otpWrap">
+        <div class="otp-grid" id="otpGrid">
+          ${[0,1,2,3,4,5].map(i=>`<input class="otp-box" id="otp${i}" type="text" inputmode="numeric"
+             maxlength="1" autocomplete="${i===0?'one-time-code':'off'}"
+             oninput="otpInput(${i})" onkeydown="otpKey(event,${i})" onpaste="otpPaste(event)">`).join('')}
+        </div>
+        <div class="otp-ok" id="otpOk">
+          <div class="otp-check">${sv(I.check,34)}</div>
+          <div class="otp-ok-t">Correo confirmado</div>
+        </div>
+      </div>
       <button class="btn-primary" id="vbtn" onclick="doVerificar()">Confirmar</button>
       <div class="login-note"><a href="#" onclick="doReenviar();return false">Reenviar código</a></div>
       <div class="login-note"><a href="#" onclick="goAuth('auth_signup');return false">Volver</a></div>
@@ -1484,24 +1513,90 @@ async function doSignup(){
       errAuth(msgs[r.error] || 'No se pudo crear la cuenta.','semail'); }
   }catch(e){ btn.textContent=t('crear_cuenta'); errAuth('Error de conexión. Intenta de nuevo.'); }
 }
+// ── Cajitas del código: escribir, borrar, pegar ──
+function otpVal(){
+  let v='';
+  for(let i=0;i<6;i++){ const el=document.getElementById('otp'+i); v+=(el&&el.value)||''; }
+  return v;
+}
+function otpPinta(){
+  for(let i=0;i<6;i++){
+    const el=document.getElementById('otp'+i);
+    if(el) el.classList.toggle('lleno', !!el.value);
+  }
+}
+function otpInput(i){
+  const el=document.getElementById('otp'+i);
+  el.value=(el.value||'').replace(/[^0-9]/g,'').slice(0,1);
+  el.classList.remove('error');
+  otpPinta();
+  if(el.value && i<5){ const sig=document.getElementById('otp'+(i+1)); if(sig) sig.focus(); }
+  if(otpVal().length===6) doVerificar();      // se confirma solo al llenar los 6
+}
+function otpKey(e,i){
+  if(e.key==='Backspace' && !e.target.value && i>0){
+    e.preventDefault();
+    const ant=document.getElementById('otp'+(i-1));
+    if(ant){ ant.value=''; ant.focus(); otpPinta(); }
+  }
+  if(e.key==='ArrowLeft'  && i>0){ const a=document.getElementById('otp'+(i-1)); if(a) a.focus(); }
+  if(e.key==='ArrowRight' && i<5){ const b=document.getElementById('otp'+(i+1)); if(b) b.focus(); }
+}
+function otpPaste(e){
+  e.preventDefault();
+  const txt=((e.clipboardData||window.clipboardData).getData('text')||'').replace(/[^0-9]/g,'').slice(0,6);
+  for(let i=0;i<6;i++){ const el=document.getElementById('otp'+i); if(el) el.value=txt[i]||''; }
+  otpPinta();
+  const ult=document.getElementById('otp'+Math.min(txt.length,5)); if(ult) ult.focus();
+  if(txt.length===6) doVerificar();
+}
+function otpError(){
+  for(let i=0;i<6;i++){
+    const el=document.getElementById('otp'+i);
+    if(el){ el.classList.add('error'); el.value=''; el.classList.remove('lleno'); }
+  }
+  const p=document.getElementById('otp0');
+  if(p) p.focus();
+  setTimeout(()=>{ for(let i=0;i<6;i++){ const el=document.getElementById('otp'+i); if(el) el.classList.remove('error'); } },600);
+}
+function otpExito(){
+  const g=document.getElementById('otpGrid'), ok=document.getElementById('otpOk');
+  if(g) g.style.opacity='0';
+  if(ok) ok.classList.add('on');
+}
+
 // ── confirmar el codigo que le llego por correo ──
+let VERIFICANDO=false;
 async function doVerificar(){
-  const codigo=(document.getElementById('vcod').value||'').trim();
-  if(codigo.length!==6) return errAuth('Escribe los 6 dígitos del código.','vcod');
-  const btn=document.getElementById('vbtn'); btn.textContent='Comprobando...';
+  if(VERIFICANDO) return;
+  const codigo=otpVal();
+  if(codigo.length!==6) return errAuth('Escribe los 6 dígitos del código.','otp0');
+  VERIFICANDO=true;
+  const btn=document.getElementById('vbtn'); if(btn) btn.textContent='Comprobando...';
   try{
     const qs=new URLSearchParams({accion:'verificar',email:VERIF_EMAIL,codigo}).toString();
     const r=await (await fetch(MAIL_URL+'?'+qs)).json();
-    if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(VERIF_EMAIL); return; }
-    btn.textContent='Confirmar';
+    if(r.ok){
+      otpExito();
+      if(btn) btn.textContent='¡Listo!';
+      setTimeout(()=>{ authMsg=''; tab='auth_login'; render(); showBienvenida(VERIF_EMAIL); }, 1100);
+      return;
+    }
+    VERIFICANDO=false;
+    if(btn) btn.textContent='Confirmar';
+    otpError();
     const msgs={
       CODIGO_MALO: 'Código incorrecto.' + (r.restantes!=null?(' Te quedan '+r.restantes+' intentos.'):''),
       CADUCADO:'El código caducó. Vuelve a registrarte.',
       MUCHOS_INTENTOS:'Demasiados intentos. Vuelve a registrarte.',
       EXISTS:'Ese correo ya está registrado. Inicia sesión.'
     };
-    errAuth(msgs[r.error]||'No se pudo confirmar el código.','vcod');
-  }catch(e){ btn.textContent='Confirmar'; errAuth('Error de conexión. Intenta de nuevo.','vcod'); }
+    errAuth(msgs[r.error]||'No se pudo confirmar el código.','otp0');
+  }catch(e){
+    VERIFICANDO=false;
+    if(btn) btn.textContent='Confirmar';
+    errAuth('Error de conexión. Intenta de nuevo.','otp0');
+  }
 }
 
 async function doReenviar(){
@@ -1509,8 +1604,8 @@ async function doReenviar(){
     const qs=new URLSearchParams({accion:'reenviar',email:VERIF_EMAIL}).toString();
     const r=await (await fetch(MAIL_URL+'?'+qs)).json();
     errAuth(r.ok?'Te reenvié el código. Revisa tu correo y el spam.'
-                :'El código caducó. Vuelve a registrarte.','vcod');
-  }catch(e){ errAuth('No se pudo reenviar. Intenta de nuevo.','vcod'); }
+                :'El código caducó. Vuelve a registrarte.','otp0');
+  }catch(e){ errAuth('No se pudo reenviar. Intenta de nuevo.','otp0'); }
 }
 
 // ── ventana de "cuenta creada" con el aviso del correo y el spam ──
@@ -2986,22 +3081,51 @@ function adminMessagesPage(){
       <div class="msg-head"><div class="avatar" style="width:34px;height:34px;font-size:12px">${init}</div>
         <div style="flex:1;min-width:0"><div class="msg-name">${m.nombre||'—'}</div>
           <div class="msg-email">${m.email||'—'}</div>${telLine}</div>
-        <div class="msg-date">${m.fecha}</div></div>
-      <div class="msg-body">${m.mensaje}</div>
+        <div class="msg-date">${m.fecha||'—'}</div></div>
+      <div class="msg-body">${m.mensaje||'(vacío)'}</div>
       <div class="msg-actions">
         <a class="btn-ghost" style="padding:8px 14px" href="mailto:${m.email}?subject=SNIPER%20PORTAL&body=Hola%20${encodeURIComponent(m.nombre||'')}%2C%20">${sv(I.mail,14)} Responder correo</a>
         ${waBtn}
-        <button class="ibtn danger" title="Borrar" onclick="delMsg('${m.id}')">${sv(I.trash,15)}</button>
+        <button class="ibtn danger" title="Borrar" onclick="delMsg('${m._docid||m.id||''}')">${sv(I.trash,15)}</button>
       </div></div>`;
   }).join('');
   return `<div class="page-head"><h1>Mensajes</h1><p>Mensajes que te envían tus clientes desde el portal.</p></div>
     <div class="admin-toolbar"><div style="font-size:13px;color:var(--text-dim)">${MSGS.length} mensaje${MSGS.length!==1?'s':''}</div>
+      ${(MSGS||[]).some(m=>!m.nombre&&!m.email&&!m.mensaje)
+        ? `<button class="btn-ghost" style="color:var(--danger,#f85149);border-color:rgba(248,81,73,.4)" onclick="borrarMsgsBasura()">${sv(I.trash,15)} Borrar basura</button>` : ''}
       <button class="btn-ghost" onclick="MSGS=null;render()">${sv(I.refresh,15)} Actualizar</button></div>
     <div class="msg-list">${items}</div>`;
 }
 function delMsg(id){
+  if(!id||id==='undefined'){ toast('Ese mensaje no tiene identificador'); return; }
   confirmAction('Borrar mensaje','¿Borrar este mensaje?','Borrar',async()=>{
-    try{ await apiCall({action:'deletemessage',email:SESS.email,pass:SESS.pass,mid:id}); MSGS=null; render(); }catch(e){}
+    try{
+      const r=await apiCall({action:'deletemessage',email:SESS.email,pass:SESS.pass,mid:id});
+      if(r&&r.ok===false){ toast('No se pudo borrar'); console.warn('[MSG]',r); return; }
+      MSGS=null; render();
+    }catch(e){ toast('No se pudo borrar'); console.warn('[MSG]',e); }
+  });
+}
+
+// ── Borrar TODOS los mensajes basura (sin nombre, correo ni texto) ──
+function borrarMsgsBasura(){
+  const basura=(MSGS||[]).filter(m=>!m.nombre && !m.email && !m.mensaje);
+  if(!basura.length){ toast('No hay mensajes basura'); return; }
+  confirmAction('Borrar basura',
+    `¿Borrar los ${basura.length} mensajes vacíos? Los mensajes reales no se tocan.`,
+    'Borrar', async()=>{
+    let n=0, fallos=0;
+    for(const m of basura){
+      const id=m._docid||m.id;
+      if(!id){ fallos++; continue; }
+      try{
+        const r=await apiCall({action:'deletemessage',email:SESS.email,pass:SESS.pass,mid:id});
+        if(r&&r.ok===false) fallos++; else n++;
+      }catch(e){ fallos++; }
+      await new Promise(res=>setTimeout(res,120));
+    }
+    MSGS=null; render();
+    toast(fallos? `Borrados ${n}, fallaron ${fallos}` : `Listo, ${n} borrados`);
   });
 }
 
@@ -3658,6 +3782,9 @@ function render(){
   const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
   _lastView=view;
+  if(view==='login' && tab==='auth_codigo'){
+    setTimeout(()=>{ const p=document.getElementById('otp0'); if(p) p.focus(); },60);
+  }
   pintarMaint();
   if(!MAINT_LOADED && !MAINT_LOADING) loadMaint();
   if(view==='login'){ if(REVIEWS===null && !REVIEWS_LOADING) loadReviews(); if(SRV_STATS===null && !SRV_STATS_LOADING) loadStats(); }
@@ -3790,7 +3917,8 @@ async function verifyAdmin(email,pass){
 // lee una colección entera → array
 async function getCol(name){
   const snap=await getDocs(collection(db,name));
-  return snap.docs.map(d=>d.data());
+  // _docid = id REAL del documento en Firestore (los datos basura no traen campo 'id')
+  return snap.docs.map(d=>({ ...d.data(), _docid:d.id }));
 }
 
 // ═══════════════════════════════════════════════════════════════
