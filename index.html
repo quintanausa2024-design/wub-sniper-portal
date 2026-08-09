@@ -1657,7 +1657,7 @@ function otpInput(i){
   el.classList.remove('error');
   otpPinta();
   if(el.value && i<5){ const sig=document.getElementById('otp'+(i+1)); if(sig) sig.focus(); }
-  if(otpVal().length===6) doVerificar();      // se confirma solo al llenar los 6
+  if(otpVal().length===6) otpConfirmar();      // se confirma solo al llenar los 6
 }
 function otpKey(e,i){
   if(e.key==='Backspace' && !e.target.value && i>0){
@@ -1674,7 +1674,12 @@ function otpPaste(e){
   for(let i=0;i<6;i++){ const el=document.getElementById('otp'+i); if(el) el.value=txt[i]||''; }
   otpPinta();
   const ult=document.getElementById('otp'+Math.min(txt.length,5)); if(ult) ult.focus();
-  if(txt.length===6) doVerificar();
+  if(txt.length===6) otpConfirmar();
+}
+// decide qué verificación disparar según la pantalla activa
+function otpConfirmar(){
+  if(tab==='auth_admincode') return doAdminVerify();
+  return doVerificar();
 }
 function otpError(){
   for(let i=0;i<6;i++){
