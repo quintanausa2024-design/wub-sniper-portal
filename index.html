@@ -364,6 +364,8 @@
   .cust-name{display:flex;align-items:center;gap:11px;min-width:0}
   .cust-name .n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .cust-email{font-family:var(--mono);font-size:12px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .email-movil{display:none;font-family:var(--mono);font-size:11px;color:var(--text-faint);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
   .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:7px}
   .dot.g{background:var(--green);box-shadow:0 0 8px var(--green)}
   .dot.a{background:var(--amber);box-shadow:0 0 8px var(--amber)}
@@ -411,6 +413,7 @@
     .main{padding:24px 18px 50px}
     .trow{grid-template-columns:1.4fr auto;gap:10px}
     .trow .col-hide{display:none}
+    .email-movil{display:block}
     .menu-btn{display:grid !important}
   }
   .top-hi{display:flex;justify-content:flex-start;margin:0 0 10px;animation:hiFade .5s ease}
@@ -2900,7 +2903,8 @@ function clientsPage(){
         : `<button class="btn-add" style="padding:7px 13px" onclick="approveUser('${u.email}')">✓ Aprobar</button>
            <button class="ibtn danger" title="Eliminar usuario" onclick="deleteUser('${u.email}')">${sv(I.trash,15)}</button>`;
     return `<div class="trow"><div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${init}</div>
-      <div style="min-width:0"><div class="n">${u.nombre||'—'}</div></div></div>
+      <div style="min-width:0"><div class="n">${u.nombre||'—'}</div>
+        <div class="email-movil">${u.email||''}</div></div></div>
       <div class="cust-email col-hide">${u.email}</div>
       <div class="col-hide" style="font-size:12px;color:var(--text-faint)">${u.ultimo||'—'}</div>
       <div class="col-hide">${badge}</div>
