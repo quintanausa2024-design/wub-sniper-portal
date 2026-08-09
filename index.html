@@ -2586,8 +2586,84 @@ function profilePage(){
             <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
           </div></div>
       </div>
-      <div class="col-stack">${statsCard()}${pagosCard()}${maintCard()}${refCard}</div>
+      <div class="col-stack">${statsCard()}${adminsCard()}${pagosCard()}${maintCard()}${refCard}</div>
     </div>`}
+
+// ── Tarjeta: gestionar administradores (solo la ve el admin) ──
+let ADMINS_LIST=null, ADMINS_LOADING=false;
+function adminsCard(){
+  if(view!=='admin') return '';
+  if(ADMINS_LIST===null){ if(!ADMINS_LOADING) loadAdmins(); 
+    return `<div class="card"><div class="card-top">
+      <div class="card-name">�set Administradores</div></div>
+      <div style="padding:20px;color:var(--text-dim);font-size:13px">Cargando...</div></div>`.replace('�set','👥'); }
+
+  const filas = ADMINS_LIST.map(a=>{
+    const yo = a.email===SESS.email;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;
+        padding:10px 12px;background:var(--bg-2);border:1px solid var(--line-soft);border-radius:10px;margin-bottom:8px">
+      <div style="min-width:0">
+        <div style="font-weight:600;font-size:13px;color:var(--text)">${a.nombre||'—'}${yo?' <span style=\'color:var(--fire);font-size:11px\'>(tú)</span>':''}</div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.email}</div>
+      </div>
+      ${yo?'':`<button class="ibtn danger" title="Quitar admin" onclick="quitarAdmin('${a.email}')">${sv(I.trash,15)}</button>`}
+    </div>`;
+  }).join('');
+
+  return `<div class="card"><div class="card-top">
+    <div class="card-name">👥 Administradores</div>
+    <div class="card-cat">Da acceso de admin a un socio de confianza</div></div>
+    <div style="padding:18px 20px">
+      <div class="field"><label>Correo del nuevo admin</label>
+        <input type="email" id="newAdminEmail" placeholder="correo@ejemplo.com"></div>
+      <button class="btn-primary" id="addAdminBtn" onclick="activarAdmin()" style="margin:2px 0 16px">Activar admin</button>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:8px">Admins actuales:</div>
+      ${filas}
+      <div style="font-size:11px;color:var(--text-faint);margin-top:6px;line-height:1.5">
+        El socio debe tener ya una cuenta registrada. Al activarlo, verá el panel de administración igual que tú.</div>
+    </div></div>`;
+}
+
+async function loadAdmins(){
+  ADMINS_LOADING=true;
+  try{
+    const qs=new URLSearchParams({accion:'lista_admins',padmin:SESS.email,ppass:SESS.pass}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    ADMINS_LIST = (r&&r.ok&&r.admins)?r.admins:[];
+  }catch(e){ ADMINS_LIST=[]; }
+  ADMINS_LOADING=false; renderKeep();
+}
+
+async function activarAdmin(){
+  const email=(document.getElementById('newAdminEmail').value||'').trim().toLowerCase();
+  if(!email||email.indexOf('@')<0){ toast('Escribe un correo válido'); return; }
+  const btn=document.getElementById('addAdminBtn'); if(btn) btn.textContent='Activando...';
+  try{
+    const qs=new URLSearchParams({accion:'hacer_admin',padmin:SESS.email,ppass:SESS.pass,email}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    if(r&&r.ok){ toast('✅ '+(r.nombre||email)+' ahora es admin'); ADMINS_LIST=null; renderKeep(); }
+    else{
+      const m={NO_EXISTE:'Ese correo no tiene cuenta. Que se registre primero.',
+               NO_ADMIN:'No tienes permiso.',SIN_EMAIL:'Escribe un correo.'};
+      toast(m[r&&r.error]||'No se pudo activar'); if(btn) btn.textContent='Activar admin';
+    }
+  }catch(e){ toast('Error de conexión'); if(btn) btn.textContent='Activar admin'; }
+}
+
+function quitarAdmin(email){
+  confirmAction('Quitar admin',
+    `¿Quitar el acceso de administrador a <b>${email}</b>? Volverá a ser cliente normal.`,'Quitar',async()=>{
+    try{
+      const qs=new URLSearchParams({accion:'quitar_admin',padmin:SESS.email,ppass:SESS.pass,email}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(r&&r.ok){ toast('Admin quitado'); ADMINS_LIST=null; renderKeep(); }
+      else{
+        const m={NO_TE_QUITES:'No puedes quitarte admin a ti mismo.'};
+        toast(m[r&&r.error]||'No se pudo quitar');
+      }
+    }catch(e){ toast('Error de conexión'); }
+  });
+}
 
 async function changePass(){
   const p0=document.getElementById('np0').value||'';
