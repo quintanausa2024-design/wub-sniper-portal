@@ -1322,6 +1322,15 @@ let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=nul
 function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
+let ADMIN_PEND=null;
+// marca de dispositivo de confianza (por admin)
+function claveDisp(email){ return 'sp_trust_'+btoa(email).replace(/=/g,''); }
+function dispositivoConfiable(email){
+  try{ return localStorage.getItem(claveDisp(email))==='SI'; }catch(e){ return false; }
+}
+function marcarDispositivo(email){
+  try{ localStorage.setItem(claveDisp(email),'SI'); }catch(e){}
+}
 function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
 function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
@@ -1346,6 +1355,32 @@ function loginView(){
       <div class="field"><label>${t('correo')}</label><input type="email" id="remail" placeholder="tucorreo@gmail.com"></div>
       <button class="btn-primary" id="rbtn" onclick="doReset()">${t('enviar_pass')}</button>
       <div class="login-note"><a href="#" onclick="goAuth('auth_login');return false">${t('volver_entrar')}</a></div>
+    </div>`;
+  }
+  else if(tab==='auth_admincode'){
+    card = `<div class="login-card"><div class="scan"></div>
+      ${orb(true)}
+      <h2 class="login-h">Verificación de administrador</h2>
+      <p class="login-p">Estás entrando desde un dispositivo nuevo. Te envié un código a <b>${VERIF_EMAIL}</b> para confirmar que eres tú.</p>
+      ${err}
+      <div class="otp-wrap" id="otpWrap">
+        <div class="otp-grid" id="otpGrid">
+          ${[0,1,2,3,4,5].map(i=>`<input class="otp-box" id="otp${i}" type="text" inputmode="numeric"
+             maxlength="1" autocomplete="${i===0?'one-time-code':'off'}"
+             oninput="otpInput(${i})" onkeydown="otpKey(event,${i})" onpaste="otpPaste(event)">`).join('')}
+        </div>
+        <div class="otp-ok" id="otpOk">
+          <div class="otp-check">${sv(I.check,34)}</div>
+          <div class="otp-ok-t">Acceso concedido</div>
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-dim);margin:4px 0 12px;cursor:pointer">
+        <input type="checkbox" id="trustDev" checked style="width:16px;height:16px;accent-color:var(--fire)">
+        Confiar en este dispositivo (no volver a pedir código aquí)
+      </label>
+      <button class="btn-primary" id="vbtn" onclick="doAdminVerify()">Confirmar</button>
+      <div class="login-note"><a href="#" onclick="doAdminResend();return false">Reenviar código</a></div>
+      <div class="login-note"><a href="#" onclick="ADMIN_PEND=null;goAuth('auth_login');return false">Cancelar</a></div>
     </div>`;
   }
   else if(tab==='auth_codigo'){
@@ -1541,8 +1576,16 @@ async function doLogin(){
   const btn=document.getElementById('lbtn');btn.textContent='Entrando...';
   try{
     const r=await apiCall({action:'login',email,pass});
-    if(r.ok){ CLIENT.name=r.name||email; CLIENT.email=email; SESS={email,pass};
-      saveSession(r.role); setView(r.role==='ADMIN'?'admin':'client'); }
+    if(r.ok){
+      CLIENT.name=r.name||email; CLIENT.email=email; SESS={email,pass};
+      // ADMIN desde dispositivo NUEVO -> pedir código al correo antes de entrar
+      if(r.role==='ADMIN' && !dispositivoConfiable(email)){
+        ADMIN_PEND={email,pass,role:r.role,name:r.name||email};
+        try{ await fetch(MAIL_URL+'?'+new URLSearchParams({accion:'admincode',email,pass}).toString()); }catch(e){}
+        VERIF_EMAIL=email; tab='auth_admincode'; btn.textContent=t('entrar'); return render();
+      }
+      saveSession(r.role); setView(r.role==='ADMIN'?'admin':'client');
+    }
     else{
       authMsg = r.error==='PENDING'?'Tu cuenta aún no está aprobada. Te aviso en cuanto te active.'
         : r.error==='WRONGPASS'?'Contraseña incorrecta. Toca el ojito 👁 para verla, o usa "¿Olvidaste tu contraseña?".'
@@ -1646,6 +1689,45 @@ function otpExito(){
   const g=document.getElementById('otpGrid'), ok=document.getElementById('otpOk');
   if(g) g.style.opacity='0';
   if(ok) ok.classList.add('on');
+}
+
+// ── verificar el código de admin (dispositivo nuevo) ──
+let ADMINVERIF=false;
+async function doAdminVerify(){
+  if(ADMINVERIF || !ADMIN_PEND) return;
+  const codigo=otpVal();
+  if(codigo.length!==6) return errAuth('Escribe los 6 dígitos del código.','otp0');
+  ADMINVERIF=true;
+  const btn=document.getElementById('vbtn'); if(btn) btn.textContent='Comprobando...';
+  try{
+    const qs=new URLSearchParams({accion:'adminverify',email:ADMIN_PEND.email,codigo}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    if(r.ok){
+      otpExito();
+      const confiar=document.getElementById('trustDev');
+      if(!confiar || confiar.checked) marcarDispositivo(ADMIN_PEND.email);
+      const P=ADMIN_PEND; ADMIN_PEND=null;
+      CLIENT.name=P.name; CLIENT.email=P.email; SESS={email:P.email,pass:P.pass};
+      setTimeout(()=>{ saveSession(P.role); setView('admin'); }, 1000);
+      return;
+    }
+    ADMINVERIF=false;
+    if(btn) btn.textContent='Confirmar';
+    otpError();
+    const msgs={
+      CODIGO_MALO:'Código incorrecto.'+(r.restantes!=null?(' Te quedan '+r.restantes+' intentos.'):''),
+      CADUCADO:'El código caducó. Vuelve a intentar.',
+      MUCHOS_INTENTOS:'Demasiados intentos. Vuelve a entrar.'
+    };
+    errAuth(msgs[r.error]||'No se pudo confirmar el código.','otp0');
+  }catch(e){ ADMINVERIF=false; if(btn) btn.textContent='Confirmar'; errAuth('Error de conexión.','otp0'); }
+}
+async function doAdminResend(){
+  if(!ADMIN_PEND) return;
+  try{
+    await fetch(MAIL_URL+'?'+new URLSearchParams({accion:'admincode',email:ADMIN_PEND.email,pass:ADMIN_PEND.pass}).toString());
+    errAuth('Te reenvié el código. Revisa tu correo y el spam.','otp0');
+  }catch(e){ errAuth('No se pudo reenviar.','otp0'); }
 }
 
 // ── confirmar el codigo que le llego por correo ──
@@ -3875,7 +3957,7 @@ function render(){
   const app=document.getElementById('app');
   app.innerHTML = view==='login'?loginView():view==='admin'?adminView():clientView();
   _lastView=view;
-  if(view==='login' && tab==='auth_codigo'){
+  if(view==='login' && (tab==='auth_codigo'||tab==='auth_admincode')){
     setTimeout(()=>{ const p=document.getElementById('otp0'); if(p) p.focus(); },60);
   }
   pintarMaint();
