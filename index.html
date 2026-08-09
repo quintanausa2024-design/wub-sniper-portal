@@ -896,6 +896,8 @@
     color:#7af5e8;border:2px solid #7af5e8;background:rgba(122,245,232,.09);
     box-shadow:0 0 22px rgba(122,245,232,.30)}
   .otp-ok-t{color:#7af5e8;font-size:13.5px;font-weight:700}
+  .nav-sep{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-faint);
+    padding:14px 16px 6px;opacity:.7}
 
   /* ── Separador "O" con brillo ── */
   .or-sep{display:flex;align-items:center;gap:14px;margin:18px 0;color:var(--text-dim);
@@ -1345,7 +1347,9 @@ function saveSession(role){ROL_ACTUAL=role;try{localStorage.setItem('sp_sess',JS
 function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;ROL_ACTUAL=(s.role||'').toUpperCase();
-    view=esRolAdmin(s.role)?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
+    view=esRolAdmin(s.role)?'admin':'client';
+    tab = (s.role||'').toUpperCase()==='ADMIN_LIMITADO' ? 'products' : (view==='admin'?'clients':'products');
+    return true;}}catch(e){}return false;}
 function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';if(t==='amsg')marcarMsgsVistos();render()}
 function navBtn(id,icon,label,badge){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}${badge?`<span class="nav-badge">${badge>99?'99+':badge}</span>`:''}</button>`}
 
@@ -1614,7 +1618,9 @@ async function doLogin(){
         try{ await fetch(MAIL_URL+'?'+new URLSearchParams({accion:'admincode',email,pass}).toString()); }catch(e){}
         VERIF_EMAIL=email; tab='auth_admincode'; btn.textContent=t('entrar'); return render();
       }
-      saveSession(r.role); setView(esRolAdmin(r.role)?'admin':'client');
+      saveSession(r.role);
+      if((r.role||'').toUpperCase()==='ADMIN_LIMITADO') tab='products';
+      setView(esRolAdmin(r.role)?'admin':'client');
     }
     else{
       authMsg = r.error==='PENDING'?'Tu cuenta aún no está aprobada. Te aviso en cuanto te active.'
@@ -2870,12 +2876,26 @@ function adminView(){
   const nuevos=unreadMsgs();
   const limitado = ROL_ACTUAL==='ADMIN_LIMITADO';
   const nav = limitado
-    ? navBtn('clients',I.users,'Clientes')+navBtn('alic',I.lock,'Licencias')+navBtn('aprofile',I.user,'Mi Perfil')
+    ? // su panel de usuario COMPLETO + las dos pestañas de aprobar
+      navBtn('products',I.box,t('nav_productos'))+navBtn('guides',I.play,t('nav_guias'))
+      +navBtn('discounts',I.tag,LANG==='en'?'Discounts':'Descuentos')+navBtn('news',I.news,t('nav_noticias'))
+      +navBtn('help',I.help,t('nav_ayuda'))+navBtn('contact',I.phone,t('nav_contacto'))
+      +`<div class="nav-sep">${LANG==='en'?'ADMIN':'ADMIN'}</div>`
+      +navBtn('clients',I.users,'Clientes')+navBtn('alic',I.lock,'Licencias')
+      +navBtn('aprofile',I.user,t('nav_perfil'))
     : navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes',nuevos)+navBtn('aprofile',I.user,'Mi Perfil');
-  // el admin limitado solo puede estar en clients, alic o aprofile
+  // el admin limitado NO puede entrar a estas de admin
   if(limitado && ['aprod','arev','aref','adisc','aguides','anews','amsg'].indexOf(tab)>=0){ tab='clients'; }
   let content;
-  if(tab==='clients')content=clientsPage();
+  // pestañas de USUARIO (para el limitado)
+  if(limitado && tab==='products')      content=productsPage();
+  else if(limitado && tab==='guides')   content=guidesPage();
+  else if(limitado && tab==='discounts')content=discountsPage();
+  else if(limitado && tab==='news')     content=newsPage();
+  else if(limitado && tab==='help')     content=faqPage();
+  else if(limitado && tab==='contact')  content=contactPage();
+  // pestañas de ADMIN
+  else if(tab==='clients')content=clientsPage();
   else if(tab==='aprod')content=adminProductsPage();
   else if(tab==='alic')content=adminLicensesPage();
   else if(tab==='arev')content=adminReviewsPage();
