@@ -1331,6 +1331,7 @@ function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:
 
 // ── recordar sesión al refrescar la página ──
 let ADMIN_PEND=null;
+let ROL_ACTUAL='';   // 'ADMIN' | 'ADMIN_LIMITADO' | 'CLIENTE'
 // marca de dispositivo de confianza (por admin)
 function claveDisp(email){ return 'sp_trust_'+btoa(email).replace(/=/g,''); }
 function dispositivoConfiable(email){
@@ -1339,10 +1340,10 @@ function dispositivoConfiable(email){
 function marcarDispositivo(email){
   try{ localStorage.setItem(claveDisp(email),'SI'); }catch(e){}
 }
-function saveSession(role){try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
+function saveSession(role){ROL_ACTUAL=role;try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
 function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
-  if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;
+  if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;ROL_ACTUAL=s.role||'';
     view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
 function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';if(t==='amsg')marcarMsgsVistos();render()}
 function navBtn(id,icon,label,badge){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}${badge?`<span class="nav-badge">${badge>99?'99+':badge}</span>`:''}</button>`}
@@ -1873,7 +1874,12 @@ function footerHTML(){
   return `<footer class="disclaimer"><p><b>${t('riesgo_t')}</b> ${body}</p><p class="copy">${copy}</p></footer>`;
 }
 
-function shell(nav,content){const u=view==='admin'?{n:'Otoniel Quintana',e:'Admin · CEO',av:'OQ'}:{n:CLIENT.name,e:CLIENT.email,av:'OQ'};
+function shell(nav,content){
+  const inic=(CLIENT.name||CLIENT.email||'?').split(/[\s@.]+/).filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase()||'?';
+  const rolTxt = ROL_ACTUAL==='ADMIN_LIMITADO' ? 'Admin · Aprobaciones' : 'Admin · CEO';
+  const u=view==='admin'
+    ? {n:CLIENT.name||'Admin', e:rolTxt, av:inic}
+    : {n:CLIENT.name, e:CLIENT.email, av:inic};
   const saludo = view==='client' ? `<div class="top-hi"><span class="top-hi-txt">${LANG==='en'?'Hi':'Hola'}, <b>${(CLIENT.name||'').split(' ')[0]||''}</b> 👋</span></div>` : '';
   return `<div class="shell"><aside class="side">${orb()}<nav class="nav">${nav}</nav>
     <div class="side-foot"><div class="side-user"><div class="avatar">${u.av}</div>
@@ -2586,7 +2592,7 @@ function profilePage(){
             <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
           </div></div>
       </div>
-      <div class="col-stack">${statsCard()}${adminsCard()}${pagosCard()}${maintCard()}${refCard}</div>
+      <div class="col-stack">${statsCard()}${pagosCard()}${maintCard()}${adminsCard()}${refCard}</div>
     </div>`}
 
 // ── Tarjeta: gestionar administradores (solo la ve el admin) ──
