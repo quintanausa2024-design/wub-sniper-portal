@@ -1332,6 +1332,7 @@ function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:
 // ── recordar sesión al refrescar la página ──
 let ADMIN_PEND=null;
 let ROL_ACTUAL='';   // 'ADMIN' | 'ADMIN_LIMITADO' | 'CLIENTE'
+function esRolAdmin(r){ r=(r||'').toUpperCase(); return r==='ADMIN'||r==='ADMIN_LIMITADO'; }
 // marca de dispositivo de confianza (por admin)
 function claveDisp(email){ return 'sp_trust_'+btoa(email).replace(/=/g,''); }
 function dispositivoConfiable(email){
@@ -1343,8 +1344,8 @@ function marcarDispositivo(email){
 function saveSession(role){ROL_ACTUAL=role;try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
 function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
-  if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;ROL_ACTUAL=s.role||'';
-    view=s.role==='ADMIN'?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
+  if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;ROL_ACTUAL=(s.role||'').toUpperCase();
+    view=esRolAdmin(s.role)?'admin':'client';tab=view==='admin'?'clients':'products';return true;}}catch(e){}return false;}
 function setTab(t){tab=t;profileMsg='';profileErr='';contactDone='';PROD_OPEN=null;faqQuery='';FAQ_CAT='';guideQuery='';prodQuery='';licQuery='';if(t==='amsg')marcarMsgsVistos();render()}
 function navBtn(id,icon,label,badge){return `<button class="${tab===id?'on':''}" onclick="setTab('${id}')">${sv(icon)} ${label}${badge?`<span class="nav-badge">${badge>99?'99+':badge}</span>`:''}</button>`}
 
@@ -1608,12 +1609,12 @@ async function doLogin(){
     if(r.ok){
       CLIENT.name=r.name||email; CLIENT.email=email; SESS={email,pass};
       // ADMIN desde dispositivo NUEVO -> pedir código al correo antes de entrar
-      if(r.role==='ADMIN' && !dispositivoConfiable(email)){
+      if(esRolAdmin(r.role) && !dispositivoConfiable(email)){
         ADMIN_PEND={email,pass,role:r.role,name:r.name||email};
         try{ await fetch(MAIL_URL+'?'+new URLSearchParams({accion:'admincode',email,pass}).toString()); }catch(e){}
         VERIF_EMAIL=email; tab='auth_admincode'; btn.textContent=t('entrar'); return render();
       }
-      saveSession(r.role); setView(r.role==='ADMIN'?'admin':'client');
+      saveSession(r.role); setView(esRolAdmin(r.role)?'admin':'client');
     }
     else{
       authMsg = r.error==='PENDING'?'Tu cuenta aún no está aprobada. Te aviso en cuanto te active.'
