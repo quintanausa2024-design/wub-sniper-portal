@@ -874,23 +874,28 @@
 
   /* ── Verificación por código (6 cajitas) ── */
   .otp-wrap{position:relative;margin:22px 0 6px}
-  .otp-grid{display:flex;gap:9px;justify-content:center;transition:opacity .3s}
-  .otp-box{width:46px;height:56px;text-align:center;font-size:24px;font-weight:700;
-    color:var(--text);background:var(--bg-2);border:1.5px solid var(--line);border-radius:12px;
-    outline:none;transition:border-color .18s,box-shadow .18s,transform .18s;caret-color:transparent}
-  .otp-box:focus{border-color:#4d8cff;box-shadow:0 0 0 3px rgba(77,140,255,.16),0 0 16px rgba(77,140,255,.30);
-    transform:translateY(-2px)}
-  .otp-box.lleno{border-color:#4d8cff;color:#9dc0ff;box-shadow:0 0 12px rgba(77,140,255,.22)}
+  /* lienzo del circuito: 320x190, centrado */
+  .otp-grid{position:relative;width:320px;height:190px;margin:0 auto;transition:opacity .3s}
+  .otp-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
+  .trace{stroke:#7af5e8;stroke-width:2;fill:none;stroke-dasharray:200;stroke-dashoffset:200;opacity:0;
+    filter:drop-shadow(0 0 5px rgba(122,245,232,.75))}
+  .trace.on{opacity:1;animation:otpDraw 1.35s ease forwards}
+  @keyframes otpDraw{from{stroke-dashoffset:200}to{stroke-dashoffset:0}}
+  .otp-box{position:absolute;width:52px;height:52px;text-align:center;font-size:24px;font-weight:700;
+    color:#cffcf5;background:#0c1a1e;border:1.5px solid #1c3a3a;border-radius:13px;outline:none;z-index:2;
+    caret-color:transparent;transition:border-color .25s,box-shadow .25s,transform .2s}
+  .otp-box:focus{border-color:#7af5e8;box-shadow:0 0 0 3px rgba(122,245,232,.14),0 0 20px rgba(122,245,232,.4);transform:scale(1.05)}
+  .otp-box.lleno{border-color:#7af5e8;color:#dffefa;box-shadow:0 0 16px rgba(122,245,232,.4)}
   .otp-box.error{border-color:#f85149;color:#f85149;animation:otpShake .35s}
   @keyframes otpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
   .otp-ok{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
-    justify-content:center;gap:8px}
+    justify-content:center;gap:8px;z-index:3}
   .otp-ok.on{display:flex;animation:otpIn .4s ease}
   @keyframes otpIn{from{opacity:0;transform:scale(.86)}to{opacity:1;transform:scale(1)}}
   .otp-check{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;
-    color:#27d796;border:2px solid #27d796;background:rgba(39,215,150,.09);
-    box-shadow:0 0 22px rgba(39,215,150,.28)}
-  .otp-ok-t{color:#27d796;font-size:13.5px;font-weight:700}
+    color:#7af5e8;border:2px solid #7af5e8;background:rgba(122,245,232,.09);
+    box-shadow:0 0 22px rgba(122,245,232,.30)}
+  .otp-ok-t{color:#7af5e8;font-size:13.5px;font-weight:700}
 
   /* ── Separador "O" con brillo ── */
   .or-sep{display:flex;align-items:center;gap:14px;margin:18px 0;color:var(--text-dim);
@@ -1368,9 +1373,19 @@ function loginView(){
       ${err}
       <div class="otp-wrap" id="otpWrap">
         <div class="otp-grid" id="otpGrid">
-          ${[0,1,2,3,4,5].map(i=>`<input class="otp-box" id="otp${i}" type="text" inputmode="numeric"
+          <svg class="otp-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid meet">
+            <path class="trace" d="M 45 50 L 160 28"></path>
+            <path class="trace" d="M 160 28 L 275 50"></path>
+            <path class="trace" d="M 275 50 L 275 140"></path>
+            <path class="trace" d="M 275 140 L 160 162"></path>
+            <path class="trace" d="M 160 162 L 45 140"></path>
+            <path class="trace" d="M 45 140 L 45 50"></path>
+          </svg>
+          ${[0,1,2,3,4,5].map(i=>{const pos=[[20,25],[135,3],[250,25],[250,115],[135,137],[20,115]][i];
+             return `<input class="otp-box" id="otp${i}" type="text" inputmode="numeric"
+             style="left:${pos[0]}px;top:${pos[1]}px"
              maxlength="1" autocomplete="${i===0?'one-time-code':'off'}"
-             oninput="otpInput(${i})" onkeydown="otpKey(event,${i})" onpaste="otpPaste(event)">`).join('')}
+             oninput="otpInput(${i})" onkeydown="otpKey(event,${i})" onpaste="otpPaste(event)">`;}).join('')}
         </div>
         <div class="otp-ok" id="otpOk">
           <div class="otp-check">${sv(I.check,34)}</div>
@@ -1394,9 +1409,19 @@ function loginView(){
       ${err}
       <div class="otp-wrap" id="otpWrap">
         <div class="otp-grid" id="otpGrid">
-          ${[0,1,2,3,4,5].map(i=>`<input class="otp-box" id="otp${i}" type="text" inputmode="numeric"
+          <svg class="otp-svg" viewBox="0 0 320 190" preserveAspectRatio="xMidYMid meet">
+            <path class="trace" d="M 45 50 L 160 28"></path>
+            <path class="trace" d="M 160 28 L 275 50"></path>
+            <path class="trace" d="M 275 50 L 275 140"></path>
+            <path class="trace" d="M 275 140 L 160 162"></path>
+            <path class="trace" d="M 160 162 L 45 140"></path>
+            <path class="trace" d="M 45 140 L 45 50"></path>
+          </svg>
+          ${[0,1,2,3,4,5].map(i=>{const pos=[[20,25],[135,3],[250,25],[250,115],[135,137],[20,115]][i];
+             return `<input class="otp-box" id="otp${i}" type="text" inputmode="numeric"
+             style="left:${pos[0]}px;top:${pos[1]}px"
              maxlength="1" autocomplete="${i===0?'one-time-code':'off'}"
-             oninput="otpInput(${i})" onkeydown="otpKey(event,${i})" onpaste="otpPaste(event)">`).join('')}
+             oninput="otpInput(${i})" onkeydown="otpKey(event,${i})" onpaste="otpPaste(event)">`;}).join('')}
         </div>
         <div class="otp-ok" id="otpOk">
           <div class="otp-check">${sv(I.check,34)}</div>
@@ -1649,9 +1674,16 @@ function otpVal(){
   return v;
 }
 function otpPinta(){
+  const grid=document.getElementById('otpGrid');
+  const traces=grid?grid.querySelectorAll('.trace'):[];
   for(let i=0;i<6;i++){
     const el=document.getElementById('otp'+i);
-    if(el) el.classList.toggle('lleno', !!el.value);
+    if(el){
+      const lleno=!!el.value;
+      el.classList.toggle('lleno', lleno);
+      // al llenar una cajita, se dibuja su línea de neón hacia la siguiente
+      if(lleno && traces[i]) traces[i].classList.add('on');
+    }
   }
 }
 function otpInput(i){
@@ -1685,6 +1717,8 @@ function otpConfirmar(){
   return doVerificar();
 }
 function otpError(){
+  const grid=document.getElementById('otpGrid');
+  if(grid) grid.querySelectorAll('.trace').forEach(t=>t.classList.remove('on'));
   for(let i=0;i<6;i++){
     const el=document.getElementById('otp'+i);
     if(el){ el.classList.add('error'); el.value=''; el.classList.remove('lleno'); }
