@@ -700,6 +700,11 @@
     font-family:var(--body);cursor:pointer;transition:.14s}
   .pay-tab:hover{color:var(--text)}
   .pay-tab.on{background:var(--surface-2);border-color:var(--fire);color:var(--text)}
+  /* con 3 metodos las pestañas se aprietan: bajamos texto y relleno en pantallas chicas */
+  @media(max-width:430px){.pay-tabs{gap:6px}.pay-tab{padding:10px 6px;font-size:12px;gap:5px}}
+  .tj-hero{text-align:center;padding:18px 14px 14px;color:var(--fire-soft)}
+  .tj-hero h3{margin:10px 0 6px;font-family:var(--display);font-size:17px;font-weight:600;color:var(--text)}
+  .tj-hero p{margin:0;font-size:13px;line-height:1.55;color:var(--text-dim)}
   .pay-tab.on svg{color:var(--fire-soft)}
   .pp-qr{text-align:center;margin-bottom:14px}
   .pp-qr img{width:210px;max-width:100%;border-radius:14px;background:#fff;padding:10px}
@@ -2443,6 +2448,7 @@ function pagosCard(){
   if(SRV_STATS===null) loadStats();
   const ze=SRV_STATS?SRV_STATS.pay_zelle!==false:true;
   const pp=SRV_STATS?SRV_STATS.pay_paypal!==false:true;
+  const tj=SRV_STATS?SRV_STATS.pay_tarjeta!==false:true;
   return `<div class="card"><div class="card-top">
       <div class="card-name">${sv(I.card,16)} Métodos de pago</div>
       <div class="card-cat">Apaga uno si tienes problemas con Zelle o PayPal</div></div>
@@ -2461,16 +2467,28 @@ function pagosCard(){
         </div>
         <button class="switch ${pp?'on':''}" onclick="togglePago('paypal',${pp?0:1})"><span></span></button>
       </div>
-      ${(!ze&&!pp)?`<div class="pay-warn">⚠️ Los dos están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
+      <div class="pay-toggle" style="margin-top:14px">
+        <div style="flex:1;min-width:0">
+          <div class="pay-tg-name">Tarjeta de débito o crédito</div>
+          <div class="pay-tg-hint ${tj?'on':''}">${tj?'✓ El cliente te escribe por WhatsApp y le mandas el link':'○ Apagado · el cliente ve "no disponible"'}</div>
+        </div>
+        <button class="switch ${tj?'on':''}" onclick="togglePago('tarjeta',${tj?0:1})"><span></span></button>
+      </div>
+      ${(!ze&&!pp&&!tj)?`<div class="pay-warn">⚠️ Los tres están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
     </div></div>`;
 }
 let PAGOS_SAVING=false;
 async function togglePago(metodo,activar){
   if(PAGOS_SAVING)return; PAGOS_SAVING=true;
-  if(SRV_STATS){ if(metodo==='zelle')SRV_STATS.pay_zelle=!!activar; else SRV_STATS.pay_paypal=!!activar; }
+  if(SRV_STATS){
+    if(metodo==='zelle')       SRV_STATS.pay_zelle=!!activar;
+    else if(metodo==='paypal') SRV_STATS.pay_paypal=!!activar;
+    else                       SRV_STATS.pay_tarjeta=!!activar;
+  }
   renderKeep();
   const params={action:'setstats',email:SESS.email,pass:SESS.pass};
-  params[metodo==='zelle'?'pay_zelle':'pay_paypal']=activar?'SI':'NO';
+  const campo = metodo==='zelle' ? 'pay_zelle' : (metodo==='paypal' ? 'pay_paypal' : 'pay_tarjeta');
+  params[campo]=activar?'SI':'NO';
   try{ await apiCall(params); }catch(e){}
   PAGOS_SAVING=false;
 }
@@ -2742,8 +2760,9 @@ function openPay(p){
   PAY_CTX={nombre:p.nombre, precio:p.precio||''};
   const zeOn=SRV_STATS?SRV_STATS.pay_zelle!==false:true;
   const ppOn=SRV_STATS?SRV_STATS.pay_paypal!==false:true;
+  const tjOn=SRV_STATS?SRV_STATS.pay_tarjeta!==false:true;
   // abrir en la primera pestaña que esté activa
-  const start = zeOn ? 'ze' : (ppOn ? 'pp' : 'ze');
+  const start = zeOn ? 'ze' : (ppOn ? 'pp' : (tjOn ? 'tj' : 'ze'));
   document.getElementById('payBody').innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
       <div style="font-size:12px;color:var(--text-faint);letter-spacing:.05em;text-transform:uppercase">${isEn?'Price':'Precio'}</div>
@@ -2751,6 +2770,7 @@ function openPay(p){
     <div class="pay-tabs">
       <button class="pay-tab ${start==='ze'?'on':''}" id="ptZe" onclick="payTab('ze')">${sv(I.card,15)} Zelle${zeOn?'':' ·'}</button>
       <button class="pay-tab ${start==='pp'?'on':''}" id="ptPp" onclick="payTab('pp')">${sv(I.card,15)} PayPal${ppOn?'':' ·'}</button>
+      <button class="pay-tab ${start==='tj'?'on':''}" id="ptTj" onclick="payTab('tj')">${sv(I.card,15)} ${isEn?'Card':'Tarjeta'}${tjOn?'':' ·'}</button>
     </div>
     <div id="payPane"></div>`;
   payTab(start);
@@ -2765,6 +2785,17 @@ function comprobanteTexto(metodo){
   return isEn
     ? `Hi, I just paid by ${metodo}. Here's my proof.\nName: ${nom}\nEmail: ${mail}\nProduct: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`
     : `Hola, acabo de pagar por ${metodo}. Aquí está mi comprobante.\nNombre: ${nom}\nCorreo: ${mail}\nProducto: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`;
+}
+// mensaje de "quiero pagar con tarjeta" — ya lleva producto, precio y datos del cliente
+function pedirTarjetaTexto(){
+  const isEn=LANG==='en';
+  const nom=(CLIENT&&CLIENT.name)||'';
+  const mail=(CLIENT&&CLIENT.email)||'';
+  const prod=PAY_CTX.nombre||'';
+  const pre=PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):'';
+  return isEn
+    ? `Hi, I want to buy ${prod}${pre} and pay by debit/credit card.\nName: ${nom}\nEmail: ${mail}\nCould you send me the payment link?`
+    : `Hola, quiero comprar ${prod}${pre} y pagar con tarjeta de débito o crédito.\nNombre: ${nom}\nCorreo: ${mail}\n¿Me mandas el link de pago?`;
 }
 // botones de comprobante: WhatsApp, Telegram y correo
 function comprobanteBtns(metodo){
@@ -2800,13 +2831,16 @@ function copiarProof(){
 }
 function payTab(t){
   const isEn=LANG==='en';
-  const pp=document.getElementById('ptPp'), ze=document.getElementById('ptZe');
+  const pp=document.getElementById('ptPp'), ze=document.getElementById('ptZe'), tjb=document.getElementById('ptTj');
   if(pp)pp.classList.toggle('on',t==='pp'); if(ze)ze.classList.toggle('on',t==='ze');
+  if(tjb)tjb.classList.toggle('on',t==='tj');
   const pane=document.getElementById('payPane'); if(!pane)return;
   // ¿está activo este método?
   const activo = t==='ze'
     ? (SRV_STATS?SRV_STATS.pay_zelle!==false:true)
-    : (SRV_STATS?SRV_STATS.pay_paypal!==false:true);
+    : t==='pp'
+    ? (SRV_STATS?SRV_STATS.pay_paypal!==false:true)
+    : (SRV_STATS?SRV_STATS.pay_tarjeta!==false:true);
   if(!activo){
     pane.innerHTML=`<div class="pay-off">${sv(I.tool,26)}
       <h3>${isEn?'Temporarily unavailable':'No disponible por el momento'}</h3>
@@ -2815,6 +2849,32 @@ function payTab(t){
     return;
   }
   const monto = PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:'';
+  if(t==='tj'){
+    const txt = pedirTarjetaTexto();
+    const wa  = 'https://wa.me/18326409105?text='+encodeURIComponent(txt);
+    const tg  = TELEGRAM_USER ? ('https://t.me/'+TELEGRAM_USER) : '';
+    window.__proofTxt = txt;   // por si usa Telegram, que lo pegue
+    pane.innerHTML=`
+      <div class="tj-hero">${sv(I.card,26)}
+        <h3>${isEn?'Pay by debit or credit card':'Paga con tarjeta de débito o crédito'}</h3>
+        <p>${isEn?'I send you a secure payment link for this product. No account needed — just your card.':'Te mando un link de pago seguro para este producto. No necesitas cuenta, solo tu tarjeta.'}</p>
+      </div>
+      <div class="modal-steps">
+        <div class="mstep"><div class="num">1</div><p>${isEn?'Tap the button below. Your message goes pre-filled with the product and your details.':'Toca el botón de abajo. El mensaje ya va escrito con el producto y tus datos.'} ${monto}</p></div>
+        <div class="mstep"><div class="num">2</div><p>${isEn?'I reply with your secure payment link.':'Te respondo con tu link de pago seguro.'}</p></div>
+        <div class="mstep"><div class="num">3</div><p>${isEn?'You pay with your card and I unlock the product.':'Pagas con tu tarjeta y te libero el producto.'}</p></div>
+      </div>
+      <div class="proof-wrap">
+        <div class="proof-lbl">${sv(I.check,13)} ${isEn?'Ask for your payment link:':'Pide tu link de pago:'}</div>
+        <div class="proof-btns">
+          <a class="proof-btn wa" href="${wa}" target="_blank" rel="noopener">${sv(I.phone,15)} WhatsApp</a>
+          ${tg?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener" onclick="copiarProof()">${sv(I.send,15)} Telegram</a>`:''}
+        </div>
+        ${tg?`<div class="proof-tg-note" id="proofTgNote">${sv(I.copy,12)} ${isEn?'For Telegram: your message is copied — just paste it in the chat.':'Para Telegram: tu mensaje se copia solo — solo pégalo en el chat.'}</div>`:''}
+        <div class="proof-note">${isEn?'I usually reply within a few hours.':'Normalmente respondo en unas horas.'}</div>
+      </div>`;
+    return;
+  }
   if(t==='pp'){
     const ppLink = PAYPAL_LINK || '';
     pane.innerHTML=`
@@ -4734,7 +4794,8 @@ window.fbCall = async function(p){
       const reales = typeof d.reales==='number' ? d.reales : 0;
       return {ok:true, reales,
         clientes:d.clientes||'', anios:d.anios||'', productos:d.productos||'',
-        pay_zelle: d.pay_zelle!==false, pay_paypal: d.pay_paypal!==false };
+        pay_zelle: d.pay_zelle!==false, pay_paypal: d.pay_paypal!==false,
+        pay_tarjeta: d.pay_tarjeta!==false };
     }
     if(a==='setstats'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
@@ -4746,6 +4807,7 @@ window.fbCall = async function(p){
       if(p.productos!==undefined) upd.productos=p.productos;
       if(p.pay_zelle!==undefined) upd.pay_zelle=(p.pay_zelle==='SI');
       if(p.pay_paypal!==undefined) upd.pay_paypal=(p.pay_paypal==='SI');
+      if(p.pay_tarjeta!==undefined) upd.pay_tarjeta=(p.pay_tarjeta==='SI');
       await setDoc(doc(db,'config','stats'),upd);
       return {ok:true};
     }
