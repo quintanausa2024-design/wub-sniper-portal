@@ -3051,7 +3051,7 @@ function clientsPage(){
         ? `<button class="ibtn" title="Acceso a productos" onclick='openAccess(${JSON.stringify({e:u.email,n:u.nombre,p:u.productos||""}).replace(/'/g,"&#39;")})'>${sv(I.box,15)}</button>
            <button class="ibtn danger" title="Quitar acceso" onclick="revokeUser('${u.email}')">${sv(I.trash,15)}</button>`
         : `<button class="btn-add" style="padding:7px 13px" onclick="approveUser('${u.email}')">✓ Aprobar</button>
-           <button class="ibtn danger" title="Eliminar usuario" onclick="deleteUser('${u.email}')">${sv(I.trash,15)}</button>`;
+           ${ROL_ACTUAL==='ADMIN_LIMITADO'?'':`<button class="ibtn danger" title="Eliminar usuario" onclick="deleteUser('${u.email}')">${sv(I.trash,15)}</button>`}`;
     return `<div class="trow"><div class="cust-name"><div class="avatar" style="width:30px;height:30px;font-size:11px">${init}</div>
       <div style="min-width:0"><div class="n">${u.nombre||'—'}</div>
         <div class="email-movil">${u.email||''}</div></div></div>
@@ -3067,7 +3067,7 @@ function clientsPage(){
       <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
     <div class="admin-toolbar"><div class="search">${sv(I.search,16)}<input id="cfilter" placeholder="Buscar correo o nombre..." oninput="filterRows()"></div>
       ${pend>0?`<button class="btn-add" onclick="aprobarTodosClientes(${pend})">${sv(I.check,15)} Aprobar a todos (${pend})</button>`:''}
-      ${pend>0?`<button class="btn-ghost" style="color:var(--red);border-color:rgba(255,77,94,.3)" onclick="rechazarTodosPendientes(${pend})">${sv(I.trash,15)} Rechazar pendientes (${pend})</button>`:''}
+      ${pend>0&&ROL_ACTUAL!=='ADMIN_LIMITADO'?`<button class="btn-ghost" style="color:var(--red);border-color:rgba(255,77,94,.3)" onclick="rechazarTodosPendientes(${pend})">${sv(I.trash,15)} Rechazar pendientes (${pend})</button>`:''}
       <button class="btn-ghost" onclick="refreshUsers()">${sv(I.refresh,15)} Actualizar</button></div>
     <div class="table" id="ctable"><div class="trow head"><div>Cliente</div><div class="col-hide">Correo</div>
       <div class="col-hide">Último acceso</div><div class="col-hide">Estado</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
@@ -4257,6 +4257,18 @@ async function verifyAdmin(email,pass){
   return u.pass_hash===h && (u.rol||'').toUpperCase()==='ADMIN';
 }
 
+// Igual que verifyAdmin pero TAMBIEN deja pasar al socio (ADMIN_LIMITADO).
+// Solo se usa en las acciones que le tocan: ver clientes, aprobar/quitar
+// acceso y dar productos. Todo lo demas sigue exigiendo ADMIN total.
+async function verifyAdminAny(email,pass){
+  const u=await getUser(email);
+  if(!u) return false;
+  const h=await hashPass(pass);
+  if(u.pass_hash!==h) return false;
+  const rol=(u.rol||'').toUpperCase();
+  return rol==='ADMIN' || rol==='ADMIN_LIMITADO';
+}
+
 // lee una colección entera → array
 async function getCol(name){
   const snap=await getDocs(collection(db,name));
@@ -4405,7 +4417,7 @@ window.fbCall = async function(p){
 
     // ---------- USUARIOS (admin) ----------
     if(a==='listusers' || a==='listusersfresh'){
-      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      if(!await verifyAdminAny(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       if(a==='listusersfresh') invalidateUsers();   // forzar lectura fresca de Firebase
       const all=await getAllUsers(a==='listusersfresh');   // usa caché (no fuerza lectura de 386 docs cada vez)
       // ocultar los rechazados (basura/spam marcado)
@@ -4430,7 +4442,7 @@ window.fbCall = async function(p){
       return {ok:true, users};
     }
     if(a==='approve' || a==='revoke'){
-      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      if(!await verifyAdminAny(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
       await updateDoc(doc(db,'clientes',em),{aprobado: a==='approve'?'SI':'NO'});
       actualizarUserEnCache(em,{aprobado: a==='approve'?'SI':'NO'});
@@ -4468,7 +4480,7 @@ window.fbCall = async function(p){
       return {ok:true};
     }
     if(a==='setclientproducts'){
-      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
+      if(!await verifyAdminAny(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
       await updateDoc(doc(db,'clientes',em),{productos:p.productos||''});
       actualizarUserEnCache(em,{productos:p.productos||''});
