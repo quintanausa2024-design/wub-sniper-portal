@@ -1863,16 +1863,15 @@ async function doReset(){
   if(!email||!email.includes('@')){authMsg='Escribe un correo válido.';return render();}
   const btn=document.getElementById('rbtn');btn.textContent='Enviando...';
   try{
-    // generar contraseña temporal, guardarla en Firebase
-    const temp=genTempPass();
-    const r=await apiCall({action:'reset',email,newpass:temp});
+    // El PORTERO genera la temporal, la guarda Y manda el correo.
+    // OJO: antes el navegador generaba otra temporal y mandaba un SEGUNDO
+    // correo con ella. Llegaban dos correos y solo servia el del portero.
+    const r=await apiCall({action:'reset',email});
     if(r.ok){
-      // mandar el correo con la temporal
-      enviarCorreo({accion:'temporal', email, nombre:r.nombre||'Trader', temppass:temp});
       authMsg='✅ Te mandé una contraseña temporal a tu correo. Revísalo (y la carpeta de spam) y entra con ella.';
       tab='auth_login';render();
     }
-    else{authMsg = r.error==='NOTFOUND'?'Ese correo no está registrado.':'No se pudo enviar. Intenta de nuevo.';render();}
+    else{authMsg = r.error==='MUCHOS'?'Ya pediste varias. Espera un rato e inténtalo otra vez.':'No se pudo enviar. Intenta de nuevo.';render();}
   }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
 }
 // genera una contraseña temporal fácil de leer
@@ -4413,11 +4412,7 @@ window.fbCall = async function(p){
       const u=await authUser(p.email,p.pass);
       if(!u) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
-      // último acceso (una vez al día) — sin invalidar todo el caché
-      const hoy=nowStr().slice(0,10);
-      if((u.ultimo_acceso||'').slice(0,10)!==hoy){
-        // el portero ya apunta el ultimo acceso al validar la contrasena
-      }
+      // el último acceso lo apunta el portero al validar la contraseña
       return {ok:true, role:(u.rol||'CLIENTE').toUpperCase(), name:u.nombre||''};
     }
 
