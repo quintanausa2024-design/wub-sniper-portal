@@ -2392,7 +2392,13 @@ async function sendContact(){
   try{ if(tel) localStorage.setItem('sp_tel',tel); }catch(e){}
   if(!API_URL){contactDone='OK';return render();}
   const btn=document.getElementById('cbtn');btn.textContent=t('enviando_msg');
-  try{ const r=await apiCall({action:'contact',email:CLIENT.email,nombre:CLIENT.name,mensaje:m,telefono:tel});
+  // Va por el PORTERO, no directo a Firestore. El portero comprueba que seas
+  // cliente aprobado y aplica frenos que no se pueden saltar desde el navegador.
+  try{
+    const qs=new URLSearchParams({accion:'contacto',email:CLIENT.email,
+      nombre:CLIENT.name||'',mensaje:m,telefono:tel}).toString();
+    const res=await fetch(MAIL_URL+'?'+qs);
+    const r=await res.json();
     contactDone=r.ok?'OK':'ERR';render();
   }catch(e){contactDone='ERR';render();}
 }
@@ -3879,14 +3885,14 @@ async function loadAllData(silent){
       if(previa[i]&&previa[i].licencias) return previa[i];
       return {licencias:[]};
     });
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar), email:SESS.email, pass:SESS.pass});
   }catch(e){}
 }
 // guarda la copia rapida en Firebase con el estado actual (para que al reabrir no salga viejo)
 async function guardarCacheLic(){
   try{
     const guardar=(ALL_LICS||[]).map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)});
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar), email:SESS.email, pass:SESS.pass});
   }catch(e){}
 }
 function calcTotals(){
@@ -3915,7 +3921,7 @@ async function actualizarLicSuave(){
   window.scrollTo(0, scrollY);   // volver a donde estaba
   toast('Licencias actualizadas');
   try{ const guardar=frescos.map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar)}); }catch(e){}
+    await apiCall({action:'saveliccache', data:JSON.stringify(guardar), email:SESS.email, pass:SESS.pass}); }catch(e){}
 }
 async function setLic(pi,hwid,valor,maxpcs){
   const api=LICENSE_APIS[pi];
@@ -4355,6 +4361,22 @@ async function getCol(name){
 //  ROUTER PRINCIPAL — recibe {action, ...} y devuelve el mismo
 //  formato JSON que antes daba Apps Script
 // ═══════════════════════════════════════════════════════════════
+// ── Escrituras de admin: van por el PORTERO, no directo a Firestore.
+//    Asi las reglas de Firestore pueden quedar cerradas y nadie que
+//    copie la clave del HTML puede escribir en la base.
+async function pSet(col,id,datos,email,pass){
+  const qs=new URLSearchParams({accion:'admin_set',col,id,
+    datos:JSON.stringify(datos||{}),email:email||'',pass:pass||''}).toString();
+  const r=await fetch(MAIL_URL+'?'+qs);
+  return await r.json();
+}
+async function pDel(col,id,email,pass){
+  const qs=new URLSearchParams({accion:'admin_del',col,id,
+    email:email||'',pass:pass||''}).toString();
+  const r=await fetch(MAIL_URL+'?'+qs);
+  return await r.json();
+}
+
 window.fbCall = async function(p){
   const a = p.action;
   try {
@@ -4472,7 +4494,7 @@ window.fbCall = async function(p){
         tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), precio:(p.precio||'').trim(),
         fotos:(p.fotos||'').trim(), telegram:(p.telegram||'').trim(), orden };
       await setDoc(doc(db,'productos',id), obj);
-      if(a==='addproduct'){ await setDoc(doc(db,'config','newprod'),{id,nombre:obj.nombre,ts:Date.now()}); }
+      if(a==='addproduct'){ await pSet('config','newprod',{id,nombre:obj.nombre,ts:Date.now()},p.email,p.pass); }
       return {ok:true, id};
     }
     // guardar el nuevo orden de los productos (por arrastre)
@@ -4512,7 +4534,7 @@ window.fbCall = async function(p){
                                 && (u.aprobado||'').toUpperCase()==='SI').length;
         const sc=await getDoc(doc(db,'config','stats'));
         const cur=sc.exists()?sc.data():{};
-        if(cur.reales!==reales) await setDoc(doc(db,'config','stats'),{...cur,reales});
+        if(cur.reales!==reales) await pSet('config','stats',{...cur,reales},p.email,p.pass);
       }catch(e){}
       return {ok:true, users};
     }
@@ -4690,29 +4712,29 @@ window.fbCall = async function(p){
     if(a==='addnews'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const id='n'+Date.now();
-      await setDoc(doc(db,'noticias',id),{ id, fecha:nowStr(), tag:(p.tag||'AVISO').trim(),
-        titulo:(p.titulo||'').trim(), cuerpo:(p.cuerpo||'').trim(), color:(p.color||'').trim() });
+      const r=await pSet('noticias',id,{ id, fecha:nowStr(), tag:(p.tag||'AVISO').trim(),
+        titulo:(p.titulo||'').trim(), cuerpo:(p.cuerpo||'').trim(), color:(p.color||'').trim() },p.email,p.pass);
+      if(!r.ok) return r;
       return {ok:true, id};
     }
     if(a==='editnews'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await updateDoc(doc(db,'noticias',p.nid),{ tag:(p.tag||'AVISO').trim(),
-        titulo:(p.titulo||'').trim(), cuerpo:(p.cuerpo||'').trim(), color:(p.color||'').trim() });
-      return {ok:true};
+      const prev=await getDoc(doc(db,'noticias',p.nid));
+      const cur=prev.exists()?prev.data():{};
+      return await pSet('noticias',p.nid,{ ...cur, id:p.nid, tag:(p.tag||'AVISO').trim(),
+        titulo:(p.titulo||'').trim(), cuerpo:(p.cuerpo||'').trim(), color:(p.color||'').trim() },p.email,p.pass);
     }
     if(a==='deletenews'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'noticias',p.nid));
-      return {ok:true};
+      return await pDel('noticias',p.nid,p.email,p.pass);
     }
 
     // ---------- MENSAJES / CONTACTO ----------
+    // PUERTA CERRADA: este endpoint no pedia NADA (ni cuenta, ni freno, ni
+    // validacion) y por ahi entraba el spam. Los mensajes ahora se mandan
+    // por el portero (accion=contacto), que si comprueba quien escribe.
     if(a==='contact'){
-      const id='m'+Date.now();
-      await setDoc(doc(db,'mensajes',id),{ id, fecha:nowStr(), nombre:p.nombre||'',
-        email:(p.email||'').toLowerCase().trim(), mensaje:(p.mensaje||'').slice(0,2000),
-        telefono:(p.telefono||'').trim(), leido:'NO' });
-      return {ok:true};
+      return {ok:false,error:'USA_PORTERO'};
     }
     if(a==='listmessages'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
@@ -4779,8 +4801,7 @@ window.fbCall = async function(p){
     }
     if(a==='setmaint'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await setDoc(doc(db,'config','maint'),{on:p.on==='SI', msg:(p.msg||'').slice(0,300)});
-      return {ok:true};
+      return await pSet('config','maint',{on:p.on==='SI', msg:(p.msg||'').slice(0,300)},p.email,p.pass);
     }
     if(a==='getnewprod'){
       const s=await getDoc(doc(db,'config','newprod'));
@@ -4808,8 +4829,7 @@ window.fbCall = async function(p){
       if(p.pay_zelle!==undefined) upd.pay_zelle=(p.pay_zelle==='SI');
       if(p.pay_paypal!==undefined) upd.pay_paypal=(p.pay_paypal==='SI');
       if(p.pay_tarjeta!==undefined) upd.pay_tarjeta=(p.pay_tarjeta==='SI');
-      await setDoc(doc(db,'config','stats'),upd);
-      return {ok:true};
+      return await pSet('config','stats',upd,p.email,p.pass);
     }
 
     // ---------- noticias de mercado (esas quedan sin datos por ahora) ----------
@@ -4820,7 +4840,7 @@ window.fbCall = async function(p){
     // guardar la foto de las 8 licencias en Firebase
     if(a==='saveliccache'){
       try{
-        await setDoc(doc(db,'config','lic_cache'), { data: p.data||'[]', ts: Date.now() });
+        await pSet('config','lic_cache',{ data: p.data||'[]', ts: Date.now() },p.email,p.pass);
         return {ok:true};
       }catch(e){ return {ok:false, error:'SAVE_FAIL'}; }
     }
