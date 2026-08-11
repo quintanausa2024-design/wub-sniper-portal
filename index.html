@@ -4286,6 +4286,15 @@ function nowStr(){
 
 // ── caché de clientes en memoria (evita releer 383 docs a cada rato) ──
 let _usersCache=null, _usersCacheT=0;
+// El caché guardado ANTES de este cambio lleva pass_hash dentro. Se borra
+// una sola vez, para que ningun navegador se quede con hashes viejos.
+try{
+  if(localStorage.getItem('sp_cache_v')!=='2'){
+    localStorage.removeItem('sp_users_cache');
+    localStorage.removeItem('sp_users_cache_t');
+    localStorage.setItem('sp_cache_v','2');
+  }
+}catch(e){}
 async function getAllUsers(force){
   const now=Date.now();
   if(!force && _usersCache && (now-_usersCacheT)<600000) return _usersCache;   // 10 min en memoria
@@ -4300,8 +4309,14 @@ async function getAllUsers(force){
       }
     }catch(e){}
   }
-  const snap=await getDocs(collection(db,'clientes'));
-  _usersCache=snap.docs.map(d=>d.data());
+  // La lista viene del PORTERO y llega SIN pass_hash. Antes se bajaba
+  // la coleccion entera desde el navegador, hashes incluidos, y se
+  // guardaba en localStorage: cualquiera con F12 la veia.
+  const qs=new URLSearchParams({accion:'lista_clientes',
+    email:(SESS&&SESS.email)||'',pass:(SESS&&SESS.pass)||''}).toString();
+  const rr=await (await fetch(MAIL_URL+'?'+qs)).json();
+  if(!rr.ok) return _usersCache||[];
+  _usersCache=rr.clientes||[];
   _usersCacheT=now;
   try{ localStorage.setItem('sp_users_cache', JSON.stringify(_usersCache));
        localStorage.setItem('sp_users_cache_t', String(now)); }catch(e){}
@@ -4326,26 +4341,38 @@ function borrarUserDeCache(email){
   }
 }
 
+// Lee UN cliente por el PORTERO. Ya NO trae pass_hash: ese campo no
+// sale del servidor. Si necesitas comprobar la contrasena, usa authUser.
 async function getUser(email){
-  const ref=doc(db,'clientes',email.toLowerCase().trim());
-  const s=await getDoc(ref);
-  return s.exists()? s.data() : null;
+  try{
+    const qs=new URLSearchParams({accion:'cliente_uno',email:String(email||'').toLowerCase().trim()}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    return r.ok ? r.cliente : null;
+  }catch(e){ return null; }
 }
+// Comprueba correo+contrasena EN EL SERVIDOR y devuelve el cliente.
+// Devuelve null si la contrasena no es correcta.
+async function authUser(email,pass){
+  try{
+    const qs=new URLSearchParams({accion:'cliente_auth',
+      email:String(email||'').toLowerCase().trim(),pass:pass||''}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    return r.ok ? r.cliente : null;
+  }catch(e){ return null; }
+}
+// El rol y la contrasena se comprueban EN EL PORTERO. El navegador
+// ya no ve ningun pass_hash con el que comparar.
 async function verifyAdmin(email,pass){
-  const u=await getUser(email);
-  if(!u) return false;
-  const h=await hashPass(pass);
-  return u.pass_hash===h && (u.rol||'').toUpperCase()==='ADMIN';
+  const u=await authUser(email,pass);
+  return !!u && (u.rol||'').toUpperCase()==='ADMIN';
 }
 
 // Igual que verifyAdmin pero TAMBIEN deja pasar al socio (ADMIN_LIMITADO).
 // Solo se usa en las acciones que le tocan: ver clientes, aprobar/quitar
 // acceso y dar productos. Todo lo demas sigue exigiendo ADMIN total.
 async function verifyAdminAny(email,pass){
-  const u=await getUser(email);
+  const u=await authUser(email,pass);
   if(!u) return false;
-  const h=await hashPass(pass);
-  if(u.pass_hash!==h) return false;
   const rol=(u.rol||'').toUpperCase();
   return rol==='ADMIN' || rol==='ADMIN_LIMITADO';
 }
@@ -4383,15 +4410,13 @@ window.fbCall = async function(p){
 
     // ---------- LOGIN ----------
     if(a==='login'){
-      const u=await getUser(p.email);
-      if(!u) return {ok:false,error:'NOTFOUND'};
-      const h=await hashPass(p.pass);
-      if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
+      const u=await authUser(p.email,p.pass);
+      if(!u) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
       // último acceso (una vez al día) — sin invalidar todo el caché
       const hoy=nowStr().slice(0,10);
       if((u.ultimo_acceso||'').slice(0,10)!==hoy){
-        try{ await updateDoc(doc(db,'clientes',u.email),{ultimo_acceso:nowStr()}); }catch(e){}
+        // el portero ya apunta el ultimo acceso al validar la contrasena
       }
       return {ok:true, role:(u.rol||'CLIENTE').toUpperCase(), name:u.nombre||''};
     }
@@ -4420,43 +4445,40 @@ window.fbCall = async function(p){
 
     // ---------- CAMBIAR / RESET PASSWORD ----------
     if(a==='changepass'){
-      const u=await getUser(p.email);
-      if(!u) return {ok:false,error:'NOTFOUND'};
-      const h=await hashPass(p.oldpass||p.pass||'');
-      if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
-      const nh=await hashPass(p.newpass);
-      await updateDoc(doc(db,'clientes',u.email),{pass_hash:nh}); invalidateUsers();
-      return {ok:true};
+      // el hash se calcula y se guarda EN EL PORTERO
+      const qs=new URLSearchParams({accion:'cambiar_pass',modo:'normal',
+        email:p.email,oldpass:p.oldpass||p.pass||'',newpass:p.newpass}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(r.ok) invalidateUsers();
+      return r;
     }
     if(a==='reset'){
-      // recuperar contraseña: guarda la clave temporal que manda el portal
-      const em=(p.email||'').toLowerCase().trim();
-      const u=await getUser(em);
-      if(!u) return {ok:false,error:'NOTFOUND'};
-      if(!p.newpass || p.newpass.length<4) return {ok:false,error:'PASS_CORTA'};
-      const nh=await hashPass(p.newpass);
-      await updateDoc(doc(db,'clientes',em),{pass_hash:nh});
-      actualizarUserEnCache(em,{pass_hash:nh});
-      return {ok:true, nombre:u.nombre||''};
+      // El PORTERO genera la temporal y la manda por correo. El navegador
+      // ya no la elige: antes cualquiera podia resetear cualquier cuenta.
+      const qs=new URLSearchParams({accion:'olvide_pass',
+        email:(p.email||'').toLowerCase().trim()}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      invalidateUsers();
+      return r;
     }
     // el admin resetea la clave de un cliente
     if(a==='adminreset'){
-      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=(p.target||'').toLowerCase().trim();
       const u=await getUser(em);
       if(!u) return {ok:false,error:'NOTFOUND'};
-      const nh=await hashPass(p.newpass);
-      await updateDoc(doc(db,'clientes',em),{pass_hash:nh});
-      actualizarUserEnCache(em,{pass_hash:nh});
+      const qs=new URLSearchParams({accion:'cambiar_pass',modo:'admin',
+        email:em,newpass:p.newpass,
+        admin_email:p.email,admin_pass:p.pass}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(!r.ok) return r;
+      invalidateUsers();
       return {ok:true, nombre:u.nombre||''};
     }
 
     // ---------- LISTAR PRODUCTOS (cliente) ----------
     if(a==='listproducts'){
-      const u=await getUser(p.email);
-      if(!u) return {ok:false,error:'NOTFOUND'};
-      const h=await hashPass(p.pass);
-      if(u.pass_hash!==h) return {ok:false,error:'WRONGPASS'};
+      const u=await authUser(p.email,p.pass);
+      if(!u) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
       const prods=await getCol('productos');
@@ -4541,45 +4563,40 @@ window.fbCall = async function(p){
     if(a==='approve' || a==='revoke'){
       if(!await verifyAdminAny(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
-      await updateDoc(doc(db,'clientes',em),{aprobado: a==='approve'?'SI':'NO'});
+      const qs=new URLSearchParams({accion:a==='approve'?'approve':'revoke',
+        email:em,padmin:p.email,ppass:p.pass}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(!r.ok) return r;
       actualizarUserEnCache(em,{aprobado: a==='approve'?'SI':'NO'});
       return {ok:true};
     }
     // marcar TODOS los pendientes como rechazados (se ocultan de la lista, no se borran)
     if(a==='rechazartodos'){
-      if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      const all=await getAllUsers(true);
-      const pendientes=all.filter(u=>(u.aprobado||'').toUpperCase()!=='SI' && (u.rol||'').toUpperCase()!=='ADMIN');
-      // en LOTES de 400 (antes iba de uno en uno y con miles se cortaba a medias)
-      let n=0, ultimoError='';
-      const TAM=400;
-      for(let i=0;i<pendientes.length;i+=TAM){
-        const trozo=pendientes.slice(i,i+TAM);
-        try{
-          const batch=writeBatch(db);
-          trozo.forEach(u=>batch.update(doc(db,'clientes',u.email),{aprobado:'RECHAZADO'}));
-          await batch.commit();
-          trozo.forEach(u=>actualizarUserEnCache(u.email,{aprobado:'RECHAZADO'}));
-          n+=trozo.length;
-          console.log('[RECHAZAR] '+n+' / '+pendientes.length);
-        }catch(e){
-          ultimoError=(e&&e.message)||String(e);
-          console.warn('[RECHAZAR] lote fallo:', ultimoError);
-        }
-      }
-      return {ok:true, total:n, pendientesEncontrados:pendientes.length, error:ultimoError};
+      // lo hace el PORTERO de una pasada; el navegador ya no escribe en 'clientes'
+      const qs=new URLSearchParams({accion:'rechazar_todos',
+        email:p.email,pass:p.pass}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(!r.ok) return r;
+      invalidateUsers();
+      return {ok:true, total:r.n||0, pendientesEncontrados:r.n||0, error:''};
     }
     if(a==='deleteuser'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
-      await deleteDoc(doc(db,'clientes',em));
+      const qs=new URLSearchParams({accion:'borrarcliente',
+        email:em,padmin:p.email,ppass:p.pass}).toString();
+      const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(!r.ok) return r;
       borrarUserDeCache(em);
       return {ok:true};
     }
     if(a==='setclientproducts'){
       if(!await verifyAdminAny(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const em=p.target.toLowerCase().trim();
-      await updateDoc(doc(db,'clientes',em),{productos:p.productos||''});
+      const prev=await getUser(em);
+      if(!prev) return {ok:false,error:'NOTFOUND'};
+      const r=await pSet('clientes',em,{...prev,productos:p.productos||''},p.email,p.pass);
+      if(!r.ok) return r;
       actualizarUserEnCache(em,{productos:p.productos||''});
       return {ok:true};
     }
@@ -4589,8 +4606,8 @@ window.fbCall = async function(p){
       const guias=await getCol('guias');
       let esAdm=false, quien='';
       if(p.email && p.pass){
-        const u=await getUser(p.email);
-        if(u && u.pass_hash===await hashPass(p.pass) && (u.aprobado||'').toUpperCase()==='SI'){
+        const u=await authUser(p.email,p.pass);
+        if(u && (u.aprobado||'').toUpperCase()==='SI'){
           quien=p.email.toLowerCase().trim(); esAdm=(u.rol||'').toUpperCase()==='ADMIN';
         }
       }
@@ -4677,9 +4694,8 @@ window.fbCall = async function(p){
         texto:r.texto, aprobado:(r.aprobado||'').toUpperCase()==='SI' })) };
     }
     if(a==='addreview'){
-      const u=await getUser(p.email);
-      if(!u) return {ok:false,error:'NOTFOUND'};
-      if(u.pass_hash!==await hashPass(p.pass)) return {ok:false,error:'WRONGPASS'};
+      const u=await authUser(p.email,p.pass);
+      if(!u) return {ok:false,error:'WRONGPASS'};
       // debe tener acceso al producto
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
       if(!liberados.includes(p.pid)) return {ok:false,error:'NO_ACCESS'};
