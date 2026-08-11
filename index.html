@@ -509,6 +509,13 @@
   .contact-side{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
   .contact-side .contact-card:last-child{grid-column:1 / -1}
   @media(max-width:900px){.two-col{grid-template-columns:1fr}.contact-side{grid-template-columns:1fr}}
+  /* Rejilla ancha SOLO para Mi Perfil de admin: mosaico de 3 columnas.
+     No toca .two-col, que la usan el perfil de cliente y la pagina de contacto. */
+  .perfil-wide{columns:3 360px;column-gap:20px;max-width:1500px}
+  .perfil-wide>.card{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;
+                     display:inline-block;width:100%;margin:0 0 18px}
+  @media(max-width:1200px){.perfil-wide{columns:2 340px}}
+  @media(max-width:820px){.perfil-wide{columns:1}}
   .ref-share{display:flex;gap:8px;margin-top:12px}
   .ref-sh{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:12.5px;font-weight:700;text-decoration:none;transition:.13s}
   .ref-sh.wa{background:rgba(37,211,102,.12);color:#25D366;border:1px solid rgba(37,211,102,.3)}
@@ -2577,14 +2584,13 @@ function profilePage(){
         </div></div>`;
     }
   }
-  return `<div class="page-head"><h1>${t('perfil_h')}</h1><p>${t('perfil_sub')}</p></div>
-    <div class="two-col">
-      <div class="col-stack">
-        <div class="card"><div class="card-top" style="display:flex;align-items:center;gap:13px">
+  // Cada tarjeta se calcula UNA SOLA VEZ (varias disparan cargas al servidor;
+  // llamarlas dos veces revive el bucle de render que ya nos mordio antes).
+  const cIdent = `<div class="card"><div class="card-top" style="display:flex;align-items:center;gap:13px">
           <div class="avatar" style="width:44px;height:44px;font-size:15px">${(CLIENT.name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
-          <div style="min-width:0"><div class="card-name">${CLIENT.name}</div><div class="card-cat">${CLIENT.email}</div></div></div></div>
-        ${prodCountCard()}
-        <div class="card"><div class="card-top"><div class="card-name">${t('cambiar_pass')}</div></div>
+          <div style="min-width:0"><div class="card-name">${CLIENT.name}</div><div class="card-cat">${CLIENT.email}</div></div></div></div>`;
+  const cProd = prodCountCard();
+  const cPass = `<div class="card"><div class="card-top"><div class="card-name">${t('cambiar_pass')}</div></div>
           <div style="padding:20px">
             ${ok}${err}
             <div class="field"><label>${isEn?'Current password':'Contraseña actual'}</label><div class="pass-wrap">
@@ -2597,9 +2603,18 @@ function profilePage(){
               <input type="password" id="np2" placeholder="${isEn?'Repeat it':'Repítela'}" autocomplete="new-password">
               <span class="eye" onclick="toggleEye('np2',this)">${EYE}</span></div></div>
             <button class="btn-primary" id="cpbtn" onclick="changePass()" style="margin-top:4px">${t('guardar')}</button>
-          </div></div>
-      </div>
-      <div class="col-stack">${statsCard()}${pagosCard()}${maintCard()}${adminsCard()}${refCard}</div>
+          </div></div>`;
+  const cStats = statsCard(), cPagos = pagosCard(), cMaint = maintCard(), cAdmins = adminsCard();
+  const head = `<div class="page-head"><h1>${t('perfil_h')}</h1><p>${t('perfil_sub')}</p></div>`;
+
+  // Admin: mosaico ancho de 3 columnas (aprovecha la pantalla).
+  // Cliente: se queda con las dos columnas de siempre.
+  if(view==='admin'){
+    return head + `<div class="perfil-wide">${cIdent}${cProd}${cPass}${cStats}${cPagos}${cMaint}${cAdmins}${refCard}</div>`;
+  }
+  return head + `<div class="two-col">
+      <div class="col-stack">${cIdent}${cProd}${cPass}</div>
+      <div class="col-stack">${cStats}${cPagos}${cMaint}${cAdmins}${refCard}</div>
     </div>`}
 
 // ── Tarjeta: gestionar administradores (solo la ve el admin) ──
