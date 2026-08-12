@@ -4317,6 +4317,13 @@ async function getAllUsers(force){
   if(!rr.ok) return _usersCache||[];
   _usersCache=rr.clientes||[];
   _usersCacheT=now;
+  // Si la lectura vino a medias, NO la guardamos: si no, te quedas 10
+  // minutos viendo una lista corta creyendo que esa es toda.
+  if(rr.incompleta){
+    console.warn('[CLIENTES] lectura incompleta, no se guarda en cache');
+    _usersCacheT=0;
+    return _usersCache;
+  }
   try{ localStorage.setItem('sp_users_cache', JSON.stringify(_usersCache));
        localStorage.setItem('sp_users_cache_t', String(now)); }catch(e){}
   return _usersCache;
@@ -4510,7 +4517,7 @@ window.fbCall = async function(p){
         video:(p.video||'').trim(), download:(p.download||'').trim(),
         tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), precio:(p.precio||'').trim(),
         fotos:(p.fotos||'').trim(), telegram:(p.telegram||'').trim(), orden };
-      await setDoc(doc(db,'productos',id), obj);
+      { const r=await pSet('productos',id,obj,p.email,p.pass); if(!r.ok) return r; }
       if(a==='addproduct'){ await pSet('config','newprod',{id,nombre:obj.nombre,ts:Date.now()},p.email,p.pass); }
       return {ok:true, id};
     }
@@ -4519,14 +4526,15 @@ window.fbCall = async function(p){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const ids=(p.orden||'').split(',').filter(Boolean);
       for(let i=0;i<ids.length;i++){
-        try{ await updateDoc(doc(db,'productos',ids[i]),{orden:i}); }catch(e){}
+        try{ const ant=await getDoc(doc(db,'productos',ids[i]));
+             if(!ant.exists()) continue;
+             await pSet('productos',ids[i],{...ant.data(),orden:i},p.email,p.pass); }catch(e){}
       }
       return {ok:true};
     }
     if(a==='deleteproduct'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'productos',p.pid));
-      return {ok:true};
+      return await pDel('productos',p.pid,p.email,p.pass);
     }
 
     // ---------- USUARIOS (admin) ----------
@@ -4624,15 +4632,15 @@ window.fbCall = async function(p){
     if(a==='addguide' || a==='editguide'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const id = a==='addguide' ? ('g'+Date.now()) : p.gid;
-      await setDoc(doc(db,'guias',id),{ id, titulo:(p.titulo||'').trim(),
+      const r=await pSet('guias',id,{ id, titulo:(p.titulo||'').trim(),
         descripcion:(p.desc||'').trim(), video:(p.video||'').trim(),
-        tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), acceso:(p.acceso||'').toLowerCase().trim() });
+        tipo:(p.tipo||'PUBLICO').toUpperCase().trim(), acceso:(p.acceso||'').toLowerCase().trim() },p.email,p.pass);
+      if(!r.ok) return r;
       return {ok:true, id};
     }
     if(a==='deleteguide'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'guias',p.gid));
-      return {ok:true};
+      return await pDel('guias',p.gid,p.email,p.pass);
     }
 
     // ---------- DESCUENTOS ----------
@@ -4654,21 +4662,22 @@ window.fbCall = async function(p){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const id = a==='adddiscount' ? ('d'+Date.now()) : p.did;
       const prev = a==='editdiscount' ? (await getDoc(doc(db,'descuentos',id))).data()||{} : {};
-      await setDoc(doc(db,'descuentos',id),{ id, empresa:(p.empresa||'').trim(),
+      const r=await pSet('descuentos',id,{ id, empresa:(p.empresa||'').trim(),
         descuento:(p.descuento||'').trim(), codigo:(p.codigo||'').trim(), link:(p.link||'').trim(),
         nota:(p.nota||'').trim(), tipo:(p.tipo||'DESCUENTO').toUpperCase().trim(),
-        visible: prev.visible!==undefined?prev.visible:'SI' });
+        visible: prev.visible!==undefined?prev.visible:'SI' },p.email,p.pass);
+      if(!r.ok) return r;
       return {ok:true, id};
     }
     if(a==='setdiscvisible'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await updateDoc(doc(db,'descuentos',p.did),{visible: p.valor==='SI'?'SI':'NO'});
-      return {ok:true};
+      const ant=await getDoc(doc(db,'descuentos',p.did));
+      if(!ant.exists()) return {ok:false,error:'NO_ENCONTRADO'};
+      return await pSet('descuentos',p.did,{...ant.data(),visible: p.valor==='SI'?'SI':'NO'},p.email,p.pass);
     }
     if(a==='deletediscount'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'descuentos',p.did));
-      return {ok:true};
+      return await pDel('descuentos',p.did,p.email,p.pass);
     }
 
     // ---------- RESEÑAS ----------
@@ -4695,23 +4704,21 @@ window.fbCall = async function(p){
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
       if(!liberados.includes(p.pid)) return {ok:false,error:'NO_ACCESS'};
       // buscar si ya tiene reseña de ese producto → actualiza
-      const rs=await getCol('resenas');
-      const ya=rs.find(r=>r.email===p.email.toLowerCase().trim() && String(r.pid)===String(p.pid));
-      const id = ya? ya.id : ('r'+Date.now());
-      await setDoc(doc(db,'resenas',id),{ id, fecha:nowStr(), email:p.email.toLowerCase().trim(),
-        nombre:u.nombre||'', pid:String(p.pid), producto:p.producto||'',
-        estrellas:Number(p.estrellas||5), texto:(p.texto||'').slice(0,600), aprobado:'NO' });
-      return {ok:true, status:'PENDING'};
+      // la escribe el PORTERO: comprueba clave y acceso al producto
+      const qs=new URLSearchParams({accion:'resena_nueva',email:p.email,pass:p.pass,
+        pid:String(p.pid),producto:p.producto||'',estrellas:String(p.estrellas||5),
+        texto:(p.texto||'').slice(0,600)}).toString();
+      return await (await fetch(MAIL_URL+'?'+qs)).json();
     }
     if(a==='setreview'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await updateDoc(doc(db,'resenas',p.rid),{aprobado: p.valor==='SI'?'SI':'NO'});
-      return {ok:true};
+      const ant=await getDoc(doc(db,'resenas',p.rid));
+      if(!ant.exists()) return {ok:false,error:'NO_ENCONTRADO'};
+      return await pSet('resenas',p.rid,{...ant.data(),aprobado: p.valor==='SI'?'SI':'NO'},p.email,p.pass);
     }
     if(a==='deletereview'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      await deleteDoc(doc(db,'resenas',p.rid));
-      return {ok:true};
+      return await pDel('resenas',p.rid,p.email,p.pass);
     }
 
     // ---------- NOTICIAS ----------
@@ -4749,7 +4756,10 @@ window.fbCall = async function(p){
     }
     if(a==='listmessages'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      const ms=await getCol('mensajes'); ms.reverse();
+      const qs=new URLSearchParams({accion:'lista_mensajes',email:p.email,pass:p.pass}).toString();
+      const rr=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(!rr.ok) return rr;
+      const ms=(rr.mensajes||[]).slice().reverse();
       return {ok:true, messages:ms.map(m=>({ id:m.id, fecha:m.fecha, nombre:m.nombre,
         email:m.email, mensaje:m.mensaje, telefono:m.telefono||'' })) };
     }
@@ -4757,21 +4767,22 @@ window.fbCall = async function(p){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const mid=String(p.mid||'').trim();
       if(!mid || mid==='undefined') return {ok:false,error:'SIN_ID'};
-      try{ await deleteDoc(doc(db,'mensajes',mid)); return {ok:true}; }
-      catch(e){ return {ok:false,error:String(e.message||e)}; }
+      return await pDel('mensajes',mid,p.email,p.pass);
     }
     // borra de golpe todos los mensajes basura (sin tener que pasar cada id)
     if(a==='deletebasura'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
-      const snap=await getDocs(collection(db,'mensajes'));
+      const qs=new URLSearchParams({accion:'lista_mensajes',email:p.email,pass:p.pass}).toString();
+      const rr=await (await fetch(MAIL_URL+'?'+qs)).json();
+      if(!rr.ok) return rr;
       let n=0;
-      for(const d of snap.docs){
-        const m=d.data();
+      for(const m of (rr.mensajes||[])){
+        const d={id:m.id};
         const vacio=x=>!String(x||'').trim();
         const esBasura = vacio(m.mensaje) || (vacio(m.nombre)&&vacio(m.email))
                        || ('_persistent' in m) || ('_backup' in m)
                        || String(m.remitente||'').includes('persistence');
-        if(esBasura){ try{ await deleteDoc(doc(db,'mensajes',d.id)); n++; }catch(e){} }
+        if(esBasura){ try{ const r=await pDel('mensajes',d.id,p.email,p.pass); if(r.ok) n++; }catch(e){} }
       }
       return {ok:true, borrados:n};
     }
