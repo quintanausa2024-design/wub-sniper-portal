@@ -3941,9 +3941,18 @@ async function setLic(pi,hwid,valor,maxpcs){
       guardarCacheLic();   // <-- que la copia rapida quede al dia
       toast(valor==='SI'?'✓ Licencia activada':'Licencia desactivada');
     } else {
-      // el servidor NO guardó → no mentimos, avisamos claro
+      // el servidor NO guardó → decimos POR QUE, que "no se guardó" no ayuda
       refrescarTablaLic();
-      toast('⚠️ No se guardó en el servidor. Intenta de nuevo.');
+      const cod=(r&&r.error)||'DESCONOCIDO';
+      const motivos={
+        NO_ENCONTRADO:'No encuentro esa fila en la hoja. El correo del portal y el de la hoja no coinciden (revisa espacios o caracteres raros).',
+        NO_ADMIN:'El servidor de ese producto no te reconoce como admin. Revisa que tenga la última versión implementada.',
+        SIN_DATO:'Llegó sin el correo. Recarga la página e inténtalo otra vez.',
+        RESP_NO_JSON:'Ese script devolvió un error. Míralo en su editor (Ejecuciones).',
+        CONN:'No hay conexión con ese servidor.'
+      };
+      console.warn('[LICENCIA] fallo al guardar:', cod, 'hwid=', JSON.stringify(hwid), 'producto=', api.nombre||pi);
+      toast('⚠️ '+(motivos[cod]||('El servidor respondió: '+cod)));
     }
   }catch(e){
     l._guardando=false; refrescarTablaLic();
