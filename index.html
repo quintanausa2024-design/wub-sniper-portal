@@ -3864,6 +3864,8 @@ async function loadAllData(silent){
   }));
   ALL_LICS=frescos;
   ALL_LICS_LOADING=false;
+  frescos.forEach((d,i)=>{ if(d&&d.error)
+    console.warn('[LICENCIAS] '+LICENSE_APIS[i].name+' fallo: '+d.error); });
 
   // actualizar la vista SIN parpadeo:
   if(view==='admin'&&tab==='alic'){
@@ -3922,9 +3924,12 @@ async function actualizarLicSuave(){
   ALL_LICS=frescos; ALL_LICS_LOADING=false;
   refrescarTablaLic(); actualizarTotalesLic();
   window.scrollTo(0, scrollY);   // volver a donde estaba
-  const fallaron=frescos.filter(d=>d&&d.error).length;
-  toast(fallaron ? ('⚠️ '+fallaron+' producto(s) no contestaron. Vuelve a darle a Actualizar.')
-                 : 'Licencias actualizadas');
+  const malos=[];
+  frescos.forEach((d,i)=>{ if(d&&d.error) malos.push(LICENSE_APIS[i].name+' ('+d.error+')'); });
+  if(malos.length){
+    console.warn('[LICENCIAS] fallaron:', malos.join(' | '));
+    toast('⚠️ No contestaron: '+malos.map(x=>x.split(' (')[0]).join(', '));
+  } else toast('Licencias actualizadas');
   await guardarCacheLic();
 }
 async function setLic(pi,hwid,valor,maxpcs){
