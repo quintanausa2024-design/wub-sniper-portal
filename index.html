@@ -4263,14 +4263,9 @@ window.__googleSignIn = async function(){
   return { email: res.user.email || '', nombre: res.user.displayName || '' };
 };
 
-const SALT = "SNIPER_PORTAL_2026";
-
-// hash idéntico al de Apps Script: SHA-256(pass + SALT) en hex
-async function hashPass(p){
-  const data = new TextEncoder().encode(p + SALT);
-  const buf = await crypto.subtle.digest('SHA-256', data);
-  return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
-}
+// Aqui habia un SALT a la vista y una funcion que hasheaba contrasenas
+// en el navegador. Ya no hacen falta: las contrasenas se comprueban en
+// el portero y ningun hash llega hasta aqui.
 
 function genCodigo(){
   const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s="SNP";
