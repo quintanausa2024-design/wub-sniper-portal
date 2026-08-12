@@ -3819,6 +3819,7 @@ function delDisc(id){
 
 // ════════ ADMIN: LICENCIAS DE PRODUCTOS (HWID) ════════
 let LIC_SEL=0, LIC_MODE='pending', ALL_LICS=null, ALL_LICS_LOADING=false;
+let LIC_TS='', LIC_ERRORES='';
 async function licCall(url,params){
   const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
   try{
@@ -3834,8 +3835,27 @@ async function licCall(url,params){
     return {ok:false, error:'CONN'};
   }
 }
+// El portal ya NO pregunta a los 8 Apps Script. Lee UNA lista que el
+// portero recoge solo cada 10 minutos. Una llamada, siempre completa.
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
+  try{
+    const qs=new URLSearchParams({accion:'licencias',email:SESS.email,pass:SESS.pass}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    if(r.ok && Array.isArray(r.productos) && r.productos.length){
+      ALL_LICS=r.productos.map(x=>({licencias:x.licencias||[]}));
+      LIC_TS=r.ts||''; LIC_ERRORES=r.errores||'';
+      ALL_LICS_LOADING=false;
+      refrescarTablaLic(); actualizarTotalesLic();
+      return;
+    }
+    if(r.ok && r.vacio){
+      ALL_LICS_LOADING=false;
+      toast('Aún no se han recogido las licencias. Ejecuta activarRecolector() en el portero.');
+      return;
+    }
+  }catch(e){ console.warn('[LICENCIAS] portero no respondió, uso el modo antiguo'); }
+  ALL_LICS_LOADING=true;
 
   // 1) COPIA RÁPIDA: mostrar al instante lo guardado en Firebase
   let mostróCopia=false;
@@ -3913,6 +3933,22 @@ function refrescarTablaLic(){
 async function actualizarLicSuave(){
   if(ALL_LICS_LOADING)return;
   ALL_LICS_LOADING=true;
+  const scrollY0=window.scrollY;
+  try{
+    const qs=new URLSearchParams({accion:'licencias',email:SESS.email,pass:SESS.pass}).toString();
+    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    if(r.ok && Array.isArray(r.productos) && r.productos.length){
+      ALL_LICS=r.productos.map(x=>({licencias:x.licencias||[]}));
+      LIC_TS=r.ts||''; LIC_ERRORES=r.errores||'';
+      ALL_LICS_LOADING=false;
+      refrescarTablaLic(); actualizarTotalesLic();
+      window.scrollTo(0,scrollY0);
+      toast(LIC_ERRORES ? ('Actualizado. Pendiente de reintentar: '+LIC_ERRORES)
+                        : ('Licencias actualizadas'+(LIC_TS?' ('+LIC_TS+')':'')));
+      return;
+    }
+  }catch(e){}
+  ALL_LICS_LOADING=true;
   const scrollY=window.scrollY;   // recordar dónde está el scroll
   const frescos=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
@@ -3948,7 +3984,9 @@ async function setLic(pi,hwid,valor,maxpcs){
       // el servidor CONFIRMÓ el cambio → ahora sí lo mostramos
       l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs);
       refrescarTablaLic(); actualizarTotalesLic();
-      guardarCacheLic();   // <-- que la copia rapida quede al dia
+      // avisar al portero para que refresque su lista (en segundo plano)
+      try{ fetch(MAIL_URL+'?'+new URLSearchParams({accion:'recoger',
+             email:SESS.email,pass:SESS.pass}).toString()); }catch(e){}   // <-- que la copia rapida quede al dia
       toast(valor==='SI'?'✓ Licencia activada':'Licencia desactivada');
     } else {
       // el servidor NO guardó → decimos POR QUE, que "no se guardó" no ayuda
