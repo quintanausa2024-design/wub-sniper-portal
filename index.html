@@ -3984,9 +3984,9 @@ async function setLic(pi,hwid,valor,maxpcs){
       // el servidor CONFIRMÓ el cambio → ahora sí lo mostramos
       l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs);
       refrescarTablaLic(); actualizarTotalesLic();
-      // avisar al portero para que refresque su lista (en segundo plano)
-      try{ fetch(MAIL_URL+'?'+new URLSearchParams({accion:'recoger',
-             email:SESS.email,pass:SESS.pass}).toString()); }catch(e){}   // <-- que la copia rapida quede al dia
+      // refrescar en el portero SOLO este producto (rapido, ~2s)
+      try{ fetch(MAIL_URL+'?'+new URLSearchParams({accion:'recoger_uno',i:String(pi),
+             email:SESS.email,pass:SESS.pass}).toString()); }catch(e){}
       toast(valor==='SI'?'✓ Licencia activada':'Licencia desactivada');
     } else {
       // el servidor NO guardó → decimos POR QUE, que "no se guardó" no ayuda
