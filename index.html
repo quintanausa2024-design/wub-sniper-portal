@@ -3865,7 +3865,7 @@ async function loadAllData(silent){
       ALL_LICS=r.productos.map(x=>({licencias:x.licencias||[]}));
       LIC_TS=r.ts||''; LIC_ERRORES=r.errores||'';
       ALL_LICS_LOADING=false;
-      refrescarTablaLic(); actualizarTotalesLic();
+      pintarLicencias();
       return;
     }
     if(r.ok && r.vacio){
@@ -3905,6 +3905,7 @@ async function loadAllData(silent){
   ALL_LICS_LOADING=false;
   frescos.forEach((d,i)=>{ if(d&&d.error)
     console.warn('[LICENCIAS] '+LICENSE_APIS[i].name+' fallo: '+d.error); });
+  pintarLicencias();
 
   // actualizar la vista SIN parpadeo:
   if(view==='admin'&&tab==='alic'){
@@ -3960,7 +3961,7 @@ async function actualizarLicSuave(){
       ALL_LICS=r.productos.map(x=>({licencias:x.licencias||[]}));
       LIC_TS=r.ts||''; LIC_ERRORES=r.errores||'';
       ALL_LICS_LOADING=false;
-      refrescarTablaLic(); actualizarTotalesLic();
+      pintarLicencias();
       window.scrollTo(0,scrollY0);
       toast(LIC_ERRORES ? ('Actualizado. Pendiente de reintentar: '+LIC_ERRORES)
                         : ('Licencias actualizadas'+(LIC_TS?' ('+LIC_TS+')':'')));
@@ -4185,6 +4186,19 @@ function filtrarLicPend(){
   const w=document.getElementById('licTablaWrap'); if(w) w.innerHTML=filasPendHTML();
   const x=document.getElementById('licX'); if(x) x.style.display=licQuery?'':'none';
 }
+// Cuando llegan las licencias hay DOS situaciones distintas:
+//  a) la pantalla aun dice "Cargando..." -> no existe ninguna tabla que
+//     refrescar, hay que DIBUJAR la pagina entera.
+//  b) la tabla ya esta puesta -> solo refrescar filas (sin parpadeo).
+// Antes siempre se hacia (b), y por eso al entrar por primera vez en
+// Licencias la pantalla se quedaba en gris hasta cambiar de pestaña.
+function pintarLicencias(){
+  if(view!=='admin' || tab!=='alic') return;
+  const yaHayTabla = !!document.getElementById('licTotales');
+  if(yaHayTabla){ refrescarTablaLic(); actualizarTotalesLic(); }
+  else { renderKeep(); }
+}
+
 function adminLicensesPage(){
   if(ALL_LICS===null){ loadAllData();
     return `<div class="page-head"><h1>Licencias</h1><p>Cargando...</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">Cargando licencias...</div>`; }
