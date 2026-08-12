@@ -3875,25 +3875,29 @@ async function loadAllData(silent){
     }
   }
 
-  // 3) GUARDAR copia (solo lo que conectó bien; conserva la anterior si falló)
-  try{
-    let previa=[];
-    try{ const c=await apiCall({action:'getliccache'}); if(c.ok&&c.data) previa=JSON.parse(c.data); }catch(e){}
-    const guardar=frescos.map((d,i)=>{
-      if(d&&d.licencias) return {licencias:d.licencias};
-      if(previa[i]&&previa[i].licencias) return previa[i];
-      return {licencias:[]};
-    });
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar), email:SESS.email, pass:SESS.pass});
-  }catch(e){}
+  // 3) GUARDAR copia — SOLO si los 8 contestaron bien.
+  //    Antes se guardaba igualmente, poniendo {licencias:[]} en los que
+  //    fallaban. Esa lista vacia quedaba guardada como si fuera real y
+  //    por eso "desaparecian" licencias al recargar.
+  await guardarCacheLic();
 }
-// guarda la copia rapida en Firebase con el estado actual (para que al reabrir no salga viejo)
+// Guarda la copia rapida SOLO si los 8 productos contestaron.
+// Si alguno fallo, no se guarda nada: mejor una copia vieja completa
+// que una nueva a medias.
 async function guardarCacheLic(){
   try{
-    const guardar=(ALL_LICS||[]).map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
+    const d=ALL_LICS||[];
+    const todosOk = d.length===LICENSE_APIS.length &&
+                    d.every(x=> x && (x.skip===true || Array.isArray(x.licencias)));
+    if(!todosOk){
+      console.warn('[LICENCIAS] copia NO guardada: algun producto no contesto');
+      return;
+    }
+    const guardar=d.map(x=>(x&&x.licencias)?{licencias:x.licencias}:{licencias:[]});
     await apiCall({action:'saveliccache', data:JSON.stringify(guardar), email:SESS.email, pass:SESS.pass});
   }catch(e){}
 }
+
 function calcTotals(){
   let tot=0,apr=0,pend=0,conn=0;
   (ALL_LICS||[]).forEach(d=>{ if(d&&d.licencias){conn++;tot+=d.licencias.length;apr+=d.licencias.filter(l=>l.aprobado).length;pend+=d.licencias.filter(l=>!l.aprobado).length;} });
@@ -3918,9 +3922,10 @@ async function actualizarLicSuave(){
   ALL_LICS=frescos; ALL_LICS_LOADING=false;
   refrescarTablaLic(); actualizarTotalesLic();
   window.scrollTo(0, scrollY);   // volver a donde estaba
-  toast('Licencias actualizadas');
-  try{ const guardar=frescos.map(d=>(d&&d.licencias)?{licencias:d.licencias}:{licencias:[]});
-    await apiCall({action:'saveliccache', data:JSON.stringify(guardar), email:SESS.email, pass:SESS.pass}); }catch(e){}
+  const fallaron=frescos.filter(d=>d&&d.error).length;
+  toast(fallaron ? ('⚠️ '+fallaron+' producto(s) no contestaron. Vuelve a darle a Actualizar.')
+                 : 'Licencias actualizadas');
+  await guardarCacheLic();
 }
 async function setLic(pi,hwid,valor,maxpcs){
   const api=LICENSE_APIS[pi];
