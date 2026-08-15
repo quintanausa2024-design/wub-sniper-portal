@@ -1591,9 +1591,22 @@ const RAILWAY_ON  = true;   // ponlo en false para volver a Firebase
 
 // Acciones que ya viven en Railway
 const EN_RAILWAY = new Set([
+  // clientes y acceso
   'login','signup','verificarcodigo','changepass','reset','adminreset',
   'listusers','listusersfresh','approve','revoke','deleteuser',
-  'setclientproducts'
+  'setclientproducts',
+  // catalogo y contenido
+  'listproducts','adminproducts','saveproduct','addproduct','editproduct',
+  'deleteproduct','reorderproducts',
+  'listguides','saveguide','addguide','editguide','deleteguide',
+  'listnews','addnews','editnews','deletenews',
+  'listdiscounts','listdiscountsadmin','savediscount','adddiscount',
+  'editdiscount','setdiscvisible','deletediscount',
+  'listreviews','listreviewsadmin','addreview','setreview','deletereview',
+  'listmessages','deletemessage','contact',
+  'getstats','setstats','getmaint','setmaint','getnewprod',
+  'mireferido','listreferidos',
+  'rechazartodos','deletebasura'
 ]);
 
 // El vale de sesion. Sustituye a mandar la contraseña en cada peticion.
@@ -1699,6 +1712,96 @@ async function llamarRailway(p){
     return await rwFetch('/admin/clientes/productos',
       { email:p.target, productos:p.productos||'' });
   }
+
+  // ── CATALOGO Y CONTENIDO ────────────────────────────────
+  const cred = { email:(SESS&&SESS.email)||'', pass:(SESS&&SESS.pass)||'' };
+
+  if (a === 'listproducts')  return await rwFetch('/productos/mios', cred);
+  if (a === 'adminproducts') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                               return await rwFetch('/admin/productos', null, 'GET'); }
+  if (a === 'saveproduct' || a === 'addproduct' || a === 'editproduct') {
+    if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+    return await rwFetch('/admin/productos/guardar', {
+      id:p.pid||p.id||'', nombre:p.nombre, categoria:p.categoria, descripcion:p.descripcion,
+      precio:p.precio, tipo:p.tipo, fotos:p.fotos, telegram:p.telegram, orden:p.orden });
+  }
+  if (a === 'deleteproduct') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                               return await rwFetch('/admin/productos/borrar', {id:p.pid||p.id}); }
+  if (a === 'reorderproducts'){ if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                               return await rwFetch('/admin/productos/orden',
+                                 {ids: (typeof p.ids==='string'? p.ids.split(',') : (p.ids||[]))}); }
+
+  if (a === 'listguides')  return await rwFetch('/guias', cred);
+  if (a === 'saveguide' || a === 'addguide' || a === 'editguide') {
+    if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+    return await rwFetch('/admin/guias/guardar', {
+      id:p.gid||p.id||'', titulo:p.titulo, descripcion:p.desc||p.descripcion,
+      video:p.video, tipo:p.tipo, acceso:p.acceso });
+  }
+  if (a === 'deleteguide') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                             return await rwFetch('/admin/guias/borrar', {id:p.gid||p.id}); }
+
+  if (a === 'listnews') return await rwFetch('/noticias', null, 'GET');
+  if (a === 'addnews' || a === 'editnews') {
+    if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+    return await rwFetch('/admin/noticias/guardar', {
+      id:p.nid||p.id||'', tag:p.tag, titulo:p.titulo, cuerpo:p.cuerpo, color:p.color });
+  }
+  if (a === 'deletenews') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                            return await rwFetch('/admin/noticias/borrar', {id:p.nid||p.id}); }
+
+  if (a === 'listdiscounts') return await rwFetch('/descuentos', null, 'GET');
+  if (a === 'listdiscountsadmin') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                                    return await rwFetch('/admin/descuentos', null, 'GET'); }
+  if (a === 'savediscount' || a === 'adddiscount' || a === 'editdiscount') {
+    if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+    return await rwFetch('/admin/descuentos/guardar', {
+      id:p.did||p.id||'', empresa:p.empresa, descuento:p.descuento, codigo:p.codigo,
+      link:p.link, nota:p.nota, tipo:p.tipo });
+  }
+  if (a === 'setdiscvisible') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                                return await rwFetch('/admin/descuentos/visible',
+                                  {id:p.did||p.id, visible:p.valor}); }
+  if (a === 'deletediscount') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                                return await rwFetch('/admin/descuentos/borrar', {id:p.did||p.id}); }
+
+  if (a === 'listreviews') return await rwFetch('/resenas', null, 'GET');
+  if (a === 'listreviewsadmin') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                                  return await rwFetch('/admin/resenas', null, 'GET'); }
+  if (a === 'addreview') return await rwFetch('/resenas/nueva',
+      { ...cred, pid:p.pid, producto:p.producto, estrellas:p.estrellas, texto:p.texto });
+  if (a === 'setreview') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                           return await rwFetch('/admin/resenas/aprobar',
+                             {id:p.rid||p.id, aprobado:p.valor}); }
+  if (a === 'deletereview') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                              return await rwFetch('/admin/resenas/borrar', {id:p.rid||p.id}); }
+
+  if (a === 'listmessages') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                              return await rwFetch('/admin/mensajes', null, 'GET'); }
+  if (a === 'deletemessage'){ if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                              return await rwFetch('/admin/mensajes/borrar', {id:p.mid||p.id}); }
+  if (a === 'contact') return await rwFetch('/contacto',
+      { ...cred, mensaje:p.mensaje, telefono:p.telefono });
+
+  if (a === 'getstats')   return await rwFetch('/config/stats', null, 'GET');
+  if (a === 'setstats')   { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                            return await rwFetch('/admin/config/stats', p); }
+  if (a === 'getmaint')   return await rwFetch('/config/maint', null, 'GET');
+  if (a === 'setmaint')   { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                            return await rwFetch('/admin/config/maint', {on:p.on, msg:p.msg}); }
+  if (a === 'getnewprod') return await rwFetch('/config/newprod', null, 'GET');
+
+  if (a === 'rechazartodos'){ if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                              const r = await rwFetch('/admin/clientes/rechazar-todos', {});
+                              return r.ok ? {ok:true, total:r.total,
+                                             pendientesEncontrados:r.total, error:''} : r; }
+  if (a === 'deletebasura') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                              const r = await rwFetch('/admin/mensajes/limpiar', {});
+                              return r.ok ? {ok:true, borrados:r.total} : r; }
+
+  if (a === 'mireferido')   return await rwFetch('/referidos/mio', cred);
+  if (a === 'listreferidos'){ if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+                              return await rwFetch('/admin/referidos', null, 'GET'); }
 
   return { ok:false, error:'ACCION_NO_MIGRADA' };
 }
@@ -4610,10 +4713,25 @@ async function authUser(email,pass){
     return r.ok ? r.cliente : null;
   }catch(e){ return null; }
 }
-// El rol y la contrasena se comprueban EN EL PORTERO. El navegador
-// ya no ve ningun pass_hash con el que comparar.
+// ── Quien eres lo dice RAILWAY ─────────────────────────────
+// Los clientes ya viven ahi. Estas funciones las usan trozos del
+// portal que siguen en Firebase (guias, resenas, catalogo), y
+// tienen que preguntar donde estan los datos de verdad: si no,
+// quien se registre nuevo "no existe" para ellas.
+async function quienSoyRailway(email, pass){
+  try{
+    const r = await fetch(RAILWAY_URL + '/auth/login', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ email, pass })
+    }).then(x=>x.json());
+    if (!r.ok) return null;
+    return { email, nombre:r.cliente.nombre||'', rol:r.cliente.rol||'CLIENTE',
+             productos:r.cliente.productos||'', aprobado:'SI' };
+  }catch(e){ return null; }
+}
+
 async function verifyAdmin(email,pass){
-  const u=await authUser(email,pass);
+  const u=await quienSoyRailway(email,pass);
   return !!u && (u.rol||'').toUpperCase()==='ADMIN';
 }
 
@@ -4621,7 +4739,7 @@ async function verifyAdmin(email,pass){
 // Solo se usa en las acciones que le tocan: ver clientes, aprobar/quitar
 // acceso y dar productos. Todo lo demas sigue exigiendo ADMIN total.
 async function verifyAdminAny(email,pass){
-  const u=await authUser(email,pass);
+  const u=await quienSoyRailway(email,pass);
   if(!u) return false;
   const rol=(u.rol||'').toUpperCase();
   return rol==='ADMIN' || rol==='ADMIN_LIMITADO';
@@ -4723,7 +4841,11 @@ window.fbCall = async function(p){
 
     // ---------- LISTAR PRODUCTOS (cliente) ----------
     if(a==='listproducts'){
-      const u=await authUser(p.email,p.pass);
+      // Quien eres y que tienes liberado lo dice RAILWAY (ahi viven los
+      // clientes ahora). El catalogo de productos sigue en Firebase.
+      // Sin esto, quien se registra nuevo no existe en Firebase y no
+      // veria NINGUN producto.
+      const u = await quienSoyRailway(p.email, p.pass);
       if(!u) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
@@ -4853,7 +4975,7 @@ window.fbCall = async function(p){
       const guias=await getCol('guias');
       let esAdm=false, quien='';
       if(p.email && p.pass){
-        const u=await authUser(p.email,p.pass);
+        const u=await quienSoyRailway(p.email,p.pass);
         if(u && (u.aprobado||'').toUpperCase()==='SI'){
           quien=p.email.toLowerCase().trim(); esAdm=(u.rol||'').toUpperCase()==='ADMIN';
         }
@@ -4942,7 +5064,7 @@ window.fbCall = async function(p){
         texto:r.texto, aprobado:(r.aprobado||'').toUpperCase()==='SI' })) };
     }
     if(a==='addreview'){
-      const u=await authUser(p.email,p.pass);
+      const u=await quienSoyRailway(p.email,p.pass);
       if(!u) return {ok:false,error:'WRONGPASS'};
       // debe tener acceso al producto
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
