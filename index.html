@@ -1242,7 +1242,8 @@ const LICENSE_APIS = [
 ];
 
 let view='login',tab='auth_login',authMsg='',profileMsg='',profileErr='';
-let VERIF_EMAIL='';   // correo pendiente de confirmar con codigo
+let VERIF_EMAIL='';
+let SIGNUP_PASS='', SIGNUP_NOMBRE='';   // para reenviar el codigo   // correo pendiente de confirmar con codigo
 let REMEMBER={email:'',pass:'',on:false};
 let CONTACT_TEL='';
 try{CONTACT_TEL=localStorage.getItem('sp_tel')||'';}catch(e){}
@@ -1368,7 +1369,14 @@ function marcarDispositivo(email){
   try{ localStorage.setItem(claveDisp(email),'SI'); }catch(e){}
 }
 function saveSession(role){ROL_ACTUAL=role;try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
-function clearSession(){try{localStorage.removeItem('sp_sess');}catch(e){}}
+function clearSession(){
+  try{localStorage.removeItem('sp_sess');}catch(e){}
+  // cerrar tambien el vale en Railway, para que no quede vivo
+  try{ if(RW_TOKEN){ fetch(RAILWAY_URL+'/auth/salir',{method:'POST',
+        headers:{'content-type':'application/json'},
+        body:JSON.stringify({token:RW_TOKEN})}); } }catch(e){}
+  try{ rwGuardarToken(null); }catch(e){}
+}
 function restoreSession(){try{const s=JSON.parse(localStorage.getItem('sp_sess')||'null');
   if(s&&s.email&&s.pass){SESS={email:s.email,pass:s.pass};CLIENT.name=s.name||s.email;CLIENT.email=s.email;ROL_ACTUAL=(s.role||'').toUpperCase();
     view=esRolAdmin(s.role)?'admin':'client';
@@ -1568,7 +1576,155 @@ function sniperBG(){
 }
 function goAuth(t){tab=t;authMsg='';render()}
 
+// ════════════════════════════════════════════════════════════
+//  PUENTE A RAILWAY
+//
+//  El portal habla como siempre: apiCall({action:'login'...}).
+//  Este puente desvia a Railway TODO lo que toca clientes, y deja
+//  en Firebase lo demas (productos, mensajes, guias, licencias).
+//
+//  Asi la mudanza va por partes: si algo falla, se cambia una
+//  linea (RAILWAY_ON = false) y todo vuelve a Firebase.
+// ════════════════════════════════════════════════════════════
+const RAILWAY_URL = 'https://sniper-sniper-server-production.up.railway.app';
+const RAILWAY_ON  = true;   // ponlo en false para volver a Firebase
+
+// Acciones que ya viven en Railway
+const EN_RAILWAY = new Set([
+  'login','signup','verificarcodigo','changepass','reset','adminreset',
+  'listusers','listusersfresh','approve','revoke','deleteuser',
+  'setclientproducts'
+]);
+
+// El vale de sesion. Sustituye a mandar la contraseña en cada peticion.
+let RW_TOKEN = null;
+try { RW_TOKEN = localStorage.getItem('rw_token') || null; } catch(e){}
+function rwGuardarToken(t){
+  RW_TOKEN = t || null;
+  try { t ? localStorage.setItem('rw_token', t) : localStorage.removeItem('rw_token'); } catch(e){}
+}
+
+async function rwFetch(ruta, cuerpo, metodo='POST'){
+  const opciones = {
+    method: metodo,
+    headers: { 'content-type':'application/json',
+               ...(RW_TOKEN ? { 'Authorization':'Bearer '+RW_TOKEN } : {}) }
+  };
+  if (metodo === 'POST') opciones.body = JSON.stringify(cuerpo || {});
+  const r = await fetch(RAILWAY_URL + ruta, opciones);
+  return await r.json();
+}
+
+// Si el vale caduco, se saca uno nuevo con las credenciales guardadas.
+async function rwAsegurarSesion(){
+  if (RW_TOKEN) return true;
+  if (!SESS || !SESS.email || !SESS.pass) return false;
+  const r = await rwFetch('/auth/login', { email:SESS.email, pass:SESS.pass });
+  if (r.ok && r.token) { rwGuardarToken(r.token); return true; }
+  return false;
+}
+
+async function llamarRailway(p){
+  const a = p.action;
+
+  if (a === 'login') {
+    const r = await rwFetch('/auth/login', { email:p.email, pass:p.pass });
+    if (r.ok && r.token) rwGuardarToken(r.token);
+    if (r.ok) return { ok:true, role:(r.cliente.rol||'CLIENTE'), name:r.cliente.nombre||'' };
+    return { ok:false, error:r.error||'WRONGPASS' };
+  }
+
+  if (a === 'signup') {
+    const r = await rwFetch('/registro/pedir-codigo',
+      { email:p.email, pass:p.pass, nombre:p.nombre });
+    if (r.ok) return { ok:true, verificar:true };
+    const traduce = { YA_EXISTE:'EXISTS', CORREO_MALO:'EMAIL_INVALIDO',
+                      MUCHOS_INTENTOS:'LIMITE_ALCANZADO' };
+    return { ok:false, error: traduce[r.error] || r.error || 'ERROR' };
+  }
+
+  if (a === 'verificarcodigo') {
+    const r = await rwFetch('/registro/confirmar', { email:p.email, codigo:p.codigo });
+    return r.ok ? { ok:true } : { ok:false, error:r.error||'CODIGO_MALO' };
+  }
+
+  if (a === 'changepass') {
+    if (!await rwAsegurarSesion()) return { ok:false, error:'NO_SESION' };
+    const r = await rwFetch('/auth/cambiar-pass',
+      { actual:p.oldpass||p.pass, nueva:p.newpass });
+    // al cambiarla, la guardada en memoria ya no sirve
+    if (r.ok && SESS) { SESS.pass = p.newpass; try{ saveSession(ROL_ACTUAL); }catch(e){} }
+    return r;
+  }
+
+  if (a === 'reset') {
+    const r = await rwFetch('/auth/olvide', { email:p.email });
+    return r.ok ? { ok:true } : r;
+  }
+
+  if (a === 'adminreset') {
+    if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
+    return await rwFetch('/admin/clientes/reset', { email:p.target });
+  }
+
+  if (a === 'listusers' || a === 'listusersfresh') {
+    if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
+    const r = await rwFetch('/admin/clientes', null, 'GET');
+    if (!r.ok) return r;
+    // dejarlo con la misma forma que esperaba el portal
+    const users = (r.clientes||[]).map(c=>({
+      email: c.email, nombre: c.nombre||'', name: c.nombre||'',
+      aprobado: c.aprobado||'NO', rol: c.rol||'CLIENTE',
+      telefono: c.telefono||'', productos: c.productos||'',
+      registro: fechaCorta(c.fecha_registro),
+      fecha_registro: fechaCorta(c.fecha_registro),
+      ultimo_acceso: fechaCorta(c.ultimo_acceso)
+    }));
+    return { ok:true, users };
+  }
+
+  if (a === 'approve' || a === 'revoke') {
+    if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
+    return await rwFetch('/admin/clientes/acceso',
+      { email:p.target, aprobar: a==='approve' });
+  }
+
+  if (a === 'deleteuser') {
+    if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
+    return await rwFetch('/admin/clientes/borrar', { email:p.target });
+  }
+
+  if (a === 'setclientproducts') {
+    if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
+    return await rwFetch('/admin/clientes/productos',
+      { email:p.target, productos:p.productos||'' });
+  }
+
+  return { ok:false, error:'ACCION_NO_MIGRADA' };
+}
+
+// Las fechas llegan como 2026-08-11T18:53:00Z; el portal las espera
+// en dd/MM/yyyy HH:mm
+function fechaCorta(v){
+  if(!v) return '';
+  const d = new Date(v);
+  if (isNaN(d)) return String(v);
+  const dd = String(d.getDate()).padStart(2,'0');
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mi = String(d.getMinutes()).padStart(2,'0');
+  return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
+}
+
 async function apiCall(params){
+  // Lo de clientes va a Railway; lo demas sigue en Firebase.
+  if (RAILWAY_ON && params && EN_RAILWAY.has(params.action)) {
+    try { return await llamarRailway(params); }
+    catch(e){
+      console.error('[RAILWAY] fallo:', params.action, e);
+      return { ok:false, error:'CONN' };
+    }
+  }
   // Antes preguntaba "¿ya esta?" cada 50 ms: se perdian hasta 50 ms por
   // llamada. Ahora Firebase avisa en cuanto esta listo y arrancamos al instante.
   if(typeof window.fbCall!=='function'){
@@ -1690,6 +1846,8 @@ async function doSignup(){
   const btn=document.getElementById('sbtn');btn.textContent='Creando...';
   try{
     const r=await apiCall({action:'signup',email,pass,nombre,ref:REF_CODE});
+    // guardados para poder pedir OTRO codigo si no le llega el primero
+    SIGNUP_PASS=pass; SIGNUP_NOMBRE=nombre;
     if(r.ok && r.verificar){ authMsg=''; VERIF_EMAIL=email; tab='auth_codigo'; return render(); }
     if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(email); }
     else{ btn.textContent=t('crear_cuenta');
@@ -1820,8 +1978,8 @@ async function doVerificar(){
   VERIFICANDO=true;
   const btn=document.getElementById('vbtn'); if(btn) btn.textContent='Comprobando...';
   try{
-    const qs=new URLSearchParams({accion:'verificar',email:VERIF_EMAIL,codigo}).toString();
-    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    // va por Railway (antes: portero). apiCall lo desvia solo.
+    const r=await apiCall({action:'verificarcodigo',email:VERIF_EMAIL,codigo});
     if(r.ok){
       otpExito();
       if(btn) btn.textContent='¡Listo!';
@@ -1847,8 +2005,9 @@ async function doVerificar(){
 
 async function doReenviar(){
   try{
-    const qs=new URLSearchParams({accion:'reenviar',email:VERIF_EMAIL}).toString();
-    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    // pedir un codigo nuevo a Railway
+    const r=await apiCall({action:'signup',email:VERIF_EMAIL,
+                           pass:(SIGNUP_PASS||''),nombre:(SIGNUP_NOMBRE||'')});
     errAuth(r.ok?'Te reenvié el código. Revisa tu correo y el spam.'
                 :'El código caducó. Vuelve a registrarte.','otp0');
   }catch(e){ errAuth('No se pudo reenviar. Intenta de nuevo.','otp0'); }
