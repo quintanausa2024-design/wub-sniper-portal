@@ -1819,6 +1819,31 @@ function fechaCorta(v){
   return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
 }
 
+// Descargar un producto.
+// El enlace real ya no viaja al navegador: se pide un permiso de un
+// solo uso que dura 60 segundos. Asi no se puede copiar con F12 ni
+// pasarselo a alguien que no lo tenga comprado.
+async function descargarProducto(pid, boton){
+  const antes = boton ? boton.innerHTML : '';
+  if (boton) { boton.disabled = true; boton.textContent = 'Preparando...'; }
+  try{
+    const r = await rwFetch('/descargar/vale',
+      { pid, email:(SESS&&SESS.email)||'', pass:(SESS&&SESS.pass)||'' });
+    if (r.ok && r.url) {
+      window.open(RAILWAY_URL + r.url, '_blank');
+    } else {
+      const motivos = {
+        NO_LO_TIENES:'Este producto todavía no lo tienes liberado.',
+        SIN_ARCHIVO:'Este producto aún no tiene archivo de descarga.',
+        NO_EXISTE:'No encuentro ese producto.',
+        NO_SESION:'Vuelve a entrar e inténtalo otra vez.'
+      };
+      toast('⚠️ ' + (motivos[r.error] || 'No se pudo preparar la descarga.'));
+    }
+  }catch(e){ toast('⚠️ Error de conexión. Inténtalo otra vez.'); }
+  if (boton) { boton.disabled = false; boton.innerHTML = antes; }
+}
+
 async function apiCall(params){
   // Lo de clientes va a Railway; lo demas sigue en Firebase.
   if (RAILWAY_ON && params && EN_RAILWAY.has(params.action)) {
@@ -2308,7 +2333,7 @@ function productsPage(){
     const dl = soon
       ? `<button class="btn-dl disabled" style="cursor:default" onclick="event.stopPropagation()">${t('muy_pronto')}</button>`
       : can
-        ? `<button class="btn-dl" onclick="event.stopPropagation();window.open('${p.download}','_blank')">${sv(I.dl,16)} ${t('descargar')}</button>`
+        ? `<button class="btn-dl" onclick="event.stopPropagation();descargarProducto('${p.id}',this)">${sv(I.dl,16)} ${t('descargar')}</button>`
         : priv
           ? `<button class="btn-dl" style="background:linear-gradient(135deg,var(--cyan),#1E86E0)" onclick='event.stopPropagation();openPay(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${sv(I.lock,15)} ${p.precio?(t('comprar')+' · $'+p.precio):t('comprar')}</button>`
           : `<button class="btn-dl disabled" onclick="event.stopPropagation()">${sv(I.lock,15)} ${t('no_disponible')}</button>`;
@@ -2362,7 +2387,7 @@ function productDetailPage(p){
   const dl = soon
     ? `<button class="btn-primary" style="cursor:default;opacity:.7">${t('muy_pronto')}</button>`
     : can
-      ? `<button class="btn-primary" onclick="window.open('${p.download}','_blank')">${sv(I.dl,17)} ${t('descargar')}</button>`
+      ? `<button class="btn-primary" onclick="descargarProducto('${p.id}',this)">${sv(I.dl,17)} ${t('descargar')}</button>`
       : priv
         ? `<button class="btn-primary" style="background:linear-gradient(135deg,var(--cyan),#1E86E0)" onclick='openPay(${JSON.stringify(p).replace(/'/g,"&#39;")})'>${sv(I.lock,16)} ${p.precio?(t('comprar')+' · $'+p.precio):t('comprar')}</button>`
         : `<button class="btn-primary" style="opacity:.6;cursor:default">${sv(I.lock,16)} ${t('no_disponible')}</button>`;
