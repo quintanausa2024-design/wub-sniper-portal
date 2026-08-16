@@ -1721,9 +1721,14 @@ async function llamarRailway(p){
                                return await rwFetch('/admin/productos', null, 'GET'); }
   if (a === 'saveproduct' || a === 'addproduct' || a === 'editproduct') {
     if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
+    // OJO: el formulario manda 'desc' (no 'descripcion'), y ademas
+    // 'download' y 'video'. Si no se reenvian, el enlace de descarga
+    // y la descripcion NO se guardan aunque los escribas.
     return await rwFetch('/admin/productos/guardar', {
-      id:p.pid||p.id||'', nombre:p.nombre, categoria:p.categoria, descripcion:p.descripcion,
-      precio:p.precio, tipo:p.tipo, fotos:p.fotos, telegram:p.telegram, orden:p.orden });
+      id:p.pid||p.id||'', nombre:p.nombre, categoria:p.categoria,
+      descripcion: p.descripcion || p.desc || '',
+      precio:p.precio, tipo:p.tipo, fotos:p.fotos, telegram:p.telegram,
+      download:p.download || '', video:p.video || '', orden:p.orden });
   }
   if (a === 'deleteproduct') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
                                return await rwFetch('/admin/productos/borrar', {id:p.pid||p.id}); }
