@@ -4101,7 +4101,42 @@ function delDisc(id){
 // ════════ ADMIN: LICENCIAS DE PRODUCTOS (HWID) ════════
 let LIC_SEL=0, LIC_MODE='pending', ALL_LICS=null, ALL_LICS_LOADING=false;
 let LIC_TS='', LIC_ERRORES='';
+// Aprobar, quitar y borrar licencias YA van a Railway. Los Apps
+// Script de cada producto se quedan solo para atender a los AddOns
+// de NinjaTrader: el portal no los necesita para nada.
 async function licCall(url,params){
+  if (RAILWAY_ON && params && String(params.action||'').indexOf('portal_') === 0) {
+    try {
+      // saber de que producto es, por su direccion
+      const api = LICENSE_APIS.find(x => x.url === url);
+      const producto = api ? api.name : '';
+      if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
+
+      if (params.action === 'portal_set') {
+        // 'liberar' suelta las PCs para que pueda activar en otra maquina
+        if (String(params.liberar||'') === '1') {
+          return await rwFetch('/licencias/liberar-pcs',
+            { producto, email: params.hwid || params.correo || params.email });
+        }
+        return await rwFetch('/licencias/acceso', {
+          producto,
+          email: params.hwid || params.correo || params.email,
+          aprobar: String(params.valor||'').toUpperCase() === 'SI',
+          maxpcs: params.maxpcs || 0,
+          vence: params.vence || ''
+        });
+      }
+      if (params.action === 'portal_delete') {
+        return await rwFetch('/licencias/borrar',
+          { producto, email: params.hwid || params.correo || params.email });
+      }
+      // portal_list ya no se usa: la lista entera viene de /licencias
+      return { ok:true, licencias: [] };
+    } catch(e) {
+      console.error('[LICENCIA] fallo:', e);
+      return { ok:false, error:'CONN' };
+    }
+  }
   const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
   try{
     const res=await fetch(url+'?'+qs, {redirect:'follow'});
@@ -4121,8 +4156,10 @@ async function licCall(url,params){
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
   try{
-    const qs=new URLSearchParams({accion:'licencias',email:SESS.email,pass:SESS.pass}).toString();
-    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    // Las licencias viven en Railway: una consulta directa, sin esperar
+    // al portero ni a los 8 Apps Script.
+    if(!await rwAsegurarSesion()) return;
+    const r=await rwFetch('/licencias', null, 'GET');
     if(r.ok && Array.isArray(r.productos) && r.productos.length){
       ALL_LICS=r.productos.map(x=>({licencias:x.licencias||[]}));
       LIC_TS=r.ts||''; LIC_ERRORES=r.errores||'';
@@ -4217,8 +4254,10 @@ async function actualizarLicSuave(){
   ALL_LICS_LOADING=true;
   const scrollY0=window.scrollY;
   try{
-    const qs=new URLSearchParams({accion:'licencias',email:SESS.email,pass:SESS.pass}).toString();
-    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    // Las licencias viven en Railway: una consulta directa, sin esperar
+    // al portero ni a los 8 Apps Script.
+    if(!await rwAsegurarSesion()) return;
+    const r=await rwFetch('/licencias', null, 'GET');
     if(r.ok && Array.isArray(r.productos) && r.productos.length){
       ALL_LICS=r.productos.map(x=>({licencias:x.licencias||[]}));
       LIC_TS=r.ts||''; LIC_ERRORES=r.errores||'';
