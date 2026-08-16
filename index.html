@@ -1648,8 +1648,10 @@ async function llamarRailway(p){
   }
 
   if (a === 'signup') {
+    // 'ref' es el codigo de quien lo trajo. Sin esto, quien se registre
+    // con el codigo de otro no quedaria apuntado como su referido.
     const r = await rwFetch('/registro/pedir-codigo',
-      { email:p.email, pass:p.pass, nombre:p.nombre });
+      { email:p.email, pass:p.pass, nombre:p.nombre, ref:p.ref || '' });
     if (r.ok) return { ok:true, verificar:true };
     const traduce = { YA_EXISTE:'EXISTS', CORREO_MALO:'EMAIL_INVALIDO',
                       MUCHOS_INTENTOS:'LIMITE_ALCANZADO' };
@@ -1733,8 +1735,12 @@ async function llamarRailway(p){
   if (a === 'deleteproduct') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
                                return await rwFetch('/admin/productos/borrar', {id:p.pid||p.id}); }
   if (a === 'reorderproducts'){ if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
-                               return await rwFetch('/admin/productos/orden',
-                                 {ids: (typeof p.ids==='string'? p.ids.split(',') : (p.ids||[]))}); }
+    // El portal manda el campo 'orden' (no 'ids'). Si no se lee bien,
+    // llega vacio y el orden NO se guarda: por eso al recargar volvia
+    // a salir como estaba.
+    const lista = p.orden || p.ids || '';
+    return await rwFetch('/admin/productos/orden',
+      { ids: (typeof lista === 'string' ? lista.split(',').filter(Boolean) : (lista || [])) }); }
 
   if (a === 'listguides')  return await rwFetch('/guias', cred);
   if (a === 'saveguide' || a === 'addguide' || a === 'editguide') {
