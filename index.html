@@ -3313,8 +3313,8 @@ async function approveUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
   if(u){ u.aprobado='SI'; renderKeep(); }          // se ve el cambio al instante
   try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
-  // correo de bienvenida
-  enviarCorreo({accion:'bienvenida', email:em, nombre:(u&&u.nombre)||'Trader'});
+  // El correo de bienvenida lo manda el SERVIDOR al aprobar.
+  // Aqui habia otro envio: por eso llegaban DOS correos.
 }
 async function revokeUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
