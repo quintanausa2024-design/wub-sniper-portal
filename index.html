@@ -555,6 +555,26 @@
     border-top:1px solid var(--line-soft);margin-top:0;padding-top:11px}
   .ay-item.open .ay-a{display:block}
   .ay-nada{text-align:center;padding:26px 18px;color:var(--text-dim);font-size:13.5px;line-height:1.6}
+  /* conversacion */
+  .ay-msg{max-width:86%;padding:11px 14px;border-radius:14px;font-size:13.3px;line-height:1.6;
+    margin-bottom:9px;animation:ayIn .22s ease}
+  @keyframes ayIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .ay-yo{background:var(--fire);color:#fff;margin-left:auto;border-bottom-right-radius:5px}
+  .ay-bot{background:var(--bg-2);border:1px solid var(--line-soft);color:var(--text-dim);
+    border-bottom-left-radius:5px}
+  .ay-bot b{color:var(--text)}
+  .ay-sug{display:flex;flex-wrap:wrap;gap:6px;margin:2px 0 12px}
+  .ay-sug button{background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);
+    border-radius:9px;padding:8px 11px;font-size:12.3px;cursor:pointer;
+    font-family:var(--body);text-align:left;line-height:1.4;transition:.14s}
+  .ay-sug button:hover{border-color:var(--fire);color:var(--text)}
+  .ay-esc{display:flex;gap:5px;padding:11px 14px;background:var(--bg-2);
+    border:1px solid var(--line-soft);border-radius:14px;width:fit-content;margin-bottom:9px}
+  .ay-esc i{width:6px;height:6px;border-radius:50%;background:var(--text-faint);
+    animation:ayPunto 1.3s infinite}
+  .ay-esc i:nth-child(2){animation-delay:.18s}
+  .ay-esc i:nth-child(3){animation-delay:.36s}
+  @keyframes ayPunto{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
   .ay-foot{padding:12px 16px;border-top:1px solid var(--line-soft);background:var(--bg-2)}
   .ay-wa{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
     background:#25D366;color:#fff;border:none;border-radius:11px;padding:11px;
@@ -1084,7 +1104,8 @@
     <p>Busca tu duda o mira las preguntas más comunes</p>
   </div>
   <div class="ay-search">
-    <input type="text" id="ayInput" placeholder="Escribe tu duda..." oninput="ayudaBuscar()" autocomplete="off">
+    <input type="text" id="ayInput" placeholder="Escribe tu duda y pulsa Enter..."
+           onkeydown="if(event.key==='Enter')ayudaPreguntar()" autocomplete="off">
   </div>
   <div class="ay-body" id="ayBody"></div>
   <div class="ay-foot">
@@ -1934,19 +1955,24 @@ async function descargarProducto(pid, boton){
 //  Busca en las preguntas que TU escribiste. Sin IA: no puede
 //  inventarse respuestas ni prometer resultados.
 // ═══════════════════════════════════════════════════════════
-let AY_TEMAS = null, AY_ABIERTO = false, AY_APUNTADO = 0;
+let AY_TEMAS = null, AY_ABIERTO = false, AY_APUNTADO = 0, AY_SALUDADO = false;
 
-// Pasa las 36 preguntas que ya estaban escritas aqui al centro de
-// ayuda. Se ejecuta UNA vez desde la consola del navegador (F12):
-//     importarAyuda()
-// Si ya hay temas guardados, no hace nada (para no duplicar).
+// Pasa las preguntas que ya estaban escritas aqui al centro de ayuda.
+// Se ejecuta UNA vez desde la consola del navegador (F12):  importarAyuda()
 async function importarAyuda(){
   if (!await rwAsegurarSesion()) { console.error('Entra como admin primero'); return; }
   const r = await rwFetch('/admin/ayuda/importar', { temas: FAQ });
   if (r.ok) { AY_TEMAS = null; console.log('Listo. Preguntas importadas: ' + r.puestos); }
-  else if (r.error === 'YA_HAY_TEMAS') console.warn('Ya hay ' + r.total + ' preguntas guardadas. No se importa nada.');
+  else if (r.error === 'YA_HAY_TEMAS') console.warn('Ya hay ' + r.total + ' preguntas guardadas.');
   else console.error('No se pudo:', r.error);
 }
+
+// ¿Esta el cliente dentro del portal o en la pantalla de entrada?
+// En la entrada solo hablamos de cuenta y acceso; dentro, de todo.
+function ayudaDentro(){
+  return !!(SESS && SESS.email) && view !== 'login';
+}
+const AY_CATS_FUERA = ['Cuenta', 'Problemas'];
 
 function ayudaToggle(){
   const p = document.getElementById('ayPanel');
@@ -1959,97 +1985,204 @@ function ayudaToggle(){
 }
 
 async function ayudaCargar(){
-  if (AY_TEMAS) return ayudaPintar(AY_TEMAS);
-  const b = document.getElementById('ayBody');
-  if (b) b.innerHTML = '<div class="ay-nada">Cargando...</div>';
-  try{
-    const r = await (await fetch(RAILWAY_URL + '/ayuda')).json();
-    AY_TEMAS = (r.ok && r.temas) ? r.temas : [];
-  }catch(e){ AY_TEMAS = []; }
-  ayudaPintar(AY_TEMAS);
+  if (!AY_TEMAS) {
+    try{
+      const r = await (await fetch(RAILWAY_URL + '/ayuda')).json();
+      AY_TEMAS = (r.ok && r.temas) ? r.temas : [];
+    }catch(e){ AY_TEMAS = []; }
+  }
+  if (!AY_SALUDADO) { AY_SALUDADO = true; ayudaSaludo(); }
 }
 
-// Quita tildes y mayusculas para que "instalacion" encuentre "instalación"
+// Solo los temas que tocan segun donde este
+function ayudaMisTemas(){
+  const t = AY_TEMAS || [];
+  if (ayudaDentro()) return t;
+  return t.filter(x => AY_CATS_FUERA.includes(String(x.categoria)));
+}
+
+function ayudaSaludo(){
+  const b = document.getElementById('ayBody');
+  if (!b) return;
+  b.innerHTML = '';
+  const dentro = ayudaDentro();
+  ayudaDice(dentro
+    ? '¡Hola! Pregúntame lo que necesites sobre el portal, tus productos o las licencias.'
+    : '¡Hola! Aquí te ayudo con el <b>registro</b> y el <b>acceso al portal</b>. Cuando entres, podré ayudarte con todo lo demás.');
+  ayudaSugerencias();
+}
+
+// Botones con las preguntas mas habituales
+function ayudaSugerencias(){
+  const t = ayudaMisTemas().slice(0, 4);
+  if (!t.length) return;
+  const b = document.getElementById('ayBody');
+  const d = document.createElement('div');
+  d.className = 'ay-sug';
+  d.innerHTML = t.map(x =>
+    `<button onclick="ayudaResponderA(${x.id})">${escapeHtml(x.pregunta)}</button>`).join('');
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+}
+
+function ayudaDice(html, mio){
+  const b = document.getElementById('ayBody');
+  if (!b) return;
+  const d = document.createElement('div');
+  d.className = 'ay-msg ' + (mio ? 'ay-yo' : 'ay-bot');
+  d.innerHTML = html;
+  b.appendChild(d);
+  b.scrollTop = b.scrollHeight;
+  if (!mio) ayudaSonido();
+}
+
+// Un tono corto y suave al responder. Se genera solo, sin archivos.
+function ayudaSonido(){
+  try{
+    const A = window.AudioContext || window.webkitAudioContext;
+    if (!A) return;
+    const ctx = new A();
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(660, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.09);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.06, ctx.currentTime + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.22);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime + 0.24);
+    setTimeout(()=>{ try{ ctx.close(); }catch(e){} }, 400);
+  }catch(e){}
+}
+
+function ayudaEscribiendo(){
+  const b = document.getElementById('ayBody');
+  const d = document.createElement('div');
+  d.className = 'ay-esc'; d.id = 'ayEsc';
+  d.innerHTML = '<i></i><i></i><i></i>';
+  b.appendChild(d); b.scrollTop = b.scrollHeight;
+}
+function ayudaQuitarEscribiendo(){
+  const e = document.getElementById('ayEsc'); if (e) e.remove();
+}
+
+// Quita tildes y mayusculas: asi "instalacion" encuentra "instalación"
 function ayNorm(t){
   return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
 
-function ayudaBuscar(){
-  const q = ayNorm(document.getElementById('ayInput').value.trim());
-  if (!q) return ayudaPintar(AY_TEMAS||[]);
+// Palabras que salen en casi todas las respuestas y no dicen nada
+// por si solas. Si cuentan, "que es el par cruzado" acaba devolviendo
+// la respuesta de "no puedo descargar" solo porque comparten "puedo".
+const AY_VACIAS = new Set(['que','como','cual','cuando','donde','para','por','con','los','las',
+  'una','uno','del','mas','pero','este','esta','esto','tengo','puedo','hacer','todo','muy',
+  'cuenta','producto','productos','portal','sniper']);
 
-  const palabras = q.split(/\s+/).filter(x=>x.length>2);
-  const con = (AY_TEMAS||[]).map(t=>{
-    const texto = ayNorm(t.pregunta + ' ' + t.respuesta + ' ' + t.categoria);
-    const enPregunta = ayNorm(t.pregunta);
-    let puntos = 0;
-    if (enPregunta.includes(q)) puntos += 100;      // coincide entero en la pregunta
-    else if (texto.includes(q)) puntos += 40;
-    for (const w of palabras){
-      if (enPregunta.includes(w)) puntos += 12;
-      else if (texto.includes(w)) puntos += 4;
+function ayudaBuscarTemas(texto){
+  const q = ayNorm(texto.trim());
+  if (!q) return [];
+  const todas = q.split(/\s+/).filter(x => x.length > 2);
+  const clave = todas.filter(w => !AY_VACIAS.has(w));   // las que de verdad dicen algo
+
+  return ayudaMisTemas().map(t => {
+    const todo = ayNorm(t.pregunta + ' ' + t.respuesta + ' ' + t.categoria);
+    const enP  = ayNorm(t.pregunta);
+    let p = 0, acertadas = 0;
+
+    if (enP.includes(q)) p += 100;
+    else if (todo.includes(q)) p += 40;
+
+    for (const w of clave){
+      if (enP.includes(w))      { p += 14; acertadas++; }
+      else if (todo.includes(w)){ p += 5;  acertadas++; }
       else {
-        // Por la RAIZ de la palabra: asi "instalar" encuentra "instalo",
-        // "instalacion" o "instalado". La gente no escribe el verbo
-        // igual que esta en la pregunta.
+        // por la RAIZ: "instalar" encuentra "instalo", "instalación"...
         const raiz = w.length > 5 ? w.slice(0, -2) : w;
-        if (raiz.length > 3 && texto.includes(raiz)) puntos += 3;
+        if (raiz.length > 3 && todo.includes(raiz)) { p += 4; acertadas++; }
       }
     }
-    return { t, puntos };
-  }).filter(x=>x.puntos>0).sort((a,b)=>b.puntos-a.puntos);
 
-  ayudaPintar(con.map(x=>x.t), q);
+    // Si la pregunta trae varias palabras con significado, tienen que
+    // coincidir al menos la mitad. Si no, es casualidad, no respuesta.
+    if (clave.length >= 2 && acertadas < Math.ceil(clave.length / 2)) p = 0;
+    // Y si ninguna palabra con significado coincide, no vale.
+    if (clave.length >= 1 && acertadas === 0) p = 0;
+
+    return { t, p };
+  })
+  // Se exige un MINIMO de parecido. Sin esto, "que es el par cruzado"
+  // devolvia la respuesta de "no puedo descargar" solo porque ambas
+  // llevan la palabra "puedo". Contestar cualquier cosa es peor que
+  // decir "no te entendi": el cliente piensa que esto no sirve.
+  .filter(x => x.p >= 12)
+  .sort((a,b) => b.p - a.p).map(x => x.t);
 }
 
-function ayudaPintar(lista, busqueda){
-  const b = document.getElementById('ayBody');
-  if (!b) return;
+async function ayudaPreguntar(){
+  const inp = document.getElementById('ayInput');
+  const texto = inp.value.trim();
+  if (!texto) return;
+  inp.value = '';
+  ayudaDice(escapeHtml(texto), true);
 
-  if (!lista.length){
-    b.innerHTML = `<div class="ay-nada">
-      No encontré nada sobre eso.<br><br>
-      Escríbeme desde Contacto y te respondo yo mismo. \ud83d\udc47</div>`;
-    // se apunta lo que la gente busca y no encuentra: es la lista
-    // de lo que falta por escribir
-    if (busqueda && busqueda.length > 3 && Date.now() - AY_APUNTADO > 4000){
+  ayudaEscribiendo();
+  await new Promise(r => setTimeout(r, 420));   // que se note que "piensa"
+  ayudaQuitarEscribiendo();
+
+  const res = ayudaBuscarTemas(texto);
+
+  if (!res.length){
+    // No lo entendio: se dice claro y se apunta para escribir esa respuesta
+    ayudaDice(!ayudaDentro()
+      ? 'No te entendí. Aquí solo puedo ayudarte con el <b>registro</b> y el <b>acceso</b>. Si es sobre un producto, entra al portal y pregúntame ahí.'
+      : 'No te entendí. Prueba con otras palabras, o escríbeme desde <b>Contacto</b> y te respondo yo mismo.');
+    ayudaSugerencias();
+    if (texto.length > 3 && Date.now() - AY_APUNTADO > 3000){
       AY_APUNTADO = Date.now();
       try{ fetch(RAILWAY_URL + '/ayuda/sin-respuesta', {method:'POST',
         headers:{'content-type':'application/json'},
-        body: JSON.stringify({ texto: document.getElementById('ayInput').value.trim(),
-                               email: (SESS&&SESS.email)||'' })}); }catch(e){}
+        body: JSON.stringify({ texto, email: (SESS&&SESS.email)||'' })}); }catch(e){}
     }
     return;
   }
 
-  let html = '', catAnterior = '';
-  for (const t of lista){
-    if (!busqueda && t.categoria !== catAnterior){
-      html += `<div class="ay-cat">${escapeHtml(t.categoria)}</div>`;
-      catAnterior = t.categoria;
-    }
-    html += `<div class="ay-item" onclick="ayudaAbrir(this,${t.id})">
-      <div class="ay-q"><span>${escapeHtml(t.pregunta)}</span><span>${sv(I.chev,14)}</span></div>
-      <div class="ay-a">${escapeHtml(t.respuesta).replace(/\n/g,'<br>')}</div>
-    </div>`;
+  const mejor = res[0];
+  ayudaDice('<b>' + escapeHtml(mejor.pregunta) + '</b><br><br>' +
+            escapeHtml(mejor.respuesta).replace(/\n/g,'<br>'));
+  try{ fetch(RAILWAY_URL + '/ayuda/visto', {method:'POST',
+    headers:{'content-type':'application/json'}, body: JSON.stringify({ id: mejor.id })}); }catch(e){}
+
+  // si habia mas parecidas, se ofrecen
+  const otras = res.slice(1, 4);
+  if (otras.length){
+    const b = document.getElementById('ayBody');
+    const d = document.createElement('div');
+    d.className = 'ay-sug';
+    d.innerHTML = '<div style="width:100%;font-size:11.5px;color:var(--text-faint);margin-bottom:2px">También puede servirte:</div>' +
+      otras.map(x => `<button onclick="ayudaResponderA(${x.id})">${escapeHtml(x.pregunta)}</button>`).join('');
+    b.appendChild(d); b.scrollTop = b.scrollHeight;
   }
-  b.innerHTML = html;
 }
 
-function ayudaAbrir(el, id){
-  const yaEstaba = el.classList.contains('open');
-  el.classList.toggle('open');
-  if (!yaEstaba && id){
+// Al tocar una sugerencia
+function ayudaResponderA(id){
+  const t = (AY_TEMAS||[]).find(x => x.id === id);
+  if (!t) return;
+  ayudaDice(escapeHtml(t.pregunta), true);
+  ayudaEscribiendo();
+  setTimeout(()=>{
+    ayudaQuitarEscribiendo();
+    ayudaDice('<b>' + escapeHtml(t.pregunta) + '</b><br><br>' +
+              escapeHtml(t.respuesta).replace(/\n/g,'<br>'));
     try{ fetch(RAILWAY_URL + '/ayuda/visto', {method:'POST',
-      headers:{'content-type':'application/json'},
-      body: JSON.stringify({ id })}); }catch(e){}
-  }
+      headers:{'content-type':'application/json'}, body: JSON.stringify({ id })}); }catch(e){}
+  }, 380);
 }
 
 // Lleva al formulario del portal. Si aun no ha entrado, al correo.
 function ayudaEscribir(){
   ayudaToggle();
-  if (SESS && SESS.email && view !== 'login') { setTab('contact'); }
+  if (ayudaDentro()) { setTab('contact'); }
   else { window.location.href = 'mailto:' + CONTACT_MAIL; }
 }
 
