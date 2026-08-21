@@ -2286,14 +2286,17 @@ async function doGoogle(){
     const nombre=res.nombre||email;
     if(!email){ throw new Error('sin correo'); }
 
-    const qs=new URLSearchParams({accion:'google',email,nombre}).toString();
-    const r=await (await fetch(MAIL_URL+'?'+qs)).json();
+    // Va a RAILWAY. Antes iba al portero, que escribia en Firebase:
+    // por eso las cuentas creadas con Google no aparecian en el panel
+    // ni te llegaba aviso de la solicitud.
+    const r = await rwFetch('/auth/google', { email, nombre, ref: REF_CODE || '' });
 
     if(!r.ok){ authMsg='No se pudo entrar con Google. Intenta de nuevo.'; return render(); }
     if(!r.aprobado){
       authMsg='✅ Cuenta creada con Google. Aún no está aprobada — te aviso en cuanto te active.';
       tab='auth_login'; return render();
     }
+    if(r.token) rwGuardarToken(r.token);
     CLIENT.name=r.nombre||nombre; CLIENT.email=email;
     SESS={email, pass:'GOOGLE'};
     saveSession(r.rol);
