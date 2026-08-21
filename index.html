@@ -2039,7 +2039,27 @@ function ayudaSaludo(){
 
 // Botones con las preguntas mas habituales
 function ayudaSugerencias(){
-  const t = ayudaMisTemas().slice(0, 4);
+  const todos = ayudaMisTemas();
+  if (!todos.length) return;
+
+  let t;
+  if (!ayudaDentro()){
+    // fuera: las de registro y acceso, tal cual
+    t = todos.slice(0, 4);
+  } else {
+    // DENTRO: una de cada tema, no las 4 primeras de la lista.
+    // Antes salian siempre las de "entrar al portal" y "contraseña",
+    // que son justo las que ya vio en la portada.
+    const porTema = {};
+    for (const x of todos){
+      const c = String(x.categoria || 'General');
+      if (!porTema[c]) porTema[c] = x;
+    }
+    // primero los temas que mas le sirven ya estando dentro
+    const orden = ['Licencias','Productos','Problemas','Fondeo','Riesgo','Cuenta'];
+    t = orden.map(c => porTema[c]).filter(Boolean).slice(0, 4);
+    if (t.length < 4) t = Object.values(porTema).slice(0, 4);
+  }
   if (!t.length) return;
   const b = document.getElementById('ayBody');
   const d = document.createElement('div');
