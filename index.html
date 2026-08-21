@@ -1449,7 +1449,11 @@ async function loadReviews(){
 }
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
-function setView(v){view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
+function setView(v){
+  // Al entrar o salir cambian las preguntas que puede responder el
+  // centro de ayuda, asi que se reinicia la conversacion.
+  try{ AY_SALUDADO_EN = null; if (AY_ABIERTO) ayudaToggle(); }catch(e){}
+  view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
 let ADMIN_PEND=null;
@@ -1955,7 +1959,12 @@ async function descargarProducto(pid, boton){
 //  Busca en las preguntas que TU escribiste. Sin IA: no puede
 //  inventarse respuestas ni prometer resultados.
 // ═══════════════════════════════════════════════════════════
-let AY_TEMAS = null, AY_ABIERTO = false, AY_APUNTADO = 0, AY_SALUDADO = false;
+let AY_TEMAS = null, AY_ABIERTO = false, AY_APUNTADO = 0;
+// Guarda si se saludo estando DENTRO o FUERA. Si cambia (entras o
+// sales del portal), la conversacion se reinicia con los temas que
+// tocan. Antes se saludaba una sola vez y el widget se quedaba con
+// las preguntas de la portada aunque ya hubieras entrado.
+let AY_SALUDADO_EN = null;
 
 // Pasa las preguntas que ya estaban escritas aqui al centro de ayuda.
 // Se ejecuta UNA vez desde la consola del navegador (F12):  importarAyuda()
@@ -2006,7 +2015,8 @@ async function ayudaCargar(){
       AY_TEMAS = (r.ok && r.temas) ? r.temas : [];
     }catch(e){ AY_TEMAS = []; }
   }
-  if (!AY_SALUDADO) { AY_SALUDADO = true; ayudaSaludo(); }
+  const donde = ayudaDentro() ? 'dentro' : 'fuera';
+  if (AY_SALUDADO_EN !== donde) { AY_SALUDADO_EN = donde; ayudaSaludo(); }
 }
 
 // Solo los temas que tocan segun donde este
@@ -2181,7 +2191,8 @@ async function ayudaPreguntar(){
 
 // Al tocar una sugerencia
 function ayudaResponderA(id){
-  const t = (AY_TEMAS||[]).find(x => x.id === id);
+  // el id viene del HTML como texto; se compara como numero
+  const t = (AY_TEMAS||[]).find(x => Number(x.id) === Number(id));
   if (!t) return;
   ayudaDice(escapeHtml(t.pregunta), true);
   ayudaEscribiendo();
