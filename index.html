@@ -1972,7 +1972,22 @@ async function importarAyuda(){
 function ayudaDentro(){
   return !!(SESS && SESS.email) && view !== 'login';
 }
-const AY_CATS_FUERA = ['Cuenta', 'Problemas'];
+// FUERA del portal (portada y pantalla de entrada) solo se responden
+// preguntas de REGISTRO y ACCESO. Quien todavia no ha entrado no
+// necesita saber de licencias, AddOns ni prop firms: eso solo le
+// confunde, y ademas no puede hacer nada con esa informacion.
+// Se filtra por palabras de la propia pregunta, no por categoria:
+// "Problemas" incluye cosas de bots que aqui no pintan nada.
+const AY_FUERA_PALABRAS = [
+  'entro al portal', 'registr', 'contrasena', 'contraseña',
+  'correo de bienvenida', 'cambiar el correo', 'desde el celular',
+  'tiempo respondes'
+];
+
+function ayudaEsDeFuera(t){
+  const p = ayNorm(t.pregunta);
+  return AY_FUERA_PALABRAS.some(k => p.includes(ayNorm(k)));
+}
 
 function ayudaToggle(){
   const p = document.getElementById('ayPanel');
@@ -1997,8 +2012,8 @@ async function ayudaCargar(){
 // Solo los temas que tocan segun donde este
 function ayudaMisTemas(){
   const t = AY_TEMAS || [];
-  if (ayudaDentro()) return t;
-  return t.filter(x => AY_CATS_FUERA.includes(String(x.categoria)));
+  if (ayudaDentro()) return t;             // dentro: todas
+  return t.filter(ayudaEsDeFuera);         // fuera: solo registro y acceso
 }
 
 function ayudaSaludo(){
@@ -2008,7 +2023,7 @@ function ayudaSaludo(){
   const dentro = ayudaDentro();
   ayudaDice(dentro
     ? '¡Hola! Pregúntame lo que necesites sobre el portal, tus productos o las licencias.'
-    : '¡Hola! Aquí te ayudo con el <b>registro</b> y el <b>acceso al portal</b>. Cuando entres, podré ayudarte con todo lo demás.');
+    : '¡Hola! Desde aquí te ayudo a <b>registrarte</b> y a <b>entrar al portal</b>.<br><br>Cuando estés dentro podré resolverte dudas sobre productos, licencias e instalación.');
   ayudaSugerencias();
 }
 
@@ -2134,7 +2149,7 @@ async function ayudaPreguntar(){
   if (!res.length){
     // No lo entendio: se dice claro y se apunta para escribir esa respuesta
     ayudaDice(!ayudaDentro()
-      ? 'No te entendí. Aquí solo puedo ayudarte con el <b>registro</b> y el <b>acceso</b>. Si es sobre un producto, entra al portal y pregúntame ahí.'
+      ? 'No te entendí, o esa pregunta es de dentro del portal.<br><br>Aquí solo puedo ayudarte a <b>registrarte</b> y <b>entrar</b>. Si ya tienes cuenta, entra y pregúntame ahí.'
       : 'No te entendí. Prueba con otras palabras, o escríbeme desde <b>Contacto</b> y te respondo yo mismo.');
     ayudaSugerencias();
     if (texto.length > 3 && Date.now() - AY_APUNTADO > 3000){
