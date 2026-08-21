@@ -1088,9 +1088,12 @@
   </div>
   <div class="ay-body" id="ayBody"></div>
   <div class="ay-foot">
-    <a class="ay-wa" href="https://wa.me/18326409105" target="_blank" rel="noopener">
-      Escribir por WhatsApp
-    </a>
+    <!-- Antes iba a WhatsApp. Ahora al formulario del portal: los
+         mensajes llegan ordenados a la pestaña Mensajes, solo escriben
+         clientes registrados, y no entra spam. -->
+    <button class="ay-wa" onclick="ayudaEscribir()">
+      Escríbeme desde el portal
+    </button>
   </div>
 </div>
 
@@ -1188,25 +1191,25 @@ const CLIENT={name:'',email:''};
 const FAQ=[
   // ── CUENTA Y PORTAL ──
   {c:'Cuenta',q:'¿Cómo entro al portal?',a:'Con el correo y la contraseña que registraste. Si tu cuenta aún está pendiente de aprobación, te aviso en cuanto la libere. Puedes marcar "Recordar mi contraseña" para no escribirla cada vez.'},
-  {c:'Cuenta',q:'Me registré y no puedo entrar todavía',a:'Cada cuenta la apruebo manualmente para mantener el portal solo para clientes. Normalmente es rápido. Si llevas más de un día esperando, escríbeme por WhatsApp y lo reviso al momento.'},
+  {c:'Cuenta',q:'Me registré y no puedo entrar todavía',a:'Cada cuenta la apruebo manualmente para mantener el portal solo para clientes. Normalmente es rápido. Si llevas más de un día esperando, escríbeme desde Contacto (menú de la izquierda) y lo reviso.'},
   {c:'Cuenta',q:'Olvidé mi contraseña, ¿qué hago?',a:'En la pantalla de inicio toca "¿Olvidaste tu contraseña?", pon tu correo y te llega una nueva al instante. Luego cámbiala en Mi Perfil por una que recuerdes.'},
   {c:'Cuenta',q:'¿Cómo cambio mi contraseña?',a:'Entra a Mi Perfil, escribe la nueva contraseña dos veces y toca Guardar. El cambio es inmediato.'},
   {c:'Cuenta',q:'No me llegó el correo de bienvenida o el de recuperación',a:'Revisa la carpeta de Spam o Promociones y marca el correo como "No es spam" para que los próximos lleguen bien. Si aun así no aparece, escríbeme y lo reenvío.'},
-  {c:'Cuenta',q:'¿Puedo cambiar el correo de mi cuenta?',a:'Sí, pero hay que hacerlo a mano porque tu correo también es tu licencia en los productos. Escríbeme por WhatsApp con el correo viejo y el nuevo y lo cambio en todo.'},
+  {c:'Cuenta',q:'¿Puedo cambiar el correo de mi cuenta?',a:'Sí, pero hay que hacerlo a mano porque tu correo también es tu licencia en los productos. Escríbeme desde Contacto con el correo viejo y el nuevo y lo cambio en todo.'},
   {c:'Cuenta',q:'¿Puedo usar el portal desde el celular?',a:'Sí, el portal funciona en celular, tablet y computadora. Los productos en sí (AddOns y apps) sí requieren Windows con NinjaTrader 8.'},
 
   // ── LICENCIAS ──
   {c:'Licencias',q:'¿Cómo activo mi licencia?',a:'Tu correo es tu licencia. Abre el producto, ingresa el mismo correo con el que entras al portal y se activa solo. Si queda pendiente, me llega aviso y la apruebo.'},
   {c:'Licencias',q:'Mi licencia dice "Pendiente", ¿qué significa?',a:'Que ya registró tu solicitud y estoy por aprobarla. En cuanto la apruebo, cierra y vuelve a abrir el producto y ya entra normal.'},
   {c:'Licencias',q:'¿En cuántas PCs puedo usar mi licencia?',a:'Depende de lo que hayas adquirido. Cada licencia tiene un número de PCs asignado. Si necesitas más equipos, escríbeme y lo ajusto.'},
-  {c:'Licencias',q:'Cambié de computadora, ¿cómo paso mi licencia?',a:'Escríbeme por WhatsApp y libero el equipo viejo para que puedas activar el nuevo. No tienes que comprar de nuevo.'},
+  {c:'Licencias',q:'Cambié de computadora, ¿cómo paso mi licencia?',a:'Escríbeme desde Contacto y libero el equipo viejo para que puedas activar el nuevo. No tienes que comprar de nuevo.'},
   {c:'Licencias',q:'Me dice que llegué al máximo de PCs',a:'Ya usaste todos los equipos permitidos de tu licencia. Escríbeme, te libero un espacio o te amplío la cantidad de PCs.'},
   {c:'Licencias',q:'Formateé mi PC y ahora no activa',a:'Al formatear cambia la identificación del equipo y cuenta como PC nueva. Avísame y libero la anterior para que actives sin problema.'},
 
   // ── PRODUCTOS Y DESCARGAS ──
   {c:'Productos',q:'¿Cómo descargo un producto?',a:'En "Mis Productos" toca el producto para ver toda su información y fotos, y usa el botón "Descargar". Si es privado, primero debes comprarlo y que te lo libere.'},
   {c:'Productos',q:'¿Por qué no puedo descargar un producto?',a:'Si dice "Privado", necesitas comprarlo. Toca el botón de comprar, realiza el pago y te lo libero. Mientras, puedes ver su video para conocerlo.'},
-  {c:'Productos',q:'¿Cómo compro un producto privado?',a:'Toca "Comprar" en el producto, te muestra el precio y un botón para escribirme por WhatsApp. En cuanto confirme el pago, te lo libero y ya podrás descargarlo.'},
+  {c:'Productos',q:'¿Cómo compro un producto privado?',a:'Toca "Comprar" en el producto, te muestra el precio y un botón para escribirme. En cuanto confirme el pago, te lo libero y ya podrás descargarlo.'},
   {c:'Productos',q:'¿Cómo instalo un AddOn en NinjaTrader 8?',a:'En NinjaTrader: Tools → Import → NinjaScript Add-On, selecciona el archivo que descargaste y acepta. Después reinicia NinjaTrader para que cargue bien.'},
   {c:'Productos',q:'Importé el AddOn y no aparece',a:'Casi siempre es porque falta reiniciar NinjaTrader. Ciérralo por completo y ábrelo de nuevo. Si sigue sin salir, revisa en Control Center → Log si aparece algún error y mándame la captura.'},
   {c:'Productos',q:'¿Los productos se actualizan?',a:'Sí. Cuando saco una versión nueva la publico aquí en el portal y aviso en Noticias. Descargas la nueva e importas encima, tu licencia sigue igual.'},
@@ -1225,13 +1228,13 @@ const FAQ=[
   {c:'Problemas',q:'El bot no me manda órdenes',a:'Revisa tres cosas: que tengas conexión al feed, que la cuenta seleccionada sea la correcta y que el panel esté activado. Si sigue igual, mándame captura del Log de NinjaTrader.'},
   {c:'Problemas',q:'Me salió un error, ¿qué te mando?',a:'Lo que más ayuda: captura de la pantalla del error, captura del Log de NinjaTrader (Control Center → Log), qué producto usabas y si era SIM o cuenta real. Con eso lo ubico rápido.'},
   {c:'Problemas',q:'Se me quedó una posición sin stop',a:'Cierra manualmente desde NinjaTrader para protegerte primero, y luego me escribes. Nunca dejes una posición abierta sin protección mientras se revisa algo.'},
-  {c:'Problemas',q:'¿En cuánto tiempo respondes?',a:'Contesto por WhatsApp lo más rápido que puedo, normalmente el mismo día. Si es algo urgente de una cuenta en real, avísame y le doy prioridad.'},
+  {c:'Problemas',q:'¿En cuánto tiempo respondes?',a:'Contesto lo más rápido que puedo, normalmente el mismo día. Si es algo urgente de una cuenta en real, avísame y le doy prioridad.'},
 
   // ── SEGURIDAD Y RIESGO ──
   {c:'Riesgo',q:'¿Puedo probar antes de operar en real?',a:'Siempre. Prueba primero en cuenta de simulación (SIM) o Playback antes de usarlo en cuenta real o fondeada. Es la regla número uno.'},
   {c:'Riesgo',q:'¿Esto es asesoría financiera?',a:'No. SNIPER PORTAL vende software y herramientas de apoyo. No damos señales ni asesoría de inversión. Las decisiones y el riesgo son tuyos.'},
   {c:'Riesgo',q:'¿Puedo compartir el producto con un amigo?',a:'No. Cada licencia es personal y está ligada a tu correo y tus equipos. Compartirla puede bloquear tu propia licencia. Si tu amigo quiere, dale tu link de referido desde Mi Perfil.'},
-  {c:'Riesgo',q:'¿Qué es el link de referido?',a:'En Mi Perfil tienes un link personal. Quien se registre con él cuenta como tu referido y yo lo veo de tu parte. Compártelo por WhatsApp o Telegram con el botón de ahí mismo.'},
+  {c:'Riesgo',q:'¿Qué es el link de referido?',a:'En Mi Perfil tienes un link personal. Quien se registre con él cuenta como tu referido y yo lo veo de tu parte. Compártelo con el botón de ahí mismo.'},
   {c:'Riesgo',q:'¿Hay reembolsos?',a:'Al ser software digital que se descarga y activa al momento, no manejo reembolsos automáticos. Por eso te doy videos y puedes preguntarme todo antes de comprar. Si tienes un problema real con el producto, escríbeme y lo resolvemos.'}
 ];
 const INFO={
@@ -1373,7 +1376,7 @@ const TR={
     novedades:'Novedades de SNIPER', sin_novedades:'Aún no hay novedades publicadas.',
     mercado:'📈 Mercado · Nasdaq y trading', mkt_err:'No se pudieron cargar noticias del mercado ahora mismo.',
     mkt_disc:'Noticias de fuentes públicas (Google News). Solo informativo, no es asesoría financiera.',
-    ayuda_h:'Centro de Ayuda', ayuda_sub:'Preguntas frecuentes. Busca tu duda.', buscar:'Buscar...', sin_result:'No encontré nada. Escríbeme por WhatsApp.',
+    ayuda_h:'Centro de Ayuda', ayuda_sub:'Preguntas frecuentes. Busca tu duda.', buscar:'Buscar...', sin_result:'No encontré nada. Escríbeme desde Contacto.',
     contacto_h:'Contacto', contacto_sub:'¿Dudas o problemas? Escríbeme directo.',
     enviar_msg:'Enviar mensaje', enviando_msg:'Enviando...', tu_mensaje:'Tu mensaje', escribe_aqui:'Escribe aquí tu duda o problema...',
     msg_enviado:'✅ ¡Mensaje enviado! Te responderé pronto.', escanea:'Escanea para escribirme', apunta:'Abre tu cámara y apunta al código',
@@ -1403,7 +1406,7 @@ const TR={
     novedades:'SNIPER Updates', sin_novedades:'No updates published yet.',
     mercado:'📈 Market · Nasdaq & trading', mkt_err:'Market news could not be loaded right now.',
     mkt_disc:'News from public sources (Google News). Informational only, not financial advice.',
-    ayuda_h:'Help Center', ayuda_sub:'Frequently asked questions. Search your question.', buscar:'Search...', sin_result:'Nothing found. Message me on WhatsApp.',
+    ayuda_h:'Help Center', ayuda_sub:'Frequently asked questions. Search your question.', buscar:'Search...', sin_result:'Nothing found. Write me from Contact.',
     contacto_h:'Contact', contacto_sub:'Questions or issues? Message me directly.',
     enviar_msg:'Send message', enviando_msg:'Sending...', tu_mensaje:'Your message', escribe_aqui:'Write your question or issue here...',
     msg_enviado:'✅ Message sent! I will reply soon.', escanea:'Scan to message me', apunta:'Open your camera and point at the code',
@@ -2006,7 +2009,7 @@ function ayudaPintar(lista, busqueda){
   if (!lista.length){
     b.innerHTML = `<div class="ay-nada">
       No encontré nada sobre eso.<br><br>
-      Escríbeme por WhatsApp y te respondo yo mismo. \ud83d\udc47</div>`;
+      Escríbeme desde Contacto y te respondo yo mismo. \ud83d\udc47</div>`;
     // se apunta lo que la gente busca y no encuentra: es la lista
     // de lo que falta por escribir
     if (busqueda && busqueda.length > 3 && Date.now() - AY_APUNTADO > 4000){
@@ -2041,6 +2044,13 @@ function ayudaAbrir(el, id){
       headers:{'content-type':'application/json'},
       body: JSON.stringify({ id })}); }catch(e){}
   }
+}
+
+// Lleva al formulario del portal. Si aun no ha entrado, al correo.
+function ayudaEscribir(){
+  ayudaToggle();
+  if (SESS && SESS.email && view !== 'login') { setTab('contact'); }
+  else { window.location.href = 'mailto:' + CONTACT_MAIL; }
 }
 
 function escapeHtml(t){
@@ -2194,7 +2204,7 @@ async function doSignup(){
         DOMINIO_NO_PERMITIDO:'Usa un correo real (Gmail, Hotmail, Yahoo...).',
         TYPO: r.sugerencia ? ('¿Quisiste decir '+r.sugerencia+'? Corrige el correo.') : 'Revisa cómo escribiste el correo.',
         PASS_CORTA:'La contraseña debe tener al menos 4 caracteres.',
-        LIMITE_ALCANZADO:'Hay muchos registros ahora mismo. Intenta en un rato o escríbeme por WhatsApp.',
+        LIMITE_ALCANZADO:'Hay muchos registros ahora mismo. Intenta en un rato o escríbeme desde Contacto.',
         FALTAN_DATOS:'Llena todos los campos.',
         CONN:'Error de conexión. Intenta de nuevo.'
       };
@@ -2368,8 +2378,8 @@ function showBienvenida(email){
         <div><b>${isEn?'Check your Spam folder':'Revisa tu carpeta de Spam'}</b>
           <span>${isEn?'Sometimes the email lands in Spam or Promotions. If you find it there, mark it as "Not spam" so the next ones arrive fine.':'A veces el correo cae en Spam o Promociones. Si lo encuentras ahí, márcalo como "No es spam" para que los próximos lleguen bien.'}</span></div></div>
     </div>
-    <div class="ok-help">${isEn?"If it doesn't arrive, write me on WhatsApp and I'll check it right away.":'Si no te llega, escríbeme por WhatsApp y lo reviso al momento.'}
-      <a href="https://wa.me/18326409105" target="_blank" rel="noopener">WhatsApp</a></div>`;
+    <div class="ok-help">${isEn?"If it doesn't arrive, write me from Contact and I'll check it.":'Si no te llega, escríbeme desde Contacto (menú de la izquierda) y lo reviso.'}
+      <a href="#" onclick="event.preventDefault();setTab('contact')">Escríbeme aquí</a></div>`;
   document.getElementById('okModal').classList.add('show');
 }
 
@@ -2859,8 +2869,8 @@ function faqPage(){
   </div>`;
   const cta=`<div class="help-cta">
     <div><div class="help-cta-t">${isEn?"Didn't find it?":'¿No encontraste lo que buscabas?'}</div>
-      <div class="help-cta-s">${isEn?'Write me on WhatsApp and I help you directly.':'Escríbeme por WhatsApp y te ayudo directo.'}</div></div>
-    <a class="disc-go" style="width:auto;padding:11px 20px" href="https://wa.me/18326409105" target="_blank" rel="noopener">WhatsApp</a></div>`;
+      <div class="help-cta-s">${isEn?'Write me from here and I help you directly.':'Escríbeme desde aquí y te ayudo directo.'}</div></div>
+    <a class="disc-go" style="width:auto;padding:11px 20px" href="#" onclick="event.preventDefault();setTab('contact')">Escríbeme</a></div>`;
   return `<div class="page-head"><h1>${t('ayuda_h')}</h1><p>${t('ayuda_sub')}</p></div>
     ${quick}
     <div class="search" style="max-width:520px;margin-bottom:14px">${sv(I.search,16)}
@@ -2886,8 +2896,8 @@ function contactPage(){
           <button class="btn-primary" id="cbtn" onclick="sendContact()">${t('enviar_msg')}</button>
         </div></div>
       <div class="contact-side">
-        <a class="contact-card" href="https://wa.me/18326409105" target="_blank"><div class="contact-ic" style="color:var(--green)">${sv(I.phone,18)}</div>
-          <div class="lbl">WhatsApp</div><div class="val">832 640 9105</div><div class="sub">${LANG==='en'?'Tap to message me':'Toca para escribirme'}</div></a>
+        <a class="contact-card" href="mailto:sniperocket2028@gmail.com"><div class="contact-ic" style="color:var(--green)">${sv(I.mail,18)}</div>
+          <div class="lbl">${LANG==='en'?'Email':'Correo'}</div><div class="val">sniperocket2028@gmail.com</div><div class="sub">${LANG==='en'?'Tap to write me':'Toca para escribirme'}</div></a>
         <a class="contact-card" href="mailto:sniperocket2028@gmail.com"><div class="contact-ic" style="color:var(--cyan)">${sv(I.mail,18)}</div>
           <div class="lbl">${t('correo')}</div><div class="val" style="font-size:14px">sniperocket2028@gmail.com</div></a>
         <div class="contact-card" style="align-items:center;text-align:center">
@@ -3321,7 +3331,7 @@ function pedirTarjetaTexto(){
 function comprobanteBtns(metodo){
   const isEn=LANG==='en';
   const txt=comprobanteTexto(metodo);
-  const wa='https://wa.me/18326409105?text='+encodeURIComponent(txt);
+  // WhatsApp quitado a proposito: quedan correo y Telegram.
   const tg='https://t.me/'+TELEGRAM_USER;   // Telegram NO permite pre-llenar texto en chat directo
   const asunto=encodeURIComponent((isEn?'Payment proof · ':'Comprobante de pago · ')+(PAY_CTX.nombre||''));
   const mail='mailto:'+CONTACT_MAIL+'?subject='+asunto+'&body='+encodeURIComponent(txt);
@@ -3331,9 +3341,8 @@ function comprobanteBtns(metodo){
   return `<div class="proof-wrap">
     <div class="proof-lbl">${sv(I.check,13)} ${lbl}</div>
     <div class="proof-btns">
-      <a class="proof-btn wa" href="${wa}" target="_blank" rel="noopener">${sv(I.phone,15)} WhatsApp</a>
-      ${TELEGRAM_USER?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener" onclick="copiarProof()">${sv(I.send,15)} Telegram</a>`:''}
       <a class="proof-btn mail" href="${mail}">${sv(I.mail,15)} ${isEn?'Email':'Correo'}</a>
+      ${TELEGRAM_USER?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener" onclick="copiarProof()">${sv(I.send,15)} Telegram</a>`:''}
     </div>
     ${TELEGRAM_USER?`<div class="proof-tg-note" id="proofTgNote">${sv(I.copy,12)} ${isEn?'For Telegram: your details are copied — just paste them in the chat and attach the screenshot.':'Para Telegram: tus datos se copian solos — solo pégalos en el chat y adjunta la captura.'}</div>`:''}
     <div class="proof-note">${isEn?'Attach the payment screenshot in the chat.':'Adjunta la captura del pago en el chat.'}</div>
@@ -3365,14 +3374,17 @@ function payTab(t){
     pane.innerHTML=`<div class="pay-off">${sv(I.tool,26)}
       <h3>${isEn?'Temporarily unavailable':'No disponible por el momento'}</h3>
       <p>${isEn?'This payment method is paused right now. Please use the other option or contact me.':'Este método está en pausa ahora mismo. Usa la otra opción o escríbeme.'}</p>
-      <a class="btn-ghost" style="text-decoration:none;margin-top:4px" href="https://wa.me/18326409105" target="_blank">${sv(I.phone,14)} WhatsApp</a></div>`;
+      <a class="btn-ghost" style="text-decoration:none;margin-top:4px" href="#" onclick="event.preventDefault();closeModal('payModal');setTab('contact')">${sv(I.mail,14)} ${isEn?'Write me':'Escríbeme'}</a></div>`;
     return;
   }
   const monto = PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:'';
   if(t==='tj'){
     const txt = pedirTarjetaTexto();
-    const wa  = 'https://wa.me/18326409105?text='+encodeURIComponent(txt);
+    // WhatsApp quitado: se pide por correo o Telegram.
     const tg  = TELEGRAM_USER ? ('https://t.me/'+TELEGRAM_USER) : '';
+    const mailTj = 'mailto:' + CONTACT_MAIL + '?subject=' +
+      encodeURIComponent('Link de pago con tarjeta · ' + (PAY_CTX.nombre||'')) +
+      '&body=' + encodeURIComponent(txt);
     window.__proofTxt = txt;   // por si usa Telegram, que lo pegue
     pane.innerHTML=`
       <div class="tj-hero">${sv(I.card,26)}
@@ -3387,7 +3399,7 @@ function payTab(t){
       <div class="proof-wrap">
         <div class="proof-lbl">${sv(I.check,13)} ${isEn?'Ask for your payment link:':'Pide tu link de pago:'}</div>
         <div class="proof-btns">
-          <a class="proof-btn wa" href="${wa}" target="_blank" rel="noopener">${sv(I.phone,15)} WhatsApp</a>
+          <a class="proof-btn mail" href="${mailTj}">${sv(I.mail,15)} ${isEn?'Email':'Correo'}</a>
           ${tg?`<a class="proof-btn tg" href="${tg}" target="_blank" rel="noopener" onclick="copiarProof()">${sv(I.send,15)} Telegram</a>`:''}
         </div>
         ${tg?`<div class="proof-tg-note" id="proofTgNote">${sv(I.copy,12)} ${isEn?'For Telegram: your message is copied — just paste it in the chat.':'Para Telegram: tu mensaje se copia solo — solo pégalo en el chat.'}</div>`:''}
@@ -3460,7 +3472,6 @@ function openInfo(){
       <div class="info-plat">${INFO.plataformas.map(p=>`<span class="info-chip">${p}</span>`).join('')}</div></div>
     <div class="info-sec"><h4>${t('info_contacto')}</h4>
       <div class="info-contact">
-        <a href="https://wa.me/18326409105" target="_blank">${sv(I.phone,16)} WhatsApp · 832 640 9105</a>
         <a href="mailto:sniperocket2028@gmail.com">${sv(I.mail,16)} sniperocket2028@gmail.com</a>
       </div></div>`;
   document.getElementById('infoModal').classList.add('show');
