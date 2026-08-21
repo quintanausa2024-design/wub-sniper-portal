@@ -521,6 +521,48 @@
   .contact-side{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
   .contact-side .contact-card:last-child{grid-column:1 / -1}
   @media(max-width:900px){.two-col{grid-template-columns:1fr}.contact-side{grid-template-columns:1fr}}
+
+  /* ── CENTRO DE AYUDA (boton flotante) ────────────────────── */
+  .ay-btn{position:fixed;right:22px;bottom:22px;width:56px;height:56px;border-radius:18px;
+    background:var(--fire);border:none;cursor:pointer;z-index:900;color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 26px rgba(255,107,44,.38);transition:.18s}
+  .ay-btn:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,107,44,.5)}
+  .ay-btn svg{width:26px;height:26px}
+  .ay-panel{position:fixed;right:22px;bottom:90px;width:380px;max-width:calc(100vw - 32px);
+    max-height:min(620px,calc(100vh - 130px));background:var(--surface);border:1px solid var(--line);
+    border-radius:18px;z-index:901;display:none;flex-direction:column;overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.55)}
+  .ay-panel.on{display:flex}
+  .ay-head{background:var(--fire);padding:18px 20px;color:#fff}
+  .ay-head h3{margin:0;font-family:var(--display);font-size:17px;font-weight:600}
+  .ay-head p{margin:4px 0 0;font-size:12.5px;opacity:.92}
+  .ay-search{padding:14px 16px;border-bottom:1px solid var(--line-soft)}
+  .ay-search input{width:100%;background:var(--bg-2);border:1px solid var(--line);
+    border-radius:11px;padding:11px 13px;color:var(--text);font-family:var(--body);font-size:14px}
+  .ay-search input:focus{outline:none;border-color:var(--fire)}
+  .ay-body{overflow-y:auto;padding:8px 12px 14px;flex:1}
+  .ay-cat{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);
+    margin:14px 6px 7px;font-weight:600}
+  .ay-item{background:var(--bg-2);border:1px solid var(--line-soft);border-radius:11px;
+    margin-bottom:7px;overflow:hidden;transition:.14s}
+  .ay-item:hover{border-color:var(--line)}
+  .ay-q{padding:12px 14px;cursor:pointer;font-size:13.5px;color:var(--text);
+    display:flex;justify-content:space-between;gap:10px;align-items:flex-start;line-height:1.45}
+  .ay-q span:last-child{color:var(--text-faint);flex-shrink:0;transition:.18s}
+  .ay-item.open .ay-q span:last-child{transform:rotate(180deg)}
+  .ay-a{display:none;padding:0 14px 13px;font-size:13px;line-height:1.62;color:var(--text-dim);
+    border-top:1px solid var(--line-soft);margin-top:0;padding-top:11px}
+  .ay-item.open .ay-a{display:block}
+  .ay-nada{text-align:center;padding:26px 18px;color:var(--text-dim);font-size:13.5px;line-height:1.6}
+  .ay-foot{padding:12px 16px;border-top:1px solid var(--line-soft);background:var(--bg-2)}
+  .ay-wa{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    background:#25D366;color:#fff;border:none;border-radius:11px;padding:11px;
+    font-family:var(--body);font-size:13.5px;font-weight:600;cursor:pointer;text-decoration:none}
+  @media(max-width:520px){
+    .ay-panel{right:12px;left:12px;width:auto;bottom:84px}
+    .ay-btn{right:16px;bottom:16px}
+  }
   /* Rejilla ancha SOLO para Mi Perfil de admin: mosaico de 3 columnas.
      No toca .two-col, que la usan el perfil de cliente y la pagina de contacto. */
   .perfil-wide{columns:3 360px;column-gap:20px;max-width:1500px}
@@ -1022,6 +1064,35 @@
 <div id="maintBar" class="maint-bar" aria-hidden="true"></div>
 
 <div class="app" id="app"></div>
+
+<!-- ── CENTRO DE AYUDA ────────────────────────────────────────
+     Boton flotante con las preguntas frecuentes. No usa IA:
+     solo muestra las respuestas que tu has escrito, asi que no
+     puede inventarse nada ni prometer resultados. -->
+<button class="ay-btn" id="ayBtn" onclick="ayudaToggle()" title="¿Necesitas ayuda?" aria-label="Ayuda">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+       stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle>
+    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+  </svg>
+</button>
+
+<div class="ay-panel" id="ayPanel">
+  <div class="ay-head">
+    <h3>¿En qué te ayudo?</h3>
+    <p>Busca tu duda o mira las preguntas más comunes</p>
+  </div>
+  <div class="ay-search">
+    <input type="text" id="ayInput" placeholder="Escribe tu duda..." oninput="ayudaBuscar()" autocomplete="off">
+  </div>
+  <div class="ay-body" id="ayBody"></div>
+  <div class="ay-foot">
+    <a class="ay-wa" href="https://wa.me/18326409105" target="_blank" rel="noopener">
+      Escribir por WhatsApp
+    </a>
+  </div>
+</div>
 
 <div class="modal-bg" id="vidModal" onclick="if(event.target===this)closeModal('vidModal')">
   <div class="modal"><div class="modal-head"><h3 id="vidTitle">Video</h3>
@@ -1854,6 +1925,133 @@ async function descargarProducto(pid, boton){
   }catch(e){ toast('⚠️ Error de conexión. Inténtalo otra vez.'); }
   if (boton) { boton.disabled = false; boton.innerHTML = antes; }
 }
+
+// ═══════════════════════════════════════════════════════════
+//  CENTRO DE AYUDA
+//  Busca en las preguntas que TU escribiste. Sin IA: no puede
+//  inventarse respuestas ni prometer resultados.
+// ═══════════════════════════════════════════════════════════
+let AY_TEMAS = null, AY_ABIERTO = false, AY_APUNTADO = 0;
+
+// Pasa las 36 preguntas que ya estaban escritas aqui al centro de
+// ayuda. Se ejecuta UNA vez desde la consola del navegador (F12):
+//     importarAyuda()
+// Si ya hay temas guardados, no hace nada (para no duplicar).
+async function importarAyuda(){
+  if (!await rwAsegurarSesion()) { console.error('Entra como admin primero'); return; }
+  const r = await rwFetch('/admin/ayuda/importar', { temas: FAQ });
+  if (r.ok) { AY_TEMAS = null; console.log('Listo. Preguntas importadas: ' + r.puestos); }
+  else if (r.error === 'YA_HAY_TEMAS') console.warn('Ya hay ' + r.total + ' preguntas guardadas. No se importa nada.');
+  else console.error('No se pudo:', r.error);
+}
+
+function ayudaToggle(){
+  const p = document.getElementById('ayPanel');
+  AY_ABIERTO = !AY_ABIERTO;
+  p.classList.toggle('on', AY_ABIERTO);
+  if (AY_ABIERTO) {
+    ayudaCargar();
+    setTimeout(()=>{ const i=document.getElementById('ayInput'); if(i) i.focus(); }, 120);
+  }
+}
+
+async function ayudaCargar(){
+  if (AY_TEMAS) return ayudaPintar(AY_TEMAS);
+  const b = document.getElementById('ayBody');
+  if (b) b.innerHTML = '<div class="ay-nada">Cargando...</div>';
+  try{
+    const r = await (await fetch(RAILWAY_URL + '/ayuda')).json();
+    AY_TEMAS = (r.ok && r.temas) ? r.temas : [];
+  }catch(e){ AY_TEMAS = []; }
+  ayudaPintar(AY_TEMAS);
+}
+
+// Quita tildes y mayusculas para que "instalacion" encuentre "instalación"
+function ayNorm(t){
+  return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+function ayudaBuscar(){
+  const q = ayNorm(document.getElementById('ayInput').value.trim());
+  if (!q) return ayudaPintar(AY_TEMAS||[]);
+
+  const palabras = q.split(/\s+/).filter(x=>x.length>2);
+  const con = (AY_TEMAS||[]).map(t=>{
+    const texto = ayNorm(t.pregunta + ' ' + t.respuesta + ' ' + t.categoria);
+    const enPregunta = ayNorm(t.pregunta);
+    let puntos = 0;
+    if (enPregunta.includes(q)) puntos += 100;      // coincide entero en la pregunta
+    else if (texto.includes(q)) puntos += 40;
+    for (const w of palabras){
+      if (enPregunta.includes(w)) puntos += 12;
+      else if (texto.includes(w)) puntos += 4;
+      else {
+        // Por la RAIZ de la palabra: asi "instalar" encuentra "instalo",
+        // "instalacion" o "instalado". La gente no escribe el verbo
+        // igual que esta en la pregunta.
+        const raiz = w.length > 5 ? w.slice(0, -2) : w;
+        if (raiz.length > 3 && texto.includes(raiz)) puntos += 3;
+      }
+    }
+    return { t, puntos };
+  }).filter(x=>x.puntos>0).sort((a,b)=>b.puntos-a.puntos);
+
+  ayudaPintar(con.map(x=>x.t), q);
+}
+
+function ayudaPintar(lista, busqueda){
+  const b = document.getElementById('ayBody');
+  if (!b) return;
+
+  if (!lista.length){
+    b.innerHTML = `<div class="ay-nada">
+      No encontré nada sobre eso.<br><br>
+      Escríbeme por WhatsApp y te respondo yo mismo. \ud83d\udc47</div>`;
+    // se apunta lo que la gente busca y no encuentra: es la lista
+    // de lo que falta por escribir
+    if (busqueda && busqueda.length > 3 && Date.now() - AY_APUNTADO > 4000){
+      AY_APUNTADO = Date.now();
+      try{ fetch(RAILWAY_URL + '/ayuda/sin-respuesta', {method:'POST',
+        headers:{'content-type':'application/json'},
+        body: JSON.stringify({ texto: document.getElementById('ayInput').value.trim(),
+                               email: (SESS&&SESS.email)||'' })}); }catch(e){}
+    }
+    return;
+  }
+
+  let html = '', catAnterior = '';
+  for (const t of lista){
+    if (!busqueda && t.categoria !== catAnterior){
+      html += `<div class="ay-cat">${escapeHtml(t.categoria)}</div>`;
+      catAnterior = t.categoria;
+    }
+    html += `<div class="ay-item" onclick="ayudaAbrir(this,${t.id})">
+      <div class="ay-q"><span>${escapeHtml(t.pregunta)}</span><span>${sv(I.chev,14)}</span></div>
+      <div class="ay-a">${escapeHtml(t.respuesta).replace(/\n/g,'<br>')}</div>
+    </div>`;
+  }
+  b.innerHTML = html;
+}
+
+function ayudaAbrir(el, id){
+  const yaEstaba = el.classList.contains('open');
+  el.classList.toggle('open');
+  if (!yaEstaba && id){
+    try{ fetch(RAILWAY_URL + '/ayuda/visto', {method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify({ id })}); }catch(e){}
+  }
+}
+
+function escapeHtml(t){
+  return String(t||'').replace(/[<>&"]/g, c =>
+    ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'})[c]);
+}
+
+// cerrar con Escape
+document.addEventListener('keydown', e=>{
+  if (e.key === 'Escape' && AY_ABIERTO) ayudaToggle();
+});
 
 async function apiCall(params){
   // Lo de clientes va a Railway; lo demas sigue en Firebase.
