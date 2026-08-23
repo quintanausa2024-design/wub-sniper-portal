@@ -500,6 +500,17 @@
   .disc-card{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line);
     border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:.15s}
   .disc-card:hover{border-color:var(--fire);transform:translateY(-2px)}
+  /* valoracion de las prop firms */
+  .val-row{display:flex;align-items:center;gap:9px;margin:11px 0 3px;flex-wrap:wrap}
+  .val-stars{display:flex;gap:2px}
+  .val-st{background:none;border:none;padding:0;cursor:default;line-height:1;
+    color:var(--line);transition:.12s;font-size:0}
+  .val-st svg{width:17px;height:17px;display:block}
+  .val-st.on{color:#FFB020}
+  .val-puedo .val-st{cursor:pointer}
+  .val-puedo .val-st:hover{transform:scale(1.18)}
+  .val-txt{font-size:11.5px;color:var(--text-faint);white-space:nowrap}
+  .val-mio{font-size:11px;color:var(--fire-soft);white-space:nowrap}
   .disc-top{display:flex;align-items:center;gap:12px}
   .disc-logo{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--fire),#E8541A);
     display:grid;place-items:center;font-family:var(--display);font-weight:800;font-size:19px;color:#0a0a0a;flex-shrink:0}
@@ -2994,12 +3005,92 @@ function discCard(d,isEn){
     </div>
     ${d.codigo?`<div class="disc-code-row"><span class="disc-code">${d.codigo}</span>
       <button class="disc-copy" onclick="copyCode('${(d.codigo||'').replace(/'/g,'')}',this)">${sv(I.copy,14)} ${isEn?'Copy':'Copiar'}</button></div>`:''}
+    ${valoracionHTML(d.id, isEn)}
     ${d.link?`<a class="disc-go" href="${d.link}" target="_blank" rel="noopener">${d.tipo==='FONDEO'?(isEn?'Open account':'Abrir cuenta'):(isEn?'Go to site':'Ir al sitio')} ${sv(I.ext,14)}</a>`:''}
   </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  VALORACION DE LAS PROP FIRMS
+//  El cliente pone estrellas y se publica al momento, sin que
+//  tengas que aprobar nada. Un voto por cliente y firma: si
+//  vuelve a votar, cambia el suyo en vez de sumar otro.
+// ═══════════════════════════════════════════════════════════
+let VALORACIONES = null;   // { medias:{id:{media,votos}}, mios:{id:estrellas} }
+
+async function cargarValoraciones(forzar){
+  if (VALORACIONES && !forzar) return VALORACIONES;
+  try{
+    const r = await (await fetch(RAILWAY_URL + '/valoraciones', {
+      method:'POST', headers:{'content-type':'application/json'},
+      body: JSON.stringify({ email:(SESS&&SESS.email)||'' })
+    })).json();
+    VALORACIONES = r.ok ? { medias:r.medias||{}, mios:r.mios||{} } : { medias:{}, mios:{} };
+  }catch(e){ VALORACIONES = { medias:{}, mios:{} }; }
+  return VALORACIONES;
+}
+
+function estrellaSVG(llena){
+  return `<svg viewBox="0 0 24 24" fill="${llena?'currentColor':'none'}"
+    stroke="currentColor" stroke-width="1.8" stroke-linejoin="round">
+    <polygon points="12 2 15.09 8.6 22 9.5 17 14.3 18.2 21.2 12 17.9 5.8 21.2 7 14.3 2 9.5 8.91 8.6 12 2"/></svg>`;
+}
+
+function valoracionHTML(id, isEn){
+  if (!id) return '';
+  const v = VALORACIONES || { medias:{}, mios:{} };
+  const dato = v.medias[id] || { media:0, votos:0 };
+  const mio  = v.mios[id] || 0;
+  // solo puede votar un cliente que ha entrado
+  const puedo = !!(SESS && SESS.email) && view !== 'login';
+  const pintadas = mio || Math.round(dato.media);
+
+  let estrellas = '';
+  for (let i = 1; i <= 5; i++){
+    estrellas += `<button class="val-st ${i <= pintadas ? 'on':''}"
+      ${puedo ? `onclick="event.stopPropagation();votarFirma('${id}',${i},this)"` : ''}
+      title="${puedo ? (isEn?'Rate '+i:'Valorar con '+i) : (isEn?'Log in to rate':'Entra para valorar')}"
+      >${estrellaSVG(i <= pintadas)}</button>`;
+  }
+
+  const texto = dato.votos
+    ? `${dato.media} · ${dato.votos} ${dato.votos===1 ? (isEn?'vote':'voto') : (isEn?'votes':'votos')}`
+    : (isEn ? 'No ratings yet' : 'Sin valoraciones');
+
+  return `<div class="val-row ${puedo?'val-puedo':''}" id="val-${id}">
+    <div class="val-stars">${estrellas}</div>
+    <span class="val-txt">${texto}</span>
+    ${mio ? `<span class="val-mio">${isEn?'Your rating':'Tu voto'}</span>` : ''}
+  </div>`;
+}
+
+async function votarFirma(id, estrellas, btn){
+  if (!(SESS && SESS.email)) return;
+  const fila = document.getElementById('val-' + id);
+  if (fila) fila.style.opacity = '.5';
+  try{
+    const r = await rwFetch('/valoraciones/votar', {
+      email: SESS.email, pass: SESS.pass, firma_id: id, estrellas
+    });
+    if (r.ok){
+      VALORACIONES.medias[id] = { media:r.media, votos:r.votos };
+      VALORACIONES.mios[id] = r.mio;
+      if (fila) fila.outerHTML = valoracionHTML(id, LANG==='en');
+      toast(LANG==='en' ? 'Thanks for rating!' : '¡Gracias por valorar!');
+    } else {
+      if (fila) fila.style.opacity = '1';
+      toast(LANG==='en' ? "Couldn't save your rating." : 'No se pudo guardar tu voto.');
+    }
+  }catch(e){
+    if (fila) fila.style.opacity = '1';
+    toast(LANG==='en' ? 'Connection error.' : 'Error de conexión.');
+  }
 }
 function discountsPage(){
   const isEn=LANG==='en';
   if(!API_URL) return `<div class="page-head"><h1>${isEn?'Discounts':'Descuentos'}</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet.</div>`;
+  // las valoraciones se piden una vez, junto con los descuentos
+  if(VALORACIONES===null){ cargarValoraciones().then(()=>{ if(tab==='discounts') renderKeep(); }); }
   if(DISCOUNTS===null){ loadDiscounts();
     return `<div class="page-head"><h1>${isEn?'Discounts':'Descuentos'}</h1><p>${isEn?'Loading...':'Cargando...'}</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">${isEn?'Loading...':'Cargando descuentos...'}</div>`; }
   const head=`<div class="page-head"><h1>${isEn?'Funded Accounts & Discounts':'Cuentas de Fondeo y Descuentos'}</h1>
