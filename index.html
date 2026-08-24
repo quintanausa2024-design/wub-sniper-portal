@@ -554,7 +554,21 @@
   .cta{background:var(--surface);border:1px solid var(--line);border-radius:12px;
     padding:13px 14px;transition:.14s;position:relative}
   .cta:hover{border-color:var(--line-soft);transform:translateY(-1px)}
-  .cta.sel{border-color:var(--fire);background:rgba(255,107,44,.06)}
+  .cta.sel{border-color:var(--fire);background:rgba(255,107,44,.13);
+    box-shadow:0 0 0 1px var(--fire) inset}
+  .cta.sel .cta-nom b{color:var(--fire-soft)}
+  .cta-num{font-size:11px;font-family:var(--mono);color:var(--cyan);
+    background:rgba(52,179,255,.12);padding:1px 6px;border-radius:5px;margin-left:5px}
+  .cta-arch{opacity:.55}
+  .cta-arch .cta-nom b{text-decoration:line-through}
+  .arch-caja{background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    overflow:hidden;margin-top:22px}
+  .arch-cab{padding:13px 16px;border-bottom:1px solid var(--line-soft);
+    display:flex;align-items:center;gap:10px;cursor:pointer}
+  .arch-cab b{font-size:14px;color:var(--text-dim);font-weight:500}
+  .arch-fila{display:flex;align-items:center;gap:11px;padding:10px 16px;
+    border-bottom:1px solid var(--line-soft);font-size:13px}
+  .arch-fila:last-child{border-bottom:none}
   .cta-top{display:flex;align-items:flex-start;gap:9px;margin-bottom:9px}
   .cta-nom{flex:1;min-width:0}
   .cta-nom b{display:block;font-size:13.5px;color:var(--text);font-weight:500;
@@ -3279,12 +3293,20 @@ function balancePage(){
       onclick="reiniciarBalance()">${sv(I.trash,15)} ${isEn?'Reset all':'Reiniciar'}</button>`:''}
   </div>`;
 
-  const barraSel = (BAL_SELMODO && BAL_SEL.size) ? `<div class="bal-selbar" style="border-radius:11px;margin-bottom:14px;border:1px solid rgba(255,107,44,.25)">
-    <b>${BAL_SEL.size} ${isEn?'selected':'seleccionadas'}</b>
-    <button class="cta-b go" style="flex:0 0 auto;padding:7px 13px" onclick="moverVarias('FASE2')">→ ${isEn?'Phase 2':'Fase 2'}</button>
-    <button class="cta-b go" style="flex:0 0 auto;padding:7px 13px" onclick="moverVarias('PRO')">→ PRO</button>
-    <button class="cta-b" style="flex:0 0 auto;padding:7px 13px;color:var(--red);border-color:rgba(255,77,94,.3)"
-      onclick="borrarSeleccionados()">${sv(I.trash,13)} ${isEn?'Delete':'Borrar'}</button>
+  const vivas = d.cuentas.filter(c=>!c.eliminada);
+  const todasMarcadas = vivas.length && BAL_SEL.size === vivas.length;
+
+  const barraSel = BAL_SELMODO ? `<div class="bal-selbar" style="border-radius:11px;margin-bottom:14px;border:1px solid rgba(255,107,44,.25)">
+    <label style="display:flex;align-items:center;gap:7px;cursor:pointer">
+      <input type="checkbox" class="bal-chk" ${todasMarcadas?'checked':''}
+             onchange="marcarTodas(this.checked)">
+      <b>${todasMarcadas?(isEn?'All':'Todas'):(isEn?'Select all':'Marcar todas')}</b></label>
+    <b style="color:var(--fire-soft)">${BAL_SEL.size}</b>
+    ${BAL_SEL.size?`
+      <button class="cta-b go" style="flex:0 0 auto;padding:7px 13px" onclick="moverVarias('FASE2')">→ ${isEn?'Phase 2':'Fase 2'}</button>
+      <button class="cta-b go" style="flex:0 0 auto;padding:7px 13px" onclick="moverVarias('PRO')">→ PRO</button>
+      <button class="cta-b" style="flex:0 0 auto;padding:7px 13px;color:var(--red);border-color:rgba(255,77,94,.3)"
+        onclick="borrarSeleccionados()">${sv(I.trash,13)} ${isEn?'Archive':'Archivar'}</button>`:''}
   </div>` : '';
 
   if (!d.cuentas.length){
@@ -3305,7 +3327,7 @@ function balancePage(){
   ];
 
   const bloques = FASES_UI.map(F=>{
-    const suyas = d.cuentas.filter(c => c.fase === F.k);
+    const suyas = vivas.filter(c => c.fase === F.k);
     if (!suyas.length) return '';
     const suma = suyas.reduce((a,c)=>a + (F.k==='FASE1'? c.costo : c.retirado), 0);
 
@@ -3320,9 +3342,34 @@ function balancePage(){
     </div>`;
   }).join('');
 
+  // Las archivadas: siguen contando como invertido, pero ya no
+  // estan en juego. Asi ves cuantas has quemado.
+  const arch = d.cuentas.filter(c=>c.eliminada);
+  const listaArch = arch.length ? `<div class="arch-caja">
+    <div class="arch-cab" onclick="ARCH_ABIERTO=!ARCH_ABIERTO;renderKeep()">
+      ${sv(I.trash,15)}
+      <b>${isEn?'Archived':'Archivadas'} · ${arch.length}</b>
+      <span style="margin-left:auto;font-size:12.5px;color:var(--text-faint)">
+        ${isEn?'spent':'gastado'}: ${dinero(T.gasto_archivado||0)}</span>
+      <span style="color:var(--text-faint);transform:rotate(${ARCH_ABIERTO?180:0}deg);transition:.18s">${sv(I.chev,14)}</span>
+    </div>
+    ${ARCH_ABIERTO ? arch.map(c=>{
+      const nom = [c.firma,c.tamano].filter(Boolean).join(' ');
+      const fch = String(c.eliminada_en||c.fecha||'').slice(0,10).split('-').reverse().join('/');
+      return `<div class="arch-fila">
+        <span style="flex:1;color:var(--text-dim)">${escapeHtml(nom)}
+          ${c.numero?`<span class="cta-num">···${escapeHtml(c.numero)}</span>`:''}</span>
+        <span style="color:var(--text-faint);font-size:11.5px">${fch}</span>
+        <span class="cta-eur">${dinero(c.costo)}</span>
+        <button class="cta-b" style="flex:0 0 auto;padding:5px 10px;font-size:11px"
+          onclick="recuperarCuenta(${c.id})">${isEn?'Restore':'Recuperar'}</button>
+      </div>`;
+    }).join('') : ''}
+  </div>` : '';
+
   return `<div class="page-head"><h1>${isEn?'My balance':'Mi balance'}</h1>
       <p>${isEn?'Only you can see this. Not even the admin.':'Solo tú ves esto. Nadie más, ni el administrador.'}</p></div>
-    ${totales}${acciones}${barraSel}${bloques}
+    ${totales}${acciones}${barraSel}${bloques}${listaArch}
     <div class="bal-priv">${sv(I.lock,15)}
       <span>${isEn
         ? 'Your figures are stored in your account only. The administrator cannot see them.'
@@ -3335,26 +3382,28 @@ function tarjetaCuenta(c, F, isEn){
   const fecha = String(c.fecha||'').slice(0,10).split('-').reverse().join('/');
   const marcada = BAL_SEL.has(c.id);
 
+  // Solo el paso SIGUIENTE. Antes salian dos y era facil saltarse
+  // una fase por error.
   let botones = '';
   if (c.fase === 'FASE1'){
-    botones = `<button class="cta-b go" onclick="moverCuenta(${c.id},'FASE2')">→ ${isEn?'Phase 2':'Fase 2'}</button>
-               <button class="cta-b" onclick="moverCuenta(${c.id},'PRO')">→ PRO</button>`;
+    botones = `<button class="cta-b go" onclick="moverCuenta(${c.id},'FASE2')">→ ${isEn?'Phase 2':'Fase 2'}</button>`;
   } else if (c.fase === 'FASE2'){
-    botones = `<button class="cta-b go" onclick="moverCuenta(${c.id},'PRO')">→ PRO</button>
-               <button class="cta-b" onclick="moverCuenta(${c.id},'FASE1')">← ${isEn?'Phase 1':'Fase 1'}</button>`;
+    botones = `<button class="cta-b go" onclick="moverCuenta(${c.id},'PRO')">→ PRO</button>`;
   } else if (c.fase === 'PRO'){
-    botones = `<button class="cta-b go" onclick="pedirPnl(${c.id})">→ ${isEn?'Consistency':'Consistencia'}</button>
+    botones = `<button class="cta-b go" onclick="pedirPnl(${c.id})">→ ${isEn?'Consistency':'Consist.'}</button>
                <button class="cta-b ret" onclick="abrirRetiro(${c.id})">${sv(I.dl,12)} ${isEn?'Payout':'Retiro'}</button>`;
   } else {
     botones = `<button class="cta-b ret" onclick="abrirRetiro(${c.id})">${sv(I.dl,12)} ${isEn?'Payout':'Retiro'}</button>
-               <button class="cta-b" onclick="pedirPnl(${c.id})">${isEn?'Edit PnL':'Editar PnL'}</button>`;
+               <button class="cta-b" onclick="pedirPnl(${c.id})">PnL</button>`;
   }
 
-  return `<div class="cta ${marcada?'sel':''}">
+  return `<div class="cta ${marcada?'sel':''}"
+    ${BAL_SELMODO?`onclick="marcarUno(${c.id})" style="cursor:pointer"`:''}>
     <div class="cta-top">
       ${BAL_SELMODO?`<input type="checkbox" class="cta-chk" ${marcada?'checked':''}
-        onclick="marcarUno(${c.id})">`:''}
-      <div class="cta-nom"><b>${escapeHtml(nombre)}</b><span>${fecha}${c.notas?' · '+escapeHtml(c.notas):''}</span></div>
+        onclick="event.stopPropagation();marcarUno(${c.id})">`:''}
+      <div class="cta-nom"><b>${escapeHtml(nombre)}${c.numero?`<span class="cta-num">···${escapeHtml(c.numero)}</span>`:''}</b>
+        <span>${fecha}${c.notas?' · '+escapeHtml(c.notas):''}</span></div>
       ${c.costo>0?`<div class="cta-eur">${dinero(c.costo)}</div>`:''}
       ${BAL_SELMODO?'':`<button class="cta-x" onclick="borrarCuenta(${c.id})"
         title="${isEn?'Delete':'Borrar'}">${sv(I.trash,13)}</button>`}
@@ -3363,14 +3412,29 @@ function tarjetaCuenta(c, F, isEn){
       <b style="color:${c.pnl>=0?'var(--green)':'var(--red)'}">${c.pnl>=0?'+':'−'}${dinero(c.pnl)}</b></div>`:''}
     ${c.retirado>0?`<div class="cta-ret">${sv(I.dl,11)} ${isEn?'Withdrawn':'Retirado'}: ${dinero(c.retirado)}
       ${c.retiros.length>1?` <span style="color:var(--text-faint)">(${c.retiros.length})</span>`:''}</div>`:''}
-    <div class="cta-btns">${botones}</div>
+    ${BAL_SELMODO?'':`<div class="cta-btns" onclick="event.stopPropagation()">${botones}</div>`}
   </div>`;
 }
 
 // ── seleccionar varias cuentas ──
 let BAL_SELMODO = false, BAL_SEL = new Set();
 
+let ARCH_ABIERTO = false;
+
 function toggleSeleccion(){ BAL_SELMODO = !BAL_SELMODO; BAL_SEL.clear(); renderKeep(); }
+
+// Marcar o desmarcar todas las cuentas vivas de golpe
+function marcarTodas(si){
+  BAL_SEL.clear();
+  if (si) for (const c of (BALANCE?.cuentas||[])) if (!c.eliminada) BAL_SEL.add(c.id);
+  renderKeep();
+}
+
+// Sacar una cuenta del archivo
+async function recuperarCuenta(id){
+  const r = await rwFetch('/cuentas/recuperar', { email:SESS.email, pass:SESS.pass, id });
+  if (r.ok){ await recargarCuentas(); toast(LANG==='en'?'Restored':'Recuperada'); }
+}
 function marcarUno(id){
   if (BAL_SEL.has(id)) BAL_SEL.delete(id); else BAL_SEL.add(id);
   renderKeep();
@@ -3390,7 +3454,9 @@ async function moverVarias(fase){
 async function borrarSeleccionados(){
   const isEn = LANG==='en';
   if (!BAL_SEL.size) return;
-  if (!confirm(isEn ? `Delete ${BAL_SEL.size} accounts?` : `¿Borrar ${BAL_SEL.size} cuentas?`)) return;
+  if (!confirm(isEn
+    ? `Archive ${BAL_SEL.size} accounts? What you spent on them still counts as invested.`
+    : `¿Archivar ${BAL_SEL.size} cuentas? Lo que gastaste en ellas sigue contando como invertido.`)) return;
   const r = await rwFetch('/cuentas/borrar',
     { email:SESS.email, pass:SESS.pass, ids:[...BAL_SEL] });
   if (r.ok){
@@ -3414,7 +3480,9 @@ async function moverCuenta(id, fase){
 
 async function borrarCuenta(id){
   const isEn = LANG==='en';
-  if (!confirm(isEn?'Delete this account?':'¿Borrar esta cuenta?')) return;
+  if (!confirm(isEn
+    ? 'Archive this account? What you spent still counts as invested.'
+    : '¿Archivar esta cuenta? Lo que gastaste sigue contando como invertido.')) return;
   const r = await rwFetch('/cuentas/borrar', { email:SESS.email, pass:SESS.pass, id });
   if (r.ok){ await recargarCuentas(); toast(isEn?'Deleted':'Borrada'); }
 }
@@ -3477,6 +3545,14 @@ function abrirCompra(){
         <option value="">${isEn?'(none)':'(ninguno)'}</option>
         <option>25K</option><option>50K</option><option>100K</option><option>150K</option>
       </select></div>
+    <div class="mfield"><label>${isEn?'Last 4 digits (optional)':'Últimos 4 números (opcional)'}</label>
+      <input type="text" id="ctaNumero" maxlength="4" inputmode="numeric"
+             placeholder="${isEn?'e.g. 4821':'ej: 4821'}"
+             oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div style="font-size:11.5px;color:var(--text-faint);margin:-8px 0 14px">
+      ${isEn?'Helps you tell apart accounts of the same size.'
+            :'Sirve para distinguir cuentas del mismo tamaño.'}
+    </div>
     <div style="display:flex;gap:10px">
       <div class="mfield" style="flex:1"><label>${isEn?'Price each (USD)':'Precio c/u (USD)'}</label>
         <input type="number" id="ctaCosto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"
@@ -3534,6 +3610,7 @@ async function guardarCompra(){
     cantidad: parseInt(document.getElementById('ctaCant').value,10) || 1,
     firma: document.getElementById('ctaFirma').value,
     tamano: document.getElementById('ctaTamano').value,
+    numero: document.getElementById('ctaNumero')?.value || '',
     fecha: document.getElementById('ctaFecha').value,
     notas: document.getElementById('ctaNotas').value
   });
