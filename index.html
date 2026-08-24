@@ -526,6 +526,17 @@
   .bal-mov:hover .bal-del{opacity:1}
   .bal-del:hover{color:var(--red);background:rgba(255,77,94,.1)}
   .bal-vacio{text-align:center;padding:36px 20px;color:var(--text-dim);font-size:13.5px;line-height:1.7}
+  .bal-fase{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.04em;
+    padding:2px 7px;border-radius:6px;margin-left:7px;vertical-align:1px;font-family:var(--body)}
+  .f-FASE1{background:rgba(52,179,255,.16);color:var(--cyan-soft)}
+  .f-FASE2{background:rgba(255,176,32,.16);color:#FFC65C}
+  .f-PRO{background:rgba(29,158,117,.18);color:#5DCAA5}
+  .f-CONSISTENCIA{background:rgba(127,119,221,.18);color:#AFA9EC}
+  .bal-chk{width:17px;height:17px;flex-shrink:0;accent-color:var(--fire);cursor:pointer}
+  .bal-selbar{display:flex;align-items:center;gap:10px;padding:11px 16px;
+    background:rgba(255,107,44,.09);border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+  .bal-selbar b{font-size:13px;color:var(--text)}
+  .bal-selbar button{font-size:12.5px;padding:6px 12px}
   .bal-priv{margin-top:14px;padding:12px 15px;background:var(--bg-2);border-radius:10px;
     display:flex;gap:10px;align-items:flex-start}
   .bal-priv span{font-size:12px;color:var(--text-faint);line-height:1.55}
@@ -533,6 +544,25 @@
     padding:44px 26px;text-align:center}
   .bal-cerrado h3{margin:14px 0 8px;font-family:var(--display);font-size:18px;color:var(--text)}
   .bal-cerrado p{margin:0 auto;max-width:400px;font-size:13.5px;color:var(--text-dim);line-height:1.65}
+
+  /* fases y seleccion multiple en Mi Balance */
+  .bal-fase{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.04em;
+    padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:1px}
+  .f-FASE1{background:rgba(52,179,255,.16);color:var(--cyan)}
+  .f-FASE2{background:rgba(160,120,255,.16);color:#B49CFF}
+  .f-PRO{background:rgba(29,158,117,.18);color:var(--green)}
+  .f-CONSISTENCIA{background:rgba(255,176,32,.16);color:#FFB020}
+  .bal-chk{width:17px;height:17px;flex-shrink:0;accent-color:var(--fire);cursor:pointer}
+  .bal-selbar{display:flex;align-items:center;gap:10px;padding:11px 16px;
+    background:rgba(255,107,44,.09);border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
+  .bal-selbar b{font-size:13px;color:var(--text)}
+  .bal-rapid{display:grid;grid-template-columns:repeat(auto-fit,minmax(112px,1fr));
+    gap:8px;margin-bottom:16px}
+  .bal-rb{background:var(--surface);border:1px solid var(--line);border-radius:11px;
+    padding:12px 10px;cursor:pointer;text-align:center;transition:.14s;font-family:var(--body)}
+  .bal-rb:hover{border-color:var(--fire);transform:translateY(-1px)}
+  .bal-rb b{display:block;font-size:13px;color:var(--text);font-weight:500;margin-top:5px}
+  .bal-rb span{font-size:10.5px;color:var(--text-faint)}
 
   /* valoracion de las prop firms */
   .val-row{display:flex;align-items:center;gap:9px;margin:11px 0 3px;flex-wrap:wrap}
@@ -3071,7 +3101,16 @@ const BAL_TIPOS = {
   MENSUALIDAD: { txt:'Mensualidad', en:'Monthly fee',  entra:false },
   RESET      : { txt:'Reset',       en:'Reset',        entra:false },
   OTRO       : { txt:'Otro gasto',  en:'Other cost',   entra:false },
-  RETIRO     : { txt:'Retiro',      en:'Payout',       entra:true  }
+  RETIRO     : { txt:'Retiro',      en:'Payout',       entra:true  },
+  // BALANCE es solo una nota de como va la cuenta: no suma ni resta
+  BALANCE    : { txt:'Balance',     en:'Balance',      entra:false, nota:true }
+};
+
+const BAL_FASES = {
+  FASE1       : { txt:'Fase 1',       en:'Phase 1' },
+  FASE2       : { txt:'Fase 2',       en:'Phase 2' },
+  PRO         : { txt:'PRO',          en:'PRO' },
+  CONSISTENCIA: { txt:'Consistencia', en:'Consistency' }
 };
 
 function dinero(n){
@@ -3103,7 +3142,6 @@ function balancePage(){
       <div class="bal-vacio">${isEn?'Loading...':'Cargando...'}</div>`;
   }
 
-  // sin acceso: se ve la seccion pero con el cartel
   if (!BAL_ACCESO.puede){
     return `<div class="page-head"><h1>${isEn?'My balance':'Mi balance'}</h1>
       <p>${isEn?'Track what you invest and what you withdraw.':'Lleva la cuenta de lo que inviertes y lo que retiras.'}</p></div>
@@ -3129,35 +3167,74 @@ function balancePage(){
       <div class="v" style="color:${T.retorno>=100?'var(--green)':'var(--text)'}">${T.retorno}%</div></div>
   </div>`;
 
-  const acciones = `<div class="bal-acc">
-    <button class="btn-add" onclick="abrirMovimiento('RETIRO')">${sv(I.dl,15)} ${isEn?'Add payout':'Registrar retiro'}</button>
-    <button class="btn-ghost" onclick="abrirMovimiento('EVALUACION')">${sv(I.tag,15)} ${isEn?'Add cost':'Registrar gasto'}</button>
-    ${b.movimientos.length?`<button class="btn-ghost" style="color:var(--red);border-color:rgba(255,77,94,.3)"
-      onclick="reiniciarBalance()">${sv(I.trash,15)} ${isEn?'Reset':'Reiniciar'}</button>`:''}
+  // Botones rapidos: cada uno abre el formulario ya relleno con
+  // el tipo y la fase que toca, para no elegirlo cada vez.
+  const rapidos = `<div class="bal-rapid">
+    <button class="bal-rb" onclick="abrirMovimiento('EVALUACION','FASE1')">
+      <div style="color:var(--cyan)">${sv(I.tag,17)}</div>
+      <b>${isEn?'Phase 1':'Fase 1'}</b><span>${isEn?'Buy eval':'Compro evaluación'}</span></button>
+    <button class="bal-rb" onclick="abrirMovimiento('EVALUACION','FASE2')">
+      <div style="color:#B49CFF">${sv(I.tag,17)}</div>
+      <b>${isEn?'Phase 2':'Fase 2'}</b><span>${isEn?'Cost':'Gasto'}</span></button>
+    <button class="bal-rb" onclick="abrirMovimiento('MENSUALIDAD','PRO')">
+      <div style="color:var(--green)">${sv(I.check,17)}</div>
+      <b>PRO</b><span>${isEn?'Activation / fee':'Activación / cuota'}</span></button>
+    <button class="bal-rb" onclick="abrirMovimiento('BALANCE','CONSISTENCIA')">
+      <div style="color:#FFB020">${sv(I.chart,17)}</div>
+      <b>${isEn?'Consistency':'Consistencia'}</b><span>${isEn?'Update balance':'Actualizar balance'}</span></button>
+    <button class="bal-rb" onclick="abrirMovimiento('RETIRO','PRO')">
+      <div style="color:var(--green)">${sv(I.dl,17)}</div>
+      <b>${isEn?'Payout':'Retiro'}</b><span>${isEn?'From PRO account':'De cuenta PRO'}</span></button>
+    <button class="bal-rb" onclick="abrirMovimiento('RESET','')">
+      <div style="color:var(--fire-soft)">${sv(I.refresh||I.ext,17)}</div>
+      <b>Reset</b><span>${isEn?'Retry cost':'Coste de reintento'}</span></button>
   </div>`;
+
+  const acciones = b.movimientos.length ? `<div class="bal-acc">
+    <button class="btn-ghost" onclick="toggleSeleccion()">${sv(I.check,15)}
+      ${BAL_SELMODO?(isEn?'Cancel selection':'Cancelar selección'):(isEn?'Select to delete':'Seleccionar para borrar')}</button>
+    <button class="btn-ghost" style="color:var(--red);border-color:rgba(255,77,94,.3)"
+      onclick="reiniciarBalance()">${sv(I.trash,15)} ${isEn?'Reset all':'Reiniciar todo'}</button>
+  </div>` : '';
 
   let lista;
   if (!b.movimientos.length){
     lista = `<div class="bal-lista"><div class="bal-vacio">
       ${isEn?'Nothing here yet.':'Todavía no has apuntado nada.'}<br>
-      ${isEn?'Add your first cost or payout above.':'Empieza registrando un gasto o un retiro.'}</div></div>`;
+      ${isEn?'Use the buttons above to add your first entry.':'Usa los botones de arriba para tu primer apunte.'}</div></div>`;
   } else {
+    const barra = BAL_SELMODO ? `<div class="bal-selbar">
+      <input type="checkbox" class="bal-chk" onchange="marcarTodos(this.checked)"
+             ${BAL_SEL.size===b.movimientos.length?'checked':''}>
+      <b>${BAL_SEL.size} ${isEn?'selected':'seleccionados'}</b>
+      <button class="btn-ghost" style="padding:6px 12px;font-size:12.5px;color:var(--red);border-color:rgba(255,77,94,.3)"
+        onclick="borrarSeleccionados()" ${BAL_SEL.size?'':'disabled'}>
+        ${sv(I.trash,13)} ${isEn?'Delete':'Borrar'}</button>
+    </div>` : '';
+
     lista = `<div class="bal-lista">
-      <div class="bal-cab">${isEn?'Movements':'Movimientos'} · ${b.movimientos.length}</div>
+      ${barra || `<div class="bal-cab">${isEn?'Movements':'Movimientos'} · ${b.movimientos.length}</div>`}
       ${b.movimientos.map(m=>{
         const cfg = BAL_TIPOS[m.tipo] || BAL_TIPOS.OTRO;
         const entra = cfg.entra;
+        const nota = cfg.nota;
         const donde = [m.firma, m.cuenta].filter(Boolean).join(' ');
         const fecha = String(m.fecha||'').slice(0,10).split('-').reverse().join('/');
-        return `<div class="bal-mov">
-          <div class="bal-ic ${entra?'ent':'sal'}">${sv(entra?I.dl:I.ext,16)}</div>
+        const fase = m.fase ? `<span class="bal-fase f-${m.fase}">${m.fase==='CONSISTENCIA'?(isEn?'CONSIST.':'CONSIST.'):m.fase}</span>` : '';
+        return `<div class="bal-mov" ${BAL_SELMODO?`onclick="marcarUno(${m.id})" style="cursor:pointer"`:''}>
+          ${BAL_SELMODO
+            ? `<input type="checkbox" class="bal-chk" ${BAL_SEL.has(m.id)?'checked':''}
+                 onclick="event.stopPropagation();marcarUno(${m.id})">`
+            : `<div class="bal-ic ${nota?'':(entra?'ent':'sal')}"
+                 ${nota?'style="background:rgba(255,176,32,.15);color:#FFB020"':''}>${sv(nota?I.chart:(entra?I.dl:I.ext),16)}</div>`}
           <div class="bal-inf">
-            <b>${escapeHtml((isEn?cfg.en:cfg.txt) + (donde?' · '+donde:''))}</b>
+            <b>${escapeHtml((isEn?cfg.en:cfg.txt) + (donde?' · '+donde:''))}${fase}</b>
             <span>${fecha}${m.concepto?' · '+escapeHtml(m.concepto):''}</span>
           </div>
-          <div class="bal-num ${entra?'ent':'sal'}">${entra?'+':'−'}${dinero(m.monto)}</div>
-          <button class="bal-del" onclick="borrarMovimiento(${m.id})"
-            title="${isEn?'Delete':'Borrar'}">${sv(I.trash,14)}</button>
+          <div class="bal-num ${nota?'':(entra?'ent':'sal')}"
+               ${nota?'style="color:#FFB020"':''}>${nota?'':(entra?'+':'−')}${dinero(m.monto)}</div>
+          ${BAL_SELMODO?'':`<button class="bal-del" onclick="borrarMovimiento(${m.id})"
+            title="${isEn?'Delete':'Borrar'}">${sv(I.trash,14)}</button>`}
         </div>`;
       }).join('')}
     </div>`;
@@ -3165,11 +3242,41 @@ function balancePage(){
 
   return `<div class="page-head"><h1>${isEn?'My balance':'Mi balance'}</h1>
       <p>${isEn?'Only you can see this. Not even the admin.':'Solo tú ves esto. Nadie más, ni el administrador.'}</p></div>
-    ${totales}${acciones}${lista}
+    ${totales}${rapidos}${acciones}${lista}
     <div class="bal-priv">${sv(I.lock,15)}
       <span>${isEn
         ? 'Your figures are stored in your account only. The administrator cannot see them.'
         : 'Tus cifras se guardan solo en tu cuenta. El administrador no puede verlas.'}</span></div>`;
+}
+
+// ── seleccionar varios para borrar de golpe ──
+let BAL_SELMODO = false, BAL_SEL = new Set();
+
+function toggleSeleccion(){
+  BAL_SELMODO = !BAL_SELMODO;
+  BAL_SEL.clear();
+  renderKeep();
+}
+function marcarUno(id){
+  if (BAL_SEL.has(id)) BAL_SEL.delete(id); else BAL_SEL.add(id);
+  renderKeep();
+}
+function marcarTodos(si){
+  BAL_SEL.clear();
+  if (si) for (const m of (BALANCE?.movimientos||[])) BAL_SEL.add(m.id);
+  renderKeep();
+}
+async function borrarSeleccionados(){
+  const isEn = LANG==='en';
+  if (!BAL_SEL.size) return;
+  if (!confirm(isEn ? `Delete ${BAL_SEL.size} entries?` : `¿Borrar ${BAL_SEL.size} apuntes?`)) return;
+  const r = await rwFetch('/balance/borrar-varios',
+    { email:SESS.email, pass:SESS.pass, ids:[...BAL_SEL] });
+  if (r.ok){
+    BAL_SELMODO = false; BAL_SEL.clear();
+    BAL_ACCESO = null; await cargarBalance();
+    toast(isEn ? `${r.borrados} deleted` : `${r.borrados} borrados`);
+  } else toast(isEn?"Couldn't delete.":'No se pudo borrar.');
 }
 
 // Precios aproximados, para no escribirlos a mano cada vez.
@@ -3185,21 +3292,32 @@ const BAL_PRECIOS = {
   'Top One Futures':  { '50K':75,  '100K':135 }
 };
 
-function abrirMovimiento(tipo){
+function abrirMovimiento(tipo, fase){
   const isEn = LANG==='en';
   const firmas = Object.keys(BAL_PRECIOS);
   const hoy = new Date().toISOString().slice(0,10);
   const esRetiro = tipo==='RETIRO';
+  const esNota = tipo==='BALANCE';
+  fase = fase || '';
 
   const opciones = Object.keys(BAL_TIPOS).map(k=>
     `<option value="${k}" ${k===tipo?'selected':''}>${isEn?BAL_TIPOS[k].en:BAL_TIPOS[k].txt}</option>`).join('');
+  const opFases = ['', ...Object.keys(BAL_FASES)].map(k=>
+    `<option value="${k}" ${k===fase?'selected':''}>${k
+      ? (isEn?BAL_FASES[k].en:BAL_FASES[k].txt)
+      : (isEn?'(no phase)':'(sin fase)')}</option>`).join('');
 
-  document.getElementById('movTitle').textContent =
-    esRetiro ? (isEn?'Add payout':'Registrar retiro') : (isEn?'Add cost':'Registrar gasto');
+  document.getElementById('movTitle').textContent = esNota
+    ? (isEn?'Account balance':'Balance de la cuenta')
+    : (esRetiro ? (isEn?'Add payout':'Registrar retiro') : (isEn?'Add cost':'Registrar gasto'));
 
   document.getElementById('movBody').innerHTML = `
-    <div class="mfield"><label>${isEn?'Type':'Tipo'}</label>
-      <select id="movTipo" onchange="sugerirPrecio()">${opciones}</select></div>
+    <div style="display:flex;gap:10px">
+      <div class="mfield" style="flex:1"><label>${isEn?'Type':'Tipo'}</label>
+        <select id="movTipo" onchange="sugerirPrecio()">${opciones}</select></div>
+      <div class="mfield" style="flex:1"><label>${isEn?'Phase':'Fase'}</label>
+        <select id="movFase">${opFases}</select></div>
+    </div>
     <div class="mfield"><label>${isEn?'Prop firm':'Prop firm'}</label>
       <select id="movFirma" onchange="sugerirPrecio()">
         <option value="">${isEn?'(none)':'(ninguna)'}</option>
@@ -3211,10 +3329,10 @@ function abrirMovimiento(tipo){
         <option>25K</option><option>50K</option><option>100K</option><option>150K</option>
       </select></div>
     <div style="display:flex;gap:10px">
-      <div class="mfield" style="flex:1"><label>${isEn?'Price each (USD)':'Precio c/u (USD)'}</label>
+      <div class="mfield" style="flex:1"><label>${esNota?(isEn?'Current balance (USD)':'Balance actual (USD)'):(isEn?'Price each (USD)':'Precio c/u (USD)')}</label>
         <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"
                oninput="this.dataset.tocado='1';calcularTotal()"></div>
-      <div class="mfield" style="width:96px"><label>${isEn?'Qty':'Cantidad'}</label>
+      <div class="mfield" style="width:96px;${esNota?'display:none':''}"><label>${isEn?'Qty':'Cantidad'}</label>
         <input type="number" id="movCant" min="1" max="99" step="1" value="1"
                inputmode="numeric" oninput="calcularTotal()"></div>
     </div>
@@ -3283,6 +3401,7 @@ async function guardarMovimiento(){
   try{
     const datos = {
       email:SESS.email, pass:SESS.pass, tipo, monto,
+      fase: document.getElementById('movFase')?.value || '',
       firma: document.getElementById('movFirma').value,
       cuenta: document.getElementById('movCuenta').value,
       fecha: document.getElementById('movFecha').value,
@@ -3318,6 +3437,27 @@ async function guardarMovimiento(){
   if (btn){ btn.disabled = false; btn.textContent = isEn?'Save':'Guardar'; }
 }
 
+// Marcar movimientos para borrarlos de golpe
+function marcarMovimiento(id, marcado){
+  if (marcado) BAL_SEL.add(id); else BAL_SEL.delete(id);
+  renderKeep();
+}
+
+async function borrarMarcados(){
+  const isEn = LANG==='en';
+  const ids = [...BAL_SEL];
+  if (!ids.length) return;
+  if (!confirm(isEn
+    ? `Delete ${ids.length} entries?`
+    : `¿Borrar ${ids.length} apunte${ids.length>1?'s':''}?`)) return;
+  const r = await rwFetch('/balance/borrar-varios', { email:SESS.email, pass:SESS.pass, ids });
+  if (r.ok){
+    BAL_SEL.clear(); BAL_ACCESO = null;
+    await cargarBalance();
+    toast(isEn?`${r.borrados} deleted`:`${r.borrados} borrados`);
+  } else toast(isEn?"Couldn't delete.":'No se pudo borrar.');
+}
+
 async function borrarMovimiento(id){
   const isEn = LANG==='en';
   if (!confirm(isEn?'Delete this entry?':'¿Borrar este apunte?')) return;
@@ -3335,7 +3475,7 @@ async function reiniciarBalance(){
   const r = await rwFetch('/balance/reiniciar',
     { email:SESS.email, pass:SESS.pass, confirmar:'SI' });
   if (r.ok){
-    BAL_ACCESO=null; await cargarBalance();
+    BAL_SEL.clear(); BAL_ACCESO=null; await cargarBalance();
     toast(isEn?`${r.borrados} entries deleted`:`${r.borrados} apuntes borrados`);
   }
 }
