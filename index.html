@@ -579,6 +579,20 @@
   .cta-pnl{font-size:12.5px;font-family:var(--mono);margin:7px 0;padding:6px 9px;
     background:var(--bg-2);border-radius:7px;display:flex;justify-content:space-between}
   .cta-ret{font-size:11.5px;color:var(--green);font-family:var(--mono);margin-top:4px}
+  .cta-rets{margin:7px 0 2px;border-top:1px solid var(--line-soft);padding-top:6px}
+  .cta-rl{display:flex;align-items:center;gap:7px;font-size:11.5px;padding:3px 0}
+  .cta-rl span:first-child{color:var(--text-faint);min-width:22px}
+  .cta-rl b{color:var(--green);font-family:var(--mono);margin-left:auto}
+  .cta-rx{background:none;border:none;color:var(--text-faint);cursor:pointer;
+    padding:2px 3px;border-radius:4px;line-height:0}
+  .cta-rx:hover{color:var(--red);background:rgba(255,77,94,.1)}
+  .cta-lap{background:none;border:none;color:var(--text-faint);cursor:pointer;padding:3px;
+    border-radius:6px;flex-shrink:0;opacity:0;transition:.14s}
+  .cta:hover .cta-lap{opacity:1}
+  .cta-lap:hover{color:var(--cyan);background:rgba(52,179,255,.12)}
+  .cta-atras{background:none;border:none;color:var(--text-faint);cursor:pointer;
+    font-size:11px;padding:4px 7px;border-radius:6px;font-family:var(--body)}
+  .cta-atras:hover{color:var(--text-dim);background:var(--bg-2)}
   .cta-btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
   .cta-b{flex:1;min-width:0;background:var(--bg-2);border:1px solid var(--line-soft);
     color:var(--text-dim);border-radius:8px;padding:7px 6px;font-size:11.5px;
@@ -1266,6 +1280,20 @@
   <div class="modal" style="max-width:440px"><div class="modal-head"><h3 id="payTitle">Comprar</h3>
     <button class="modal-x" onclick="closeModal('payModal')">✕</button></div>
     <div class="modal-body" id="payBody"></div></div>
+</div>
+
+<!-- Ventana de confirmacion propia. La del navegador sale con el
+     nombre del dominio y rompe el aspecto del portal. -->
+<div class="modal-bg" id="confModal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-head"><h3 id="confTitulo">¿Seguro?</h3>
+      <button class="modal-x" onclick="cerrarConfirmar(false)">✕</button></div>
+    <div class="modal-body"><p id="confTexto"
+      style="margin:0;font-size:13.5px;line-height:1.65;color:var(--text-dim)"></p></div>
+    <div class="modal-foot">
+      <button class="btn-ghost" onclick="cerrarConfirmar(false)" id="confNo">Cancelar</button>
+      <button class="btn-primary" onclick="cerrarConfirmar(true)" id="confSi">Sí</button></div>
+  </div>
 </div>
 
 <!-- ventana para apuntar un movimiento en Mi Balance -->
@@ -3422,14 +3450,29 @@ function tarjetaCuenta(c, F, isEn){
       <div class="cta-nom"><b>${escapeHtml(nombre)}${c.numero?`<span class="cta-num">···${escapeHtml(c.numero)}</span>`:''}</b>
         <span>${fecha}${c.notas?' · '+escapeHtml(c.notas):''}</span></div>
       ${c.costo>0?`<div class="cta-eur">${dinero(c.costo)}</div>`:''}
-      ${BAL_SELMODO?'':`<button class="cta-x" onclick="borrarCuenta(${c.id})"
-        title="${isEn?'Delete':'Borrar'}">${sv(I.trash,13)}</button>`}
+      ${BAL_SELMODO?'':`<button class="cta-lap" onclick="editarCuenta(${c.id})"
+        title="${isEn?'Edit':'Editar'}">${sv(I.edit,13)}</button>
+      <button class="cta-x" onclick="borrarCuenta(${c.id})"
+        title="${isEn?'Archive':'Archivar'}">${sv(I.trash,13)}</button>`}
     </div>
     ${c.pnl?`<div class="cta-pnl"><span style="color:var(--text-faint)">PnL</span>
       <b style="color:${c.pnl>=0?'var(--green)':'var(--red)'}">${c.pnl>=0?'+':'−'}${dinero(c.pnl)}</b></div>`:''}
-    ${c.retirado>0?`<div class="cta-ret">${sv(I.dl,11)} ${isEn?'Withdrawn':'Retirado'}: ${dinero(c.retirado)}
-      ${c.retiros.length>1?` <span style="color:var(--text-faint)">(${c.retiros.length})</span>`:''}</div>`:''}
-    ${BAL_SELMODO?'':`<div class="cta-btns" onclick="event.stopPropagation()">${botones}</div>`}
+    ${c.retiros.length?`<div class="cta-rets">
+      ${c.retiros.map((p,i)=>`<div class="cta-rl">
+        <span>#${c.retiros.length-i}</span>
+        <span style="color:var(--text-faint)">${String(p.fecha||'').slice(0,10).split('-').reverse().join('/')}</span>
+        <b>+${dinero(p.monto)}</b>
+        <button class="cta-rx" onclick="quitarRetiro(${p.id})"
+          title="${isEn?'Delete':'Borrar'}">${sv(I.trash,11)}</button>
+      </div>`).join('')}
+      <div class="cta-rl" style="border-top:1px solid var(--line-soft);margin-top:4px;padding-top:5px">
+        <span style="color:var(--text-faint)">${isEn?'Total':'Total'}</span>
+        <b>${dinero(c.retirado)}</b></div>
+    </div>`:''}
+    ${BAL_SELMODO?'':`<div class="cta-btns" onclick="event.stopPropagation()">${botones}</div>
+    ${c.fase!=='FASE1'?`<div style="text-align:center;margin-top:5px">
+      <button class="cta-atras" onclick="event.stopPropagation();volverAtras(${c.id},'${c.fase}')">
+        ← ${isEn?'Back':'Volver'}</button></div>`:''}`}
   </div>`;
 }
 
@@ -3437,6 +3480,26 @@ function tarjetaCuenta(c, F, isEn){
 let BAL_SELMODO = false, BAL_SEL = new Set();
 
 let ARCH_ABIERTO = false;
+let _confirmarOK = null;
+
+// Ventana de confirmacion propia. La del navegador sale con el
+// nombre del dominio y rompe el aspecto del portal.
+function confirmar(texto, titulo, textoSi, peligro){
+  return new Promise(resolve=>{
+    document.getElementById('confTitulo').textContent = titulo || (LANG==='en'?'Are you sure?':'¿Seguro?');
+    document.getElementById('confTexto').innerHTML = texto;
+    const si = document.getElementById('confSi');
+    si.textContent = textoSi || (LANG==='en'?'Yes':'Sí');
+    si.style.background = peligro ? 'var(--red)' : '';
+    document.getElementById('confNo').textContent = LANG==='en'?'Cancel':'Cancelar';
+    document.getElementById('confModal').classList.add('show');
+    _confirmarOK = resolve;
+  });
+}
+function cerrarConfirmar(si){
+  document.getElementById('confModal').classList.remove('show');
+  if (_confirmarOK){ const f=_confirmarOK; _confirmarOK=null; f(!!si); }
+}
 
 function toggleSeleccion(){ BAL_SELMODO = !BAL_SELMODO; BAL_SEL.clear(); renderKeep(); }
 
@@ -3445,6 +3508,78 @@ function marcarTodas(si){
   BAL_SEL.clear();
   if (si) for (const c of (BALANCE?.cuentas||[])) if (!c.eliminada) BAL_SEL.add(Number(c.id));
   renderKeep();
+}
+
+// Volver a la fase anterior, por si la marcaste por error
+async function volverAtras(id, faseActual){
+  const anterior = { FASE2:'FASE1', PRO:'FASE2', CONSISTENCIA:'PRO' }[faseActual];
+  if (!anterior) return;
+  const r = await rwFetch('/cuentas/fase',
+    { email:SESS.email, pass:SESS.pass, id, fase:anterior });
+  if (r.ok) await recargarCuentas();
+}
+
+// Editar una cuenta: numero, firma, tamaño, coste y nota
+function editarCuenta(id){
+  const isEn = LANG==='en';
+  const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
+  if (!c) return;
+  const firmas = Object.keys(BAL_PRECIOS);
+
+  document.getElementById('movTitle').textContent = isEn?'Edit account':'Editar cuenta';
+  document.getElementById('movBody').innerHTML = `
+    <div class="mfield"><label>${isEn?'Last 4 digits':'Últimos 4 números'}</label>
+      <input type="text" id="edNumero" maxlength="4" inputmode="numeric"
+             value="${escapeHtml(c.numero||'')}" placeholder="${isEn?'e.g. 4821':'ej: 4821'}"
+             oninput="this.value=this.value.replace(/\D/g,'')"></div>
+    <div class="mfield"><label>${isEn?'Prop firm':'Prop firm'}</label>
+      <select id="edFirma">
+        <option value="">${isEn?'(none)':'(ninguna)'}</option>
+        ${firmas.map(f=>`<option ${f===c.firma?'selected':''}>${f}</option>`).join('')}
+        ${c.firma && !firmas.includes(c.firma)?`<option selected>${escapeHtml(c.firma)}</option>`:''}
+      </select></div>
+    <div class="mfield"><label>${isEn?'Account size':'Tamaño'}</label>
+      <select id="edTamano">
+        <option value="">${isEn?'(none)':'(ninguno)'}</option>
+        ${['25K','50K','100K','150K'].map(t=>`<option ${t===c.tamano?'selected':''}>${t}</option>`).join('')}
+      </select></div>
+    <div class="mfield"><label>${isEn?'Cost (USD)':'Coste (USD)'}</label>
+      <input type="number" id="edCosto" step="0.01" min="0" value="${c.costo||''}"></div>
+    <div class="mfield"><label>${isEn?'Note':'Nota'}</label>
+      <input type="text" id="edNotas" maxlength="120" value="${escapeHtml(c.notas||'')}"></div>
+    <div id="movErr"></div>`;
+
+  document.getElementById('movGuardar').onclick = () => guardarEdicion(id);
+  document.getElementById('movModal').classList.add('show');
+  setTimeout(()=>document.getElementById('edNumero')?.focus(), 70);
+}
+
+async function guardarEdicion(id){
+  const isEn = LANG==='en';
+  const r = await rwFetch('/cuentas/editar', {
+    email:SESS.email, pass:SESS.pass, id,
+    numero: document.getElementById('edNumero').value,
+    firma:  document.getElementById('edFirma').value,
+    tamano: document.getElementById('edTamano').value,
+    costo:  document.getElementById('edCosto').value,
+    notas:  document.getElementById('edNotas').value
+  });
+  if (r.ok){ closeModal('movModal'); await recargarCuentas(); toast(isEn?'Saved':'Guardado'); }
+  else {
+    const e=document.getElementById('movErr');
+    if(e) e.innerHTML = `<div class="login-err show">${isEn?"Couldn't save.":'No se pudo guardar.'}</div>`;
+  }
+}
+
+// Quitar un retiro desde la propia tarjeta
+async function quitarRetiro(id){
+  const isEn = LANG==='en';
+  if (!await confirmar(isEn
+    ? 'Delete this payout?<br><br>The amount goes back into the account PnL.'
+    : '¿Borrar este retiro?<br><br>El dinero vuelve al PnL de la cuenta.',
+    isEn?'Delete payout':'Borrar retiro', isEn?'Delete':'Borrar', true)) return;
+  const r = await rwFetch('/cuentas/retiro-borrar', { email:SESS.email, pass:SESS.pass, id });
+  if (r.ok){ await recargarCuentas(); toast(isEn?'Deleted':'Borrado'); }
 }
 
 // Sacar una cuenta del archivo
@@ -3472,9 +3607,10 @@ async function moverVarias(fase){
 async function borrarSeleccionados(){
   const isEn = LANG==='en';
   if (!BAL_SEL.size) return;
-  if (!confirm(isEn
-    ? `Archive ${BAL_SEL.size} accounts? What you spent on them still counts as invested.`
-    : `¿Archivar ${BAL_SEL.size} cuentas? Lo que gastaste en ellas sigue contando como invertido.`)) return;
+  if (!await confirmar(isEn
+    ? `Archive <b>${BAL_SEL.size}</b> accounts?<br><br>What you spent on them still counts as invested.`
+    : `¿Archivar <b>${BAL_SEL.size}</b> cuentas?<br><br>Lo que gastaste en ellas sigue contando como invertido.`,
+    isEn?'Archive accounts':'Archivar cuentas', isEn?'Archive':'Archivar', true)) return;
   const r = await rwFetch('/cuentas/borrar',
     { email:SESS.email, pass:SESS.pass, ids:[...BAL_SEL] });
   if (r.ok){
@@ -3498,19 +3634,22 @@ async function moverCuenta(id, fase){
 
 async function borrarCuenta(id){
   const isEn = LANG==='en';
-  if (!confirm(isEn
-    ? 'Archive this account? What you spent still counts as invested.'
-    : '¿Archivar esta cuenta? Lo que gastaste sigue contando como invertido.')) return;
+  if (!await confirmar(isEn
+    ? 'Archive this account?<br><br>What you spent still counts as invested.'
+    : '¿Archivar esta cuenta?<br><br>Lo que gastaste sigue contando como invertido.',
+    isEn?'Archive account':'Archivar cuenta', isEn?'Archive':'Archivar', true)) return;
   const r = await rwFetch('/cuentas/borrar', { email:SESS.email, pass:SESS.pass, id });
   if (r.ok){ await recargarCuentas(); toast(isEn?'Deleted':'Borrada'); }
 }
 
 async function reiniciarBalance(){
   const isEn = LANG==='en';
-  if (!confirm(isEn
-    ? 'This deletes ALL your accounts and payouts. It cannot be undone. Continue?'
-    : 'Esto borra TODAS tus cuentas y retiros. No se puede deshacer. ¿Seguir?')) return;
-  if (!confirm(isEn ? 'Are you sure?' : '¿Seguro? Se pierde todo.')) return;
+  if (!await confirmar(isEn
+    ? 'This deletes <b>ALL</b> your accounts and payouts.<br><br>It cannot be undone.'
+    : 'Esto borra <b>TODAS</b> tus cuentas y retiros.<br><br>No se puede deshacer.',
+    isEn?'Reset everything':'Reiniciar todo', isEn?'Delete all':'Borrar todo', true)) return;
+  if (!await confirmar(isEn ? 'Really sure? Everything is lost.' : '¿De verdad? Se pierde todo.',
+    isEn?'Last check':'Última comprobación', isEn?'Yes, delete':'Sí, borrar', true)) return;
   const r = await rwFetch('/cuentas/reiniciar',
     { email:SESS.email, pass:SESS.pass, confirmar:'SI' });
   if (r.ok){ await recargarCuentas(); toast(isEn?`${r.borradas} deleted`:`${r.borradas} borradas`); }
