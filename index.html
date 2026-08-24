@@ -1243,7 +1243,7 @@
     <button class="modal-x" onclick="closeModal('movModal')">✕</button></div>
     <div class="modal-body" id="movBody"></div>
     <div class="modal-foot"><button class="btn-ghost" onclick="closeModal('movModal')">Cancelar</button>
-      <button class="btn-primary" id="movGuardar" onclick="guardarMovimiento()">Guardar</button></div>
+      <button class="btn-primary" id="movGuardar">Guardar</button></div>
   </div>
 </div>
 
@@ -3385,7 +3385,7 @@ function abrirCompra(){
              placeholder="${isEn?'e.g. with code BG35':'ej: con código BG35'}"></div>
     <div id="movErr"></div>`;
 
-  document.getElementById('movGuardar').setAttribute('onclick','guardarCompra()');
+  document.getElementById('movGuardar').onclick = guardarCompra;
   document.getElementById('movModal').classList.add('show');
   setTimeout(()=>sugerirPrecio(), 70);
 }
@@ -3462,7 +3462,7 @@ function pedirPnl(id){
     </div>
     <div id="movErr"></div>`;
 
-  document.getElementById('movGuardar').setAttribute('onclick',`guardarPnl(${id})`);
+  document.getElementById('movGuardar').onclick = () => guardarPnl(id);
   document.getElementById('movModal').classList.add('show');
   setTimeout(()=>document.getElementById('pnlVal')?.focus(), 70);
 }
@@ -3509,7 +3509,7 @@ function abrirRetiro(id){
       </div>`).join('')}</div>`:''}
     <div id="movErr"></div>`;
 
-  document.getElementById('movGuardar').setAttribute('onclick',`guardarRetiro(${id})`);
+  document.getElementById('movGuardar').onclick = () => guardarRetiro(id);
   document.getElementById('movModal').classList.add('show');
   setTimeout(()=>document.getElementById('retMonto')?.focus(), 70);
 }
