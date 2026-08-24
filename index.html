@@ -3210,9 +3210,15 @@ function abrirMovimiento(tipo){
         <option value="">${isEn?'(none)':'(ninguno)'}</option>
         <option>25K</option><option>50K</option><option>100K</option><option>150K</option>
       </select></div>
-    <div class="mfield"><label>${isEn?'Amount (USD)':'Monto (USD)'}</label>
-      <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"
-             oninput="this.dataset.tocado='1'"></div>
+    <div style="display:flex;gap:10px">
+      <div class="mfield" style="flex:1"><label>${isEn?'Price each (USD)':'Precio c/u (USD)'}</label>
+        <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"
+               oninput="this.dataset.tocado='1';calcularTotal()"></div>
+      <div class="mfield" style="width:96px"><label>${isEn?'Qty':'Cantidad'}</label>
+        <input type="number" id="movCant" min="1" max="99" step="1" value="1"
+               inputmode="numeric" oninput="calcularTotal()"></div>
+    </div>
+    <div id="movTotal" style="margin:-6px 0 14px;font-size:13px;color:var(--text-faint)"></div>
     <div class="mfield"><label>${isEn?'Date':'Fecha'}</label>
       <input type="date" id="movFecha" value="${hoy}"></div>
     <div class="mfield"><label>${isEn?'Note (optional)':'Nota (opcional)'}</label>
@@ -3228,6 +3234,20 @@ function abrirMovimiento(tipo){
   }, 80);
 }
 
+// Enseña el total cuando compra varias de golpe. Asi ve lo que va a
+// apuntar antes de guardar, en vez de hacer la cuenta de cabeza.
+function calcularTotal(){
+  const isEn = LANG==='en';
+  const precio = parseFloat(document.getElementById('movMonto')?.value) || 0;
+  const cant = parseInt(document.getElementById('movCant')?.value, 10) || 1;
+  const caja = document.getElementById('movTotal');
+  if (!caja) return;
+  if (cant > 1 && precio > 0){
+    const total = Math.round(precio * cant * 100) / 100;
+    caja.innerHTML = `${cant} × ${dinero(precio)} = <b style="color:var(--fire-soft)">${dinero(total)}</b>`;
+  } else caja.innerHTML = '';
+}
+
 // Rellena el monto con el precio aproximado de esa cuenta.
 // Si el cliente ya escribio algo, no se le toca.
 function sugerirPrecio(){
@@ -3238,7 +3258,7 @@ function sugerirPrecio(){
   if (!monto || tipo==='RETIRO') return;
   if (monto.dataset.tocado==='1') return;
   const p = (BAL_PRECIOS[firma]||{})[cuenta];
-  if (p) monto.value = p;
+  if (p) { monto.value = p; calcularTotal(); }
 }
 
 async function guardarMovimiento(){
@@ -3253,22 +3273,39 @@ async function guardarMovimiento(){
   }
   if (err) err.innerHTML = '';
 
+  let cant = parseInt(document.getElementById('movCant')?.value, 10) || 1;
+  if (cant < 1) cant = 1;
+  if (cant > 99) cant = 99;
+
   const btn = document.getElementById('movGuardar');
   if (btn){ btn.disabled = true; btn.textContent = isEn?'Saving...':'Guardando...'; }
 
   try{
-    const r = await rwFetch('/balance/anadir', {
+    const datos = {
       email:SESS.email, pass:SESS.pass, tipo, monto,
       firma: document.getElementById('movFirma').value,
       cuenta: document.getElementById('movCuenta').value,
       fecha: document.getElementById('movFecha').value,
       concepto: document.getElementById('movNota').value
-    });
+    };
+
+    // Se apunta una linea por unidad. Asi puede borrar una suelta
+    // despues, en vez de tener que rehacer todo el grupo.
+    let r = { ok:true };
+    for (let i = 0; i < cant && r.ok; i++){
+      const nota = cant > 1
+        ? ((datos.concepto ? datos.concepto + ' · ' : '') + (i+1) + '/' + cant)
+        : datos.concepto;
+      r = await rwFetch('/balance/anadir', { ...datos, concepto: nota });
+    }
+
     if (r.ok){
       closeModal('movModal');
       BALANCE = null; BAL_ACCESO = null;
       await cargarBalance();
-      toast(isEn?'Saved':'Guardado');
+      toast(cant > 1
+        ? (isEn ? `${cant} entries saved` : `${cant} apuntes guardados`)
+        : (isEn ? 'Saved' : 'Guardado'));
     } else {
       const motivos = { SOLO_AUTOPRO: isEn?'Only for AUTO PRO clients.':'Solo para clientes de AUTO PRO.',
                         TIPO_MALO: isEn?'Invalid type.':'Tipo no válido.',
