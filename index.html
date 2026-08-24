@@ -1805,6 +1805,59 @@ function goAuth(t){tab=t;authMsg='';render()}
 //  Asi la mudanza va por partes: si algo falla, se cambia una
 //  linea (RAILWAY_ON = false) y todo vuelve a Firebase.
 // ════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  CONSOLA EN SILENCIO
+//
+//  Nadie ve mensajes al abrir F12. Los errores se guardan en
+//  memoria para poder consultarlos si hace falta:
+//     verErrores()   <- escribelo en la consola
+//
+//  OJO: esto oculta los MENSAJES, no el codigo. El index.html
+//  sigue siendo visible en F12 > Sources, como en cualquier
+//  pagina web. Lo importante (contrasenas, licencias, datos)
+//  vive en el servidor, no aqui.
+// ═══════════════════════════════════════════════════════════
+(function(){
+  const guardados = [];
+  const real = { log:console.log, warn:console.warn, error:console.error,
+                 info:console.info, debug:console.debug };
+
+  const callar = (tipo) => function(){
+    try{
+      guardados.push({ tipo, hora:new Date().toISOString(),
+        texto:[...arguments].map(x=>{
+          try{ return typeof x==='object' ? JSON.stringify(x) : String(x); }
+          catch(e){ return String(x); }
+        }).join(' ') });
+      if (guardados.length > 200) guardados.shift();
+    }catch(e){}
+  };
+
+  console.log = callar('log');
+  console.warn = callar('warn');
+  console.error = callar('error');
+  console.info = callar('info');
+  console.debug = callar('debug');
+
+  // errores que no pasan por console.error
+  window.addEventListener('error', e=>{
+    try{ guardados.push({ tipo:'error', hora:new Date().toISOString(),
+      texto:(e.message||'')+' @ '+(e.filename||'')+':'+(e.lineno||'') }); }catch(x){}
+  });
+  window.addEventListener('unhandledrejection', e=>{
+    try{ guardados.push({ tipo:'error', hora:new Date().toISOString(),
+      texto:'promesa: '+String(e.reason) }); }catch(x){}
+  });
+
+  // Para ti: escribe verErrores() en la consola y los ves.
+  window.verErrores = function(){
+    if (!guardados.length){ real.log('Sin errores guardados.'); return; }
+    for (const g of guardados) real.log(g.hora.slice(11,19), '['+g.tipo+']', g.texto);
+    real.log('--- total:', guardados.length, '---');
+  };
+  window.limpiarErrores = function(){ guardados.length = 0; real.log('Limpiado.'); };
+})();
+
 const RAILWAY_URL = 'https://sniper-sniper-server-production.up.railway.app';
 const RAILWAY_ON  = true;   // ponlo en false para volver a Firebase
 
@@ -3376,6 +3429,21 @@ async function reiniciarBalance(){
     { email:SESS.email, pass:SESS.pass, confirmar:'SI' });
   if (r.ok){ await recargarCuentas(); toast(isEn?`${r.borradas} deleted`:`${r.borradas} borradas`); }
 }
+
+// Precios aproximados de cada cuenta, para no escribirlos a mano
+// cada vez. Es solo una sugerencia: el cliente puede cambiarlos.
+const BAL_PRECIOS = {
+  'TopStep':           { '50K':49,  '100K':99,  '150K':149 },
+  'Blue Guardian':     { '25K':97,  '50K':167,  '100K':297 },
+  'Funded Next':       { '25K':69,  '50K':109,  '100K':199 },
+  'My Funded Futures': { '50K':80,  '100K':145, '150K':220 },
+  'Aqua Funded':       { '50K':89,  '100K':159 },
+  'Goat Funded':       { '50K':85,  '100K':155 },
+  'Lucid':             { '50K':100, '100K':180 },
+  'Top One Futures':   { '50K':75,  '100K':135 },
+  'Funded Futures Family': { '50K':95,  '100K':175 },
+  'Fund Your Edge':    { '50K':90,  '100K':165 }
+};
 
 // ── comprar cuentas (Fase 1) ──
 function abrirCompra(){
