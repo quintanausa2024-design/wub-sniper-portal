@@ -3397,7 +3397,7 @@ function balancePage(){
 function tarjetaCuenta(c, F, isEn){
   const nombre = [c.firma, c.tamano].filter(Boolean).join(' ') || (isEn?'Account':'Cuenta');
   const fecha = String(c.fecha||'').slice(0,10).split('-').reverse().join('/');
-  const marcada = BAL_SEL.has(c.id);
+  const marcada = BAL_SEL.has(Number(c.id));
 
   // Solo el paso SIGUIENTE. Antes salian dos y era facil saltarse
   // una fase por error.
@@ -3443,7 +3443,7 @@ function toggleSeleccion(){ BAL_SELMODO = !BAL_SELMODO; BAL_SEL.clear(); renderK
 // Marcar o desmarcar todas las cuentas vivas de golpe
 function marcarTodas(si){
   BAL_SEL.clear();
-  if (si) for (const c of (BALANCE?.cuentas||[])) if (!c.eliminada) BAL_SEL.add(c.id);
+  if (si) for (const c of (BALANCE?.cuentas||[])) if (!c.eliminada) BAL_SEL.add(Number(c.id));
   renderKeep();
 }
 
@@ -3453,7 +3453,8 @@ async function recuperarCuenta(id){
   if (r.ok){ await recargarCuentas(); toast(LANG==='en'?'Restored':'Recuperada'); }
 }
 function marcarUno(id){
-  if (BAL_SEL.has(id)) BAL_SEL.delete(id); else BAL_SEL.add(id);
+  const k = Number(id);
+  if (BAL_SEL.has(k)) BAL_SEL.delete(k); else BAL_SEL.add(k);
   renderKeep();
 }
 
@@ -3647,7 +3648,7 @@ async function guardarCompra(){
 // ── al pasar a CONSISTENCIA: pedir el PnL ──
 function pedirPnl(id){
   const isEn = LANG==='en';
-  const c = (BALANCE?.cuentas||[]).find(x=>x.id===id);
+  const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
   const nombre = c ? [c.firma,c.tamano].filter(Boolean).join(' ') : '';
 
   document.getElementById('movTitle').textContent = isEn?'To consistency':'Pasar a consistencia';
@@ -3686,7 +3687,7 @@ async function guardarPnl(id){
 // ── apuntar un retiro de una cuenta ──
 function abrirRetiro(id){
   const isEn = LANG==='en';
-  const c = (BALANCE?.cuentas||[]).find(x=>x.id===id);
+  const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
   const nombre = c ? [c.firma,c.tamano].filter(Boolean).join(' ') : '';
   const hoy = new Date().toISOString().slice(0,10);
   const previos = (c?.retiros||[]);
