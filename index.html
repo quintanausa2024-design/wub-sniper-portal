@@ -1175,6 +1175,16 @@
     <div class="modal-body" id="payBody"></div></div>
 </div>
 
+<!-- ventana para apuntar un movimiento en Mi Balance -->
+<div class="modal-bg" id="movModal" onclick="if(event.target===this)closeModal('movModal')">
+  <div class="modal"><div class="modal-head"><h3 id="movTitle">Nuevo movimiento</h3>
+    <button class="modal-x" onclick="closeModal('movModal')">✕</button></div>
+    <div class="modal-body" id="movBody"></div>
+    <div class="modal-foot"><button class="btn-ghost" onclick="closeModal('movModal')">Cancelar</button>
+      <button class="btn-primary" id="movGuardar" onclick="guardarMovimiento()">Guardar</button></div>
+  </div>
+</div>
+
 <div class="modal-bg" id="prodModal" onclick="if(event.target===this)closeModal('prodModal')">
   <div class="modal"><div class="modal-head"><h3 id="prodTitle">Producto</h3>
     <button class="modal-x" onclick="closeModal('prodModal')">✕</button></div>
@@ -3184,70 +3194,91 @@ function abrirMovimiento(tipo){
   const opciones = Object.keys(BAL_TIPOS).map(k=>
     `<option value="${k}" ${k===tipo?'selected':''}>${isEn?BAL_TIPOS[k].en:BAL_TIPOS[k].txt}</option>`).join('');
 
-  openModal('okModal', `
-    <div class="modal-head"><h3>${esRetiro?(isEn?'Add payout':'Registrar retiro'):(isEn?'Add cost':'Registrar gasto')}</h3></div>
-    <div style="padding:20px">
-      <div id="movErr"></div>
-      <div class="field"><label>${isEn?'Type':'Tipo'}</label>
-        <select id="movTipo" onchange="sugerirPrecio()">${opciones}</select></div>
-      <div class="field"><label>${isEn?'Prop firm':'Prop firm'}</label>
-        <select id="movFirma" onchange="sugerirPrecio()">
-          <option value="">${isEn?'(none)':'(ninguna)'}</option>
-          ${firmas.map(f=>`<option value="${f}">${f}</option>`).join('')}
-        </select></div>
-      <div class="field"><label>${isEn?'Account size':'Tamaño de cuenta'}</label>
-        <select id="movCuenta" onchange="sugerirPrecio()">
-          <option value="">${isEn?'(none)':'(ninguno)'}</option>
-          <option>25K</option><option>50K</option><option>100K</option><option>150K</option>
-        </select></div>
-      <div class="field"><label>${isEn?'Amount (USD)':'Monto (USD)'}</label>
-        <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"></div>
-      <div class="field"><label>${isEn?'Date':'Fecha'}</label>
-        <input type="date" id="movFecha" value="${hoy}"></div>
-      <div class="field"><label>${isEn?'Note (optional)':'Nota (opcional)'}</label>
-        <input type="text" id="movNota" maxlength="120" placeholder="${isEn?'e.g. with code BG35':'ej: con código BG35'}"></div>
-      <button class="btn-primary" onclick="guardarMovimiento()">${isEn?'Save':'Guardar'}</button>
-    </div>`);
-  setTimeout(()=>{ sugerirPrecio(); const m=document.getElementById('movMonto'); if(m&&esRetiro) m.focus(); }, 60);
+  document.getElementById('movTitle').textContent =
+    esRetiro ? (isEn?'Add payout':'Registrar retiro') : (isEn?'Add cost':'Registrar gasto');
+
+  document.getElementById('movBody').innerHTML = `
+    <div class="mfield"><label>${isEn?'Type':'Tipo'}</label>
+      <select id="movTipo" onchange="sugerirPrecio()">${opciones}</select></div>
+    <div class="mfield"><label>${isEn?'Prop firm':'Prop firm'}</label>
+      <select id="movFirma" onchange="sugerirPrecio()">
+        <option value="">${isEn?'(none)':'(ninguna)'}</option>
+        ${firmas.map(f=>`<option value="${f}">${f}</option>`).join('')}
+      </select></div>
+    <div class="mfield"><label>${isEn?'Account size':'Tamaño de cuenta'}</label>
+      <select id="movCuenta" onchange="sugerirPrecio()">
+        <option value="">${isEn?'(none)':'(ninguno)'}</option>
+        <option>25K</option><option>50K</option><option>100K</option><option>150K</option>
+      </select></div>
+    <div class="mfield"><label>${isEn?'Amount (USD)':'Monto (USD)'}</label>
+      <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"
+             oninput="this.dataset.tocado='1'"></div>
+    <div class="mfield"><label>${isEn?'Date':'Fecha'}</label>
+      <input type="date" id="movFecha" value="${hoy}"></div>
+    <div class="mfield"><label>${isEn?'Note (optional)':'Nota (opcional)'}</label>
+      <input type="text" id="movNota" maxlength="120"
+             placeholder="${isEn?'e.g. with code BG35':'ej: con código BG35'}"></div>
+    <div id="movErr"></div>`;
+
+  document.getElementById('movModal').classList.add('show');
+  setTimeout(()=>{
+    sugerirPrecio();
+    const m = document.getElementById('movMonto');
+    if (m && esRetiro) m.focus();
+  }, 80);
 }
 
-// Rellena el monto con el precio aproximado de esa cuenta
+// Rellena el monto con el precio aproximado de esa cuenta.
+// Si el cliente ya escribio algo, no se le toca.
 function sugerirPrecio(){
   const tipo = document.getElementById('movTipo')?.value;
   const firma = document.getElementById('movFirma')?.value;
   const cuenta = document.getElementById('movCuenta')?.value;
   const monto = document.getElementById('movMonto');
   if (!monto || tipo==='RETIRO') return;
-  if (monto.dataset.tocado==='1') return;   // si ya lo escribio el, no se toca
-  const p = BAL_PRECIOS[firma]?.[cuenta];
+  if (monto.dataset.tocado==='1') return;
+  const p = (BAL_PRECIOS[firma]||{})[cuenta];
   if (p) monto.value = p;
 }
 
 async function guardarMovimiento(){
   const isEn = LANG==='en';
   const err = document.getElementById('movErr');
-  const tipo = document.getElementById('movTipo').value;
-  const monto = parseFloat(document.getElementById('movMonto').value);
+  const tipo = document.getElementById('movTipo')?.value;
+  const monto = parseFloat(document.getElementById('movMonto')?.value);
+
   if (!(monto > 0)){
-    err.innerHTML = `<div class="login-err show">${isEn?'Enter an amount greater than 0.':'Escribe un monto mayor que 0.'}</div>`;
+    if (err) err.innerHTML = `<div class="login-err show">${isEn?'Enter an amount greater than 0.':'Escribe un monto mayor que 0.'}</div>`;
     return;
   }
-  err.innerHTML = '';
-  const r = await rwFetch('/balance/anadir', {
-    email:SESS.email, pass:SESS.pass, tipo, monto,
-    firma: document.getElementById('movFirma').value,
-    cuenta: document.getElementById('movCuenta').value,
-    fecha: document.getElementById('movFecha').value,
-    concepto: document.getElementById('movNota').value
-  });
-  if (r.ok){
-    closeModal('okModal');
-    BALANCE = null; BAL_ACCESO = null;
-    await cargarBalance();
-    toast(isEn?'Saved':'Guardado');
-  } else {
-    err.innerHTML = `<div class="login-err show">${isEn?"Couldn't save.":'No se pudo guardar.'}</div>`;
+  if (err) err.innerHTML = '';
+
+  const btn = document.getElementById('movGuardar');
+  if (btn){ btn.disabled = true; btn.textContent = isEn?'Saving...':'Guardando...'; }
+
+  try{
+    const r = await rwFetch('/balance/anadir', {
+      email:SESS.email, pass:SESS.pass, tipo, monto,
+      firma: document.getElementById('movFirma').value,
+      cuenta: document.getElementById('movCuenta').value,
+      fecha: document.getElementById('movFecha').value,
+      concepto: document.getElementById('movNota').value
+    });
+    if (r.ok){
+      closeModal('movModal');
+      BALANCE = null; BAL_ACCESO = null;
+      await cargarBalance();
+      toast(isEn?'Saved':'Guardado');
+    } else {
+      const motivos = { SOLO_AUTOPRO: isEn?'Only for AUTO PRO clients.':'Solo para clientes de AUTO PRO.',
+                        TIPO_MALO: isEn?'Invalid type.':'Tipo no válido.',
+                        MONTO_MALO: isEn?'Invalid amount.':'Monto no válido.' };
+      if (err) err.innerHTML = `<div class="login-err show">${motivos[r.error] || (isEn?"Couldn't save.":'No se pudo guardar.')}</div>`;
+    }
+  }catch(e){
+    if (err) err.innerHTML = `<div class="login-err show">${isEn?'Connection error.':'Error de conexión.'}</div>`;
   }
+  if (btn){ btn.disabled = false; btn.textContent = isEn?'Save':'Guardar'; }
 }
 
 async function borrarMovimiento(id){
