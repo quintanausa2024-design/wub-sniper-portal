@@ -3398,6 +3398,15 @@ function balancePage(){
         ${isEn?'spent':'gastado'}: ${dinero(T.gasto_archivado||0)}</span>
       <span style="color:var(--text-faint);transform:rotate(${ARCH_ABIERTO?180:0}deg);transition:.18s">${sv(I.chev,14)}</span>
     </div>
+    ${ARCH_ABIERTO?`<div style="padding:10px 16px;background:var(--bg-2);
+      border-bottom:1px solid var(--line-soft);font-size:11.5px;color:var(--text-faint);line-height:1.6">
+      ${isEn
+        ? 'Archived accounts still count in your totals: that money was real. Use <b>Delete</b> only if you added them by mistake.'
+        : 'Las archivadas siguen contando en tus totales: ese dinero fue real. Usa <b>Borrar</b> solo si las metiste por error.'}
+      <button class="cta-b" style="flex:0 0 auto;margin-top:8px;padding:6px 11px;font-size:11px;
+        color:var(--red);border-color:rgba(255,77,94,.3)"
+        onclick="vaciarArchivo()">${sv(I.trash,12)} ${isEn?'Empty archive':'Vaciar archivo'}</button>
+    </div>`:''}
     ${ARCH_ABIERTO ? arch.map(c=>{
       const nom = [c.firma,c.tamano].filter(Boolean).join(' ');
       const fch = String(c.eliminada_en||c.fecha||'').slice(0,10).split('-').reverse().join('/');
@@ -3408,6 +3417,8 @@ function balancePage(){
         <span class="cta-eur">${dinero(c.costo)}</span>
         <button class="cta-b" style="flex:0 0 auto;padding:5px 10px;font-size:11px"
           onclick="recuperarCuenta(${c.id})">${isEn?'Restore':'Recuperar'}</button>
+        <button class="cta-rx" onclick="borrarDelTodo(${c.id})"
+          title="${isEn?'Delete for good':'Borrar del todo'}">${sv(I.trash,13)}</button>
       </div>`;
     }).join('') : ''}
   </div>` : '';
@@ -3580,6 +3591,41 @@ async function quitarRetiro(id){
     isEn?'Delete payout':'Borrar retiro', isEn?'Delete':'Borrar', true)) return;
   const r = await rwFetch('/cuentas/retiro-borrar', { email:SESS.email, pass:SESS.pass, id });
   if (r.ok){ await recargarCuentas(); toast(isEn?'Deleted':'Borrado'); }
+}
+
+// Borrar del todo una cuenta archivada. Distinto de archivar:
+// aqui SI sale de los totales, porque fue un error.
+async function borrarDelTodo(id){
+  const isEn = LANG==='en';
+  const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
+  const tuvoRetiros = c && c.retirado > 0;
+
+  if (!await confirmar(isEn
+    ? `Delete this account <b>for good</b>?<br><br>Unlike archiving, this takes it out of your totals${
+        tuvoRetiros?` — including the <b>${dinero(c.retirado)}</b> withdrawn from it`:''}.<br><br>Use it only if you added it by mistake.`
+    : `¿Borrar esta cuenta <b>del todo</b>?<br><br>A diferencia de archivar, sale de tus totales${
+        tuvoRetiros?` — incluidos los <b>${dinero(c.retirado)}</b> que retiraste de ella`:''}.<br><br>Úsalo solo si la metiste por error.`,
+    isEn?'Delete for good':'Borrar del todo', isEn?'Delete':'Borrar', true)) return;
+
+  const r = await rwFetch('/cuentas/eliminar-definitivo',
+    { email:SESS.email, pass:SESS.pass, id, confirmar:'SI' });
+  if (r.ok && r.borradas){ await recargarCuentas(); toast(isEn?'Deleted':'Borrada'); }
+  else toast(isEn?"Couldn't delete.":'No se pudo borrar.');
+}
+
+// Vaciar el archivo entero
+async function vaciarArchivo(){
+  const isEn = LANG==='en';
+  const cuantas = (BALANCE?.cuentas||[]).filter(c=>c.eliminada).length;
+  if (!cuantas) return;
+  if (!await confirmar(isEn
+    ? `Delete the <b>${cuantas}</b> archived accounts for good?<br><br>They will come out of your totals. This cannot be undone.`
+    : `¿Borrar del todo las <b>${cuantas}</b> cuentas archivadas?<br><br>Saldrán de tus totales. No se puede deshacer.`,
+    isEn?'Empty archive':'Vaciar archivo', isEn?'Delete all':'Borrar todas', true)) return;
+
+  const r = await rwFetch('/cuentas/vaciar-archivo',
+    { email:SESS.email, pass:SESS.pass, confirmar:'SI' });
+  if (r.ok){ await recargarCuentas(); toast(isEn?`${r.borradas} deleted`:`${r.borradas} borradas`); }
 }
 
 // Sacar una cuenta del archivo
