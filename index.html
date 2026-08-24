@@ -532,7 +532,7 @@
   .f-FASE2{background:rgba(255,176,32,.16);color:#FFC65C}
   .f-PRO{background:rgba(29,158,117,.18);color:#5DCAA5}
   .f-CONSISTENCIA{background:rgba(127,119,221,.18);color:#AFA9EC}
-  .bal-chk{width:17px;height:17px;flex-shrink:0;accent-color:var(--fire);cursor:pointer}
+
   .bal-selbar{display:flex;align-items:center;gap:10px;padding:11px 16px;
     background:rgba(255,107,44,.09);border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
   .bal-selbar b{font-size:13px;color:var(--text)}
@@ -554,9 +554,10 @@
   .cta{background:var(--surface);border:1px solid var(--line);border-radius:12px;
     padding:13px 14px;transition:.14s;position:relative}
   .cta:hover{border-color:var(--line-soft);transform:translateY(-1px)}
-  .cta.sel{border-color:var(--fire);background:rgba(255,107,44,.13);
-    box-shadow:0 0 0 1px var(--fire) inset}
+  .cta.sel{border-color:var(--fire) !important;background:rgba(255,107,44,.16);
+    box-shadow:0 0 0 2px rgba(255,107,44,.45)}
   .cta.sel .cta-nom b{color:var(--fire-soft)}
+  .cta.sel .cta-eur{color:var(--fire-soft)}
   .cta-num{font-size:11px;font-family:var(--mono);color:var(--cyan);
     background:rgba(52,179,255,.12);padding:1px 6px;border-radius:5px;margin-left:5px}
   .cta-arch{opacity:.55}
@@ -589,7 +590,24 @@
     border-radius:6px;flex-shrink:0;opacity:0;transition:.14s}
   .cta:hover .cta-x{opacity:1}
   .cta-x:hover{color:var(--red);background:rgba(255,77,94,.1)}
-  .cta-chk{width:16px;height:16px;accent-color:var(--fire);cursor:pointer;flex-shrink:0}
+  /* Casilla propia: la del navegador sale blanca sobre fondo oscuro
+     y no se distingue si esta marcada o no. */
+  .cta-chk{appearance:none;-webkit-appearance:none;width:19px;height:19px;flex-shrink:0;
+    border:2px solid var(--line);border-radius:5px;background:var(--bg-2);
+    cursor:pointer;position:relative;transition:.13s;margin:0}
+  .cta-chk:hover{border-color:var(--fire)}
+  .cta-chk:checked{background:var(--fire);border-color:var(--fire)}
+  .cta-chk:checked::after{content:'';position:absolute;left:5px;top:1px;
+    width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;
+    transform:rotate(45deg)}
+  .bal-chk{appearance:none;-webkit-appearance:none;width:19px;height:19px;flex-shrink:0;
+    border:2px solid var(--line);border-radius:5px;background:var(--bg-2);
+    cursor:pointer;position:relative;transition:.13s;margin:0}
+  .bal-chk:hover{border-color:var(--fire)}
+  .bal-chk:checked{background:var(--fire);border-color:var(--fire)}
+  .bal-chk:checked::after{content:'';position:absolute;left:5px;top:1px;
+    width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;
+    transform:rotate(45deg)}
 
   /* fases y seleccion multiple en Mi Balance */
   .bal-fase{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.04em;
@@ -598,7 +616,6 @@
   .f-FASE2{background:rgba(160,120,255,.16);color:#B49CFF}
   .f-PRO{background:rgba(29,158,117,.18);color:var(--green)}
   .f-CONSISTENCIA{background:rgba(255,176,32,.16);color:#FFB020}
-  .bal-chk{width:17px;height:17px;flex-shrink:0;accent-color:var(--fire);cursor:pointer}
   .bal-selbar{display:flex;align-items:center;gap:10px;padding:11px 16px;
     background:rgba(255,107,44,.09);border-bottom:1px solid var(--line-soft);flex-wrap:wrap}
   .bal-selbar b{font-size:13px;color:var(--text)}
