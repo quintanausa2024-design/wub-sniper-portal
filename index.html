@@ -500,6 +500,40 @@
   .disc-card{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line);
     border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:.15s}
   .disc-card:hover{border-color:var(--fire);transform:translateY(-2px)}
+  /* ── MI BALANCE ─────────────────────────────────────────── */
+  .bal-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:18px}
+  .bal-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
+  .bal-card .l{font-size:12px;color:var(--text-faint);margin-bottom:6px}
+  .bal-card .v{font-size:24px;font-weight:600;font-family:var(--display);color:var(--text)}
+  .bal-card.verde{border-left:3px solid var(--green)}
+  .bal-card.rojo{border-left:3px solid var(--red)}
+  .bal-acc{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .bal-lista{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .bal-cab{padding:12px 16px;border-bottom:1px solid var(--line-soft);font-size:12px;color:var(--text-faint)}
+  .bal-mov{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line-soft)}
+  .bal-mov:last-child{border-bottom:none}
+  .bal-ic{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .bal-ic.ent{background:rgba(29,158,117,.15);color:var(--green)}
+  .bal-ic.sal{background:rgba(255,107,44,.15);color:var(--fire-soft)}
+  .bal-inf{flex:1;min-width:0}
+  .bal-inf b{display:block;font-size:13.5px;color:var(--text);font-weight:500}
+  .bal-inf span{font-size:11.5px;color:var(--text-faint)}
+  .bal-num{font-size:14.5px;font-weight:600;white-space:nowrap;font-family:var(--mono)}
+  .bal-num.ent{color:var(--green)}
+  .bal-num.sal{color:var(--fire-soft)}
+  .bal-del{background:none;border:none;color:var(--text-faint);cursor:pointer;padding:5px;
+    border-radius:7px;flex-shrink:0;opacity:0;transition:.14s}
+  .bal-mov:hover .bal-del{opacity:1}
+  .bal-del:hover{color:var(--red);background:rgba(255,77,94,.1)}
+  .bal-vacio{text-align:center;padding:36px 20px;color:var(--text-dim);font-size:13.5px;line-height:1.7}
+  .bal-priv{margin-top:14px;padding:12px 15px;background:var(--bg-2);border-radius:10px;
+    display:flex;gap:10px;align-items:flex-start}
+  .bal-priv span{font-size:12px;color:var(--text-faint);line-height:1.55}
+  .bal-cerrado{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:44px 26px;text-align:center}
+  .bal-cerrado h3{margin:14px 0 8px;font-family:var(--display);font-size:18px;color:var(--text)}
+  .bal-cerrado p{margin:0 auto;max-width:400px;font-size:13.5px;color:var(--text-dim);line-height:1.65}
+
   /* valoracion de las prop firms */
   .val-row{display:flex;align-items:center;gap:9px;margin:11px 0 3px;flex-wrap:wrap}
   .val-stars{display:flex;gap:2px}
@@ -1282,6 +1316,7 @@ const I={user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="
   grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   check:'<path d="M20 6L9 17l-5-5"/>',
   tag:'<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>',
+  chart:'<line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>',
   copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
   link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
   star:'<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
@@ -1464,6 +1499,8 @@ function setView(v){
   // Al entrar o salir cambian las preguntas que puede responder el
   // centro de ayuda, asi que se reinicia la conversacion.
   try{ AY_SALUDADO_EN = null; if (AY_ABIERTO) ayudaToggle(); }catch(e){}
+  // y se borra el balance del anterior, para que nadie vea lo de otro
+  try{ BALANCE = null; BAL_ACCESO = null; VALORACIONES = null; }catch(e){}
   view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
 
 // ── recordar sesión al refrescar la página ──
@@ -2640,10 +2677,11 @@ function updateScrollBtn(){
 window.addEventListener('scroll',updateScrollBtn,{passive:true});
 window.addEventListener('resize',updateScrollBtn);
 
-function clientView(){const nav=navBtn('products',I.box,t('nav_productos'))+navBtn('guides',I.play,t('nav_guias'))+navBtn('discounts',I.tag,LANG==='en'?'Discounts':'Descuentos')+navBtn('news',I.news,t('nav_noticias'))+navBtn('help',I.help,t('nav_ayuda'))+navBtn('contact',I.phone,t('nav_contacto'))+navBtn('profile',I.user,t('nav_perfil'));
+function clientView(){const nav=navBtn('products',I.box,t('nav_productos'))+navBtn('guides',I.play,t('nav_guias'))+navBtn('balance',I.chart,LANG==='en'?'My balance':'Mi balance')+navBtn('discounts',I.tag,LANG==='en'?'Discounts':'Descuentos')+navBtn('news',I.news,t('nav_noticias'))+navBtn('help',I.help,t('nav_ayuda'))+navBtn('contact',I.phone,t('nav_contacto'))+navBtn('profile',I.user,t('nav_perfil'));
   let content;
   if(tab==='products')content=productsPage();
   else if(tab==='guides')content=guidesPage();
+  else if(tab==='balance')content=balancePage();
   else if(tab==='discounts')content=discountsPage();
   else if(tab==='news')content=newsPage();
   else if(tab==='help')content=faqPage();
@@ -3011,6 +3049,230 @@ function discCard(d,isEn){
 }
 
 // ═══════════════════════════════════════════════════════════
+//  MI BALANCE
+//  La contabilidad privada de cada cliente. Los datos viven en
+//  el servidor filtrados por su correo: nadie mas los ve, ni el
+//  administrador. Solo para clientes con AUTO PRO.
+// ═══════════════════════════════════════════════════════════
+let BALANCE=null, BAL_ACCESO=null, BAL_CARGANDO=false;
+
+const BAL_TIPOS = {
+  EVALUACION : { txt:'Evaluación',  en:'Evaluation',   entra:false },
+  MENSUALIDAD: { txt:'Mensualidad', en:'Monthly fee',  entra:false },
+  RESET      : { txt:'Reset',       en:'Reset',        entra:false },
+  OTRO       : { txt:'Otro gasto',  en:'Other cost',   entra:false },
+  RETIRO     : { txt:'Retiro',      en:'Payout',       entra:true  }
+};
+
+function dinero(n){
+  const v = Math.abs(Number(n)||0);
+  return '$' + v.toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
+}
+
+async function cargarBalance(){
+  if (BAL_CARGANDO) return; BAL_CARGANDO = true;
+  try{
+    const acc = await rwFetch('/balance/acceso',
+      { email:(SESS&&SESS.email)||'', pass:(SESS&&SESS.pass)||'' });
+    BAL_ACCESO = acc.ok ? acc : { puede:false, abierto:false };
+    if (BAL_ACCESO.puede){
+      const r = await rwFetch('/balance',
+        { email:SESS.email, pass:SESS.pass });
+      BALANCE = r.ok ? r : { movimientos:[], totales:{invertido:0,retirado:0,neto:0,retorno:0} };
+    }
+  }catch(e){ BAL_ACCESO = { puede:false, abierto:false }; }
+  BAL_CARGANDO = false;
+  renderKeep();
+}
+
+function balancePage(){
+  const isEn = LANG==='en';
+  if (BAL_ACCESO===null){
+    cargarBalance();
+    return `<div class="page-head"><h1>${isEn?'My balance':'Mi balance'}</h1></div>
+      <div class="bal-vacio">${isEn?'Loading...':'Cargando...'}</div>`;
+  }
+
+  // sin acceso: se ve la seccion pero con el cartel
+  if (!BAL_ACCESO.puede){
+    return `<div class="page-head"><h1>${isEn?'My balance':'Mi balance'}</h1>
+      <p>${isEn?'Track what you invest and what you withdraw.':'Lleva la cuenta de lo que inviertes y lo que retiras.'}</p></div>
+      <div class="bal-cerrado">
+        <div style="color:var(--fire)">${sv(I.lock,34)}</div>
+        <h3>${isEn?'Only for AUTO PRO ROCKET clients':'Solo para clientes de AUTO PRO ROCKET'}</h3>
+        <p>${isEn
+          ? 'This section lets you track your prop firm investments and payouts, and see if you are up or down. It is available once you get AUTO PRO ROCKET.'
+          : 'Aquí puedes llevar la cuenta de lo que gastas en evaluaciones y lo que retiras, y ver si vas ganando. Está disponible cuando tengas AUTO PRO ROCKET.'}</p>
+      </div>`;
+  }
+
+  const b = BALANCE || { movimientos:[], totales:{invertido:0,retirado:0,neto:0,retorno:0} };
+  const T = b.totales;
+  const enVerde = T.neto >= 0;
+
+  const totales = `<div class="bal-tot">
+    <div class="bal-card"><div class="l">${isEn?'Invested':'Invertido'}</div><div class="v">${dinero(T.invertido)}</div></div>
+    <div class="bal-card"><div class="l">${isEn?'Withdrawn':'Retirado'}</div><div class="v">${dinero(T.retirado)}</div></div>
+    <div class="bal-card ${enVerde?'verde':'rojo'}"><div class="l">${isEn?'Net':'Neto'}</div>
+      <div class="v" style="color:${enVerde?'var(--green)':'var(--red)'}">${enVerde?'+':'−'}${dinero(T.neto)}</div></div>
+    <div class="bal-card"><div class="l">${isEn?'Return':'Retorno'}</div>
+      <div class="v" style="color:${T.retorno>=100?'var(--green)':'var(--text)'}">${T.retorno}%</div></div>
+  </div>`;
+
+  const acciones = `<div class="bal-acc">
+    <button class="btn-add" onclick="abrirMovimiento('RETIRO')">${sv(I.dl,15)} ${isEn?'Add payout':'Registrar retiro'}</button>
+    <button class="btn-ghost" onclick="abrirMovimiento('EVALUACION')">${sv(I.tag,15)} ${isEn?'Add cost':'Registrar gasto'}</button>
+    ${b.movimientos.length?`<button class="btn-ghost" style="color:var(--red);border-color:rgba(255,77,94,.3)"
+      onclick="reiniciarBalance()">${sv(I.trash,15)} ${isEn?'Reset':'Reiniciar'}</button>`:''}
+  </div>`;
+
+  let lista;
+  if (!b.movimientos.length){
+    lista = `<div class="bal-lista"><div class="bal-vacio">
+      ${isEn?'Nothing here yet.':'Todavía no has apuntado nada.'}<br>
+      ${isEn?'Add your first cost or payout above.':'Empieza registrando un gasto o un retiro.'}</div></div>`;
+  } else {
+    lista = `<div class="bal-lista">
+      <div class="bal-cab">${isEn?'Movements':'Movimientos'} · ${b.movimientos.length}</div>
+      ${b.movimientos.map(m=>{
+        const cfg = BAL_TIPOS[m.tipo] || BAL_TIPOS.OTRO;
+        const entra = cfg.entra;
+        const donde = [m.firma, m.cuenta].filter(Boolean).join(' ');
+        const fecha = String(m.fecha||'').slice(0,10).split('-').reverse().join('/');
+        return `<div class="bal-mov">
+          <div class="bal-ic ${entra?'ent':'sal'}">${sv(entra?I.dl:I.ext,16)}</div>
+          <div class="bal-inf">
+            <b>${escapeHtml((isEn?cfg.en:cfg.txt) + (donde?' · '+donde:''))}</b>
+            <span>${fecha}${m.concepto?' · '+escapeHtml(m.concepto):''}</span>
+          </div>
+          <div class="bal-num ${entra?'ent':'sal'}">${entra?'+':'−'}${dinero(m.monto)}</div>
+          <button class="bal-del" onclick="borrarMovimiento(${m.id})"
+            title="${isEn?'Delete':'Borrar'}">${sv(I.trash,14)}</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  return `<div class="page-head"><h1>${isEn?'My balance':'Mi balance'}</h1>
+      <p>${isEn?'Only you can see this. Not even the admin.':'Solo tú ves esto. Nadie más, ni el administrador.'}</p></div>
+    ${totales}${acciones}${lista}
+    <div class="bal-priv">${sv(I.lock,15)}
+      <span>${isEn
+        ? 'Your figures are stored in your account only. The administrator cannot see them.'
+        : 'Tus cifras se guardan solo en tu cuenta. El administrador no puede verlas.'}</span></div>`;
+}
+
+// Precios aproximados, para no escribirlos a mano cada vez.
+// Son solo una sugerencia: el cliente puede cambiarlos.
+const BAL_PRECIOS = {
+  'TopStep':          { '50K':49,  '100K':99,  '150K':149 },
+  'Blue Guardian':    { '25K':97,  '50K':167,  '100K':297 },
+  'Funded Next':      { '25K':69,  '50K':109,  '100K':199 },
+  'My Funded Futures':{ '50K':80,  '100K':145, '150K':220 },
+  'Aqua Funded':      { '50K':89,  '100K':159 },
+  'Goat Funded':      { '50K':85,  '100K':155 },
+  'Lucid':            { '50K':100, '100K':180 },
+  'Top One Futures':  { '50K':75,  '100K':135 }
+};
+
+function abrirMovimiento(tipo){
+  const isEn = LANG==='en';
+  const firmas = Object.keys(BAL_PRECIOS);
+  const hoy = new Date().toISOString().slice(0,10);
+  const esRetiro = tipo==='RETIRO';
+
+  const opciones = Object.keys(BAL_TIPOS).map(k=>
+    `<option value="${k}" ${k===tipo?'selected':''}>${isEn?BAL_TIPOS[k].en:BAL_TIPOS[k].txt}</option>`).join('');
+
+  openModal('okModal', `
+    <div class="modal-head"><h3>${esRetiro?(isEn?'Add payout':'Registrar retiro'):(isEn?'Add cost':'Registrar gasto')}</h3></div>
+    <div style="padding:20px">
+      <div id="movErr"></div>
+      <div class="field"><label>${isEn?'Type':'Tipo'}</label>
+        <select id="movTipo" onchange="sugerirPrecio()">${opciones}</select></div>
+      <div class="field"><label>${isEn?'Prop firm':'Prop firm'}</label>
+        <select id="movFirma" onchange="sugerirPrecio()">
+          <option value="">${isEn?'(none)':'(ninguna)'}</option>
+          ${firmas.map(f=>`<option value="${f}">${f}</option>`).join('')}
+        </select></div>
+      <div class="field"><label>${isEn?'Account size':'Tamaño de cuenta'}</label>
+        <select id="movCuenta" onchange="sugerirPrecio()">
+          <option value="">${isEn?'(none)':'(ninguno)'}</option>
+          <option>25K</option><option>50K</option><option>100K</option><option>150K</option>
+        </select></div>
+      <div class="field"><label>${isEn?'Amount (USD)':'Monto (USD)'}</label>
+        <input type="number" id="movMonto" step="0.01" min="0" placeholder="0.00" inputmode="decimal"></div>
+      <div class="field"><label>${isEn?'Date':'Fecha'}</label>
+        <input type="date" id="movFecha" value="${hoy}"></div>
+      <div class="field"><label>${isEn?'Note (optional)':'Nota (opcional)'}</label>
+        <input type="text" id="movNota" maxlength="120" placeholder="${isEn?'e.g. with code BG35':'ej: con código BG35'}"></div>
+      <button class="btn-primary" onclick="guardarMovimiento()">${isEn?'Save':'Guardar'}</button>
+    </div>`);
+  setTimeout(()=>{ sugerirPrecio(); const m=document.getElementById('movMonto'); if(m&&esRetiro) m.focus(); }, 60);
+}
+
+// Rellena el monto con el precio aproximado de esa cuenta
+function sugerirPrecio(){
+  const tipo = document.getElementById('movTipo')?.value;
+  const firma = document.getElementById('movFirma')?.value;
+  const cuenta = document.getElementById('movCuenta')?.value;
+  const monto = document.getElementById('movMonto');
+  if (!monto || tipo==='RETIRO') return;
+  if (monto.dataset.tocado==='1') return;   // si ya lo escribio el, no se toca
+  const p = BAL_PRECIOS[firma]?.[cuenta];
+  if (p) monto.value = p;
+}
+
+async function guardarMovimiento(){
+  const isEn = LANG==='en';
+  const err = document.getElementById('movErr');
+  const tipo = document.getElementById('movTipo').value;
+  const monto = parseFloat(document.getElementById('movMonto').value);
+  if (!(monto > 0)){
+    err.innerHTML = `<div class="login-err show">${isEn?'Enter an amount greater than 0.':'Escribe un monto mayor que 0.'}</div>`;
+    return;
+  }
+  err.innerHTML = '';
+  const r = await rwFetch('/balance/anadir', {
+    email:SESS.email, pass:SESS.pass, tipo, monto,
+    firma: document.getElementById('movFirma').value,
+    cuenta: document.getElementById('movCuenta').value,
+    fecha: document.getElementById('movFecha').value,
+    concepto: document.getElementById('movNota').value
+  });
+  if (r.ok){
+    closeModal('okModal');
+    BALANCE = null; BAL_ACCESO = null;
+    await cargarBalance();
+    toast(isEn?'Saved':'Guardado');
+  } else {
+    err.innerHTML = `<div class="login-err show">${isEn?"Couldn't save.":'No se pudo guardar.'}</div>`;
+  }
+}
+
+async function borrarMovimiento(id){
+  const isEn = LANG==='en';
+  if (!confirm(isEn?'Delete this entry?':'¿Borrar este apunte?')) return;
+  const r = await rwFetch('/balance/borrar', { email:SESS.email, pass:SESS.pass, id });
+  if (r.ok){ BAL_ACCESO=null; await cargarBalance(); toast(isEn?'Deleted':'Borrado'); }
+}
+
+async function reiniciarBalance(){
+  const isEn = LANG==='en';
+  // se pregunta dos veces: esto borra TODO y no tiene vuelta atras
+  if (!confirm(isEn
+    ? 'This deletes ALL your entries and cannot be undone. Continue?'
+    : 'Esto borra TODOS tus apuntes y no se puede deshacer. ¿Seguir?')) return;
+  if (!confirm(isEn ? 'Are you sure?' : '¿Seguro? Se pierde todo tu historial.')) return;
+  const r = await rwFetch('/balance/reiniciar',
+    { email:SESS.email, pass:SESS.pass, confirmar:'SI' });
+  if (r.ok){
+    BAL_ACCESO=null; await cargarBalance();
+    toast(isEn?`${r.borrados} entries deleted`:`${r.borrados} apuntes borrados`);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
 //  VALORACION DE LAS PROP FIRMS
 //  El cliente pone estrellas y se publica al momento, sin que
 //  tengas que aprobar nada. Un voto por cliente y firma: si
@@ -3278,7 +3540,40 @@ function pagosCard(){
         <button class="switch ${tj?'on':''}" onclick="togglePago('tarjeta',${tj?0:1})"><span></span></button>
       </div>
       ${(!ze&&!pp&&!tj)?`<div class="pay-warn">⚠️ Los tres están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
+    </div></div>` + balanceCard();
+}
+
+// Interruptor para abrir "Mi balance" a los clientes de AUTO PRO.
+// Mientras este apagado, solo lo ves tu.
+function balanceCard(){
+  const on = BAL_ACCESO ? !!BAL_ACCESO.abierto : false;
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${sv(I.chart,15)} Mi balance</div>
+      <div class="card-cat">CONTABILIDAD PRIVADA DE CADA CLIENTE</div></div>
+    <div style="padding:18px 20px">
+      <div class="pay-toggle">
+        <div style="flex:1;min-width:0">
+          <div class="pay-tg-name">Abierto a los clientes</div>
+          <div class="pay-tg-hint ${on?'on':''}">${on
+            ? '✓ Lo ven los clientes con AUTO PRO ROCKET'
+            : '○ Apagado · solo lo ves tú'}</div>
+        </div>
+        <button class="switch ${on?'on':''}" onclick="toggleBalance(${on?0:1})"><span></span></button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-faint);line-height:1.6">
+        Cada cliente lleva ahí lo que invierte y lo que retira.
+        Los datos son suyos: <b>tú no puedes verlos</b>, ni ellos los de otro.
+      </div>
     </div></div>`;
+}
+
+async function toggleBalance(activar){
+  const r = await rwFetch('/admin/balance/activar', { activo: activar? 'SI':'NO' });
+  if (r.ok){
+    if (BAL_ACCESO) BAL_ACCESO.abierto = r.activo;
+    renderKeep();
+    toast(r.activo ? 'Abierto a los clientes con AUTO PRO' : 'Apagado · ahora solo lo ves tú');
+  } else toast('No se pudo cambiar.');
 }
 let PAGOS_SAVING=false;
 async function togglePago(metodo,activar){
@@ -3757,17 +4052,22 @@ function adminView(){
   const nav = limitado
     ? // su panel de usuario COMPLETO + las dos pestañas de aprobar
       navBtn('products',I.box,t('nav_productos'))+navBtn('guides',I.play,t('nav_guias'))
+      +navBtn('balance',I.chart,LANG==='en'?'My balance':'Mi balance')
       +navBtn('discounts',I.tag,LANG==='en'?'Discounts':'Descuentos')+navBtn('news',I.news,t('nav_noticias'))
       +navBtn('help',I.help,t('nav_ayuda'))+navBtn('contact',I.phone,t('nav_contacto'))
       +`<div class="nav-sep">${LANG==='en'?'ADMIN':'ADMIN'}</div>`
       +navBtn('clients',I.users,'Clientes')+navBtn('alic',I.lock,'Licencias')
       +navBtn('aprofile',I.user,t('nav_perfil'))
-    : navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes',nuevos)+navBtn('aprofile',I.user,'Mi Perfil');
+    : navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes',nuevos)
+      +`<div class="nav-sep">MÍO</div>`
+      +navBtn('balance',I.chart,'Mi balance')+navBtn('aprofile',I.user,'Mi Perfil');
   // el admin limitado NO puede entrar a estas de admin
   if(limitado && ['aprod','arev','aref','adisc','aguides','anews','amsg'].indexOf(tab)>=0){ tab='clients'; }
   let content;
+  // Mi balance: lo ven los dos (el CEO para probarlo, el socio como cliente)
+  if(tab==='balance')                   content=balancePage();
   // pestañas de USUARIO (para el limitado)
-  if(limitado && tab==='products')      content=productsPage();
+  else if(limitado && tab==='products')  content=productsPage();
   else if(limitado && tab==='guides')   content=guidesPage();
   else if(limitado && tab==='discounts')content=discountsPage();
   else if(limitado && tab==='news')     content=newsPage();
