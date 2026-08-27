@@ -12,7 +12,6 @@
 <meta name="author" content="SNIPER PORTAL">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="https://sniperportaltrading.com/">
-<!-- Open Graph (cómo se ve al compartir el link en WhatsApp, redes) -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="SNIPER PORTAL — Software y Bots de Trading">
 <meta property="og:description" content="Herramientas, AddOns y bots de trading para NinjaTrader 8, TopStep y cuentas de fondeo. Activación por licencia y soporte directo.">
@@ -27,19 +26,16 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Organization","name":"SNIPER PORTAL","description":"Software, AddOns y bots de trading para NinjaTrader 8, TopStep y cuentas de fondeo.","url":"https://sniperportaltrading.com/","email":"sniperocket2028@gmail.com","areaServed":"Worldwide"}
 </script>
-<!-- Adelantar conexiones: el navegador resuelve DNS y abre el canal
-     seguro mientras aun esta leyendo la pagina, en vez de esperar al final. -->
+
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="preconnect" href="https://script.google.com">
 <link rel="preconnect" href="https://script.googleusercontent.com">
-<!-- Empezar a bajar Firebase YA, sin esperar a leer el resto del archivo -->
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Las fuentes ya no bloquean el pintado: la pagina aparece y ellas
-     entran cuando llegan. Antes la pantalla se quedaba en blanco esperandolas. -->
+
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <noscript><link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"></noscript>
 <style>
@@ -57,7 +53,6 @@
     background:var(--bg);color:var(--text);font-family:var(--body);
     -webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;position:relative;
   }
-  /* ambient background (estático, para no cargar el CPU) */
   body::before{
     content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
     background:
@@ -65,7 +60,6 @@
       radial-gradient(700px 500px at 12% 108%, rgba(52,179,255,.09), transparent 60%),
       radial-gradient(600px 600px at 50% 50%, rgba(52,179,255,.03), transparent 70%);
   }
-  /* rejilla futurista (estática) */
   .grid-bg{
     position:fixed;inset:-2px;z-index:0;pointer-events:none;opacity:.5;
     background-image:
@@ -76,14 +70,12 @@
     mask-image:radial-gradient(circle at 50% 40%,#000 20%,transparent 78%);
   }
   @keyframes gridmove{0%{background-position:0 0,0 0}100%{background-position:52px 52px,52px 52px}}
-  /* barrido de escáner — desactivado (pesaba mucho) */
   .scan-bg{ display:none; }
   @keyframes scansweep{0%{top:-180px;opacity:0}12%{opacity:1}88%{opacity:1}100%{top:100vh;opacity:0}}
   @media(prefers-reduced-motion:reduce){
     .grid-bg,.scan-bg,body::before{animation:none}
   }
   @keyframes drift{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-20px,18px) scale(1.05)}}
-  /* faint star/grid texture */
   body::after{
     content:"";position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4;
     background-image:radial-gradient(1px 1px at 20% 30%,rgba(255,255,255,.12),transparent),
@@ -100,7 +92,6 @@
   ::selection{background:rgba(255,107,44,.3)}
   @media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
 
-  /* DEMO BAR */
   .demobar{position:fixed;top:0;left:0;right:0;height:38px;z-index:100;
     display:flex;align-items:center;justify-content:center;gap:10px;
     background:rgba(255,107,44,.10);border-bottom:1px solid rgba(255,107,44,.25);
@@ -111,7 +102,6 @@
 
   .app{padding-top:0;min-height:100vh;position:relative;z-index:1}
 
-  /* ===== LOGO ORB (animated, like Lucid) ===== */
   .orb-wrap{display:flex;align-items:center;gap:14px}
   .orb{width:46px;height:46px;border-radius:50%;position:relative;flex-shrink:0;
     background:radial-gradient(circle at 35% 30%, #3A4D6B 0%, #18243A 38%, #060A12 78%);
@@ -129,7 +119,6 @@
   .brand-txt .brand-name{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:.07em;line-height:1}
   .brand-txt .brand-name span{color:var(--fire)}
   .brand-txt .brand-sub{font-size:9.5px;letter-spacing:.36em;color:var(--text-faint);margin-top:4px}
-  /* sniper scope reticle (login) */
   .scope{position:relative;width:150px;height:150px;display:grid;place-items:center;margin:0 auto 6px}
   .scope .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(255,107,44,.22)}
   .scope .ring2{position:absolute;inset:20px;border-radius:50%;border:1px dashed rgba(52,179,255,.28);animation:spin 22s linear infinite}
@@ -141,12 +130,10 @@
   .scope .cross.r{right:0;top:50%;height:1.5px;width:18px;transform:translateY(-50%)}
   .scope .orb{width:62px;height:62px;z-index:2}
   @keyframes spin{to{transform:rotate(360deg)}}
-  /* scan sweep on login card */
   .login-card .scan{position:absolute;left:0;right:0;height:60px;pointer-events:none;z-index:0;
     background:linear-gradient(180deg,transparent,rgba(52,179,255,.06),transparent);animation:sweep 5s ease-in-out infinite}
   @keyframes sweep{0%{top:-60px}100%{top:100%}}
 
-  /* LOGIN */
   .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;overflow:hidden}
   .sniper-bg{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
   .candles-svg{position:absolute;left:0;right:0;bottom:0;width:100%;height:52%;opacity:.42}
@@ -195,12 +182,10 @@
   .remember input{width:16px;height:16px;accent-color:var(--fire);cursor:pointer}
   .remember-row a{font-size:12px;color:var(--cyan)}
 
-  /* SHELL */
   .shell{display:flex;min-height:100vh}
   .side{width:252px;flex-shrink:0;background:linear-gradient(180deg,var(--bg-2),#070B12);
     border-right:1px solid var(--line-soft);padding:24px 16px;display:flex;flex-direction:column;
     position:sticky;top:0;height:100vh;overflow:hidden}
-  /* fondo animado del menú lateral */
   .side::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
     background:
       radial-gradient(300px 200px at 30% 0%, rgba(255,107,44,.10), transparent 65%),
@@ -209,7 +194,6 @@
   @keyframes sideglow{
     0%{background-position:0% 0%,100% 100%;opacity:.7}
     100%{background-position:20% 10%,80% 90%;opacity:1}}
-  /* rejilla vertical que sube lento */
   .side::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.4;
     background-image:linear-gradient(rgba(52,179,255,.05) 1px,transparent 1px);
     background-size:100% 34px;
@@ -230,7 +214,6 @@
     background:linear-gradient(180deg,var(--fire),var(--fire-soft));box-shadow:0 0 12px var(--fire);
     animation:barpulse 2.4s ease-in-out infinite}
   @keyframes barpulse{0%,100%{box-shadow:0 0 8px var(--fire);opacity:.85}50%{box-shadow:0 0 18px var(--fire);opacity:1}}
-  /* destello que cruza el botón al pasar el mouse */
   .nav-badge{margin-left:auto;background:var(--fire);color:#0a0a0a;font-size:11px;font-weight:800;
     min-width:20px;height:20px;padding:0 6px;border-radius:11px;display:inline-flex;align-items:center;
     justify-content:center;box-shadow:0 0 12px rgba(255,107,44,.6);animation:badgePulse 2s ease-in-out infinite}
@@ -269,7 +252,6 @@
   .page-head h1{font-family:var(--display);font-size:28px;font-weight:600;letter-spacing:-.01em}
   .page-head p{color:var(--text-dim);font-size:14px;margin-top:5px}
 
-  /* PRODUCT CARDS */
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
   .card{background:linear-gradient(165deg,var(--surface),#0D1420);border:1px solid var(--line-soft);
     border-radius:18px;overflow:hidden;transition:border-color .2s,transform .2s,box-shadow .25s;
@@ -291,7 +273,6 @@
   .pill.locked .pdot{background:var(--text-faint)}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
   .card-desc{font-size:13px;color:var(--text-dim);line-height:1.55;padding:14px 20px 0}
-  /* progress bar (Lucid style) */
   .prog-wrap{padding:16px 20px 4px}
   .prog-top{display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-bottom:7px;letter-spacing:.03em}
   .prog-top b{color:var(--text);font-family:var(--mono);font-weight:500}
@@ -313,7 +294,6 @@
     font-size:13px;font-weight:600;background:var(--surface-2);border:1px solid var(--line);color:var(--text);transition:.15s}
   .btn-vid:hover{border-color:var(--cyan);color:var(--cyan);box-shadow:0 8px 22px -10px rgba(52,179,255,.5)}
 
-  /* NEWS */
   .news-list{display:flex;flex-direction:column;gap:14px;max-width:740px}
   .news-item{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line-soft);
     border-radius:15px;padding:20px 22px 20px 26px;position:relative;transition:.2s;animation:rise .5s ease backwards}
@@ -331,7 +311,6 @@
   .news-tag.cyan{background:rgba(52,179,255,.12);color:var(--cyan)}
   .news-tag.green{background:rgba(39,215,150,.12);color:var(--green)}
 
-  /* CONTACT */
   .contact-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:780px}
   .contact-card{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line-soft);
     border-radius:15px;padding:24px;display:flex;flex-direction:column;gap:6px;transition:.2s;animation:rise .5s ease backwards}
@@ -343,7 +322,6 @@
   .contact-card .val{font-family:var(--display);font-size:18px;font-weight:600}
   .contact-card .sub{font-size:12px;color:var(--text-dim)}
 
-  /* ADMIN */
   .admin-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;gap:14px;flex-wrap:wrap}
   .search{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);
     border-radius:11px;padding:10px 13px;flex:1;max-width:330px}
@@ -388,7 +366,6 @@
   .ibtn:hover{border-color:var(--fire);color:var(--fire-soft)}
   .ibtn.danger:hover{border-color:var(--red);color:var(--red)}
 
-  /* MODAL */
   .modal-bg{position:fixed;inset:0;background:rgba(4,7,12,.8);backdrop-filter:blur(5px);z-index:200;
     display:none;align-items:center;justify-content:center;padding:24px}
   .modal-bg.show{display:flex;animation:fadein .2s}
@@ -448,20 +425,17 @@
   .info-contact a{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--text);padding:9px 12px;
     background:var(--bg-2);border:1px solid var(--line-soft);border-radius:10px;transition:.13s}
   .info-contact a:hover{border-color:var(--line)}
-  /* empty states (admin sections to fill later) */
   .empty-state{text-align:center;padding:70px 24px;max-width:460px;margin:0 auto}
   .empty-ic{width:66px;height:66px;border-radius:18px;margin:0 auto 18px;display:grid;place-items:center;
     background:var(--surface);border:1px solid var(--line);color:var(--fire-soft)}
   .empty-state h3{font-family:var(--display);font-size:18px;margin-bottom:8px;color:var(--text)}
   .empty-state p{color:var(--text-dim);font-size:14px;line-height:1.5}
-  /* disclaimer footer */
   .disclaimer{margin:46px auto 0;padding:22px 4px 0;border-top:1px solid var(--line-soft);max-width:880px}
   .disclaimer p{font-size:11.5px;color:var(--text-faint);line-height:1.65}
   .disclaimer .copy{margin-top:10px;opacity:.75}
   .login-col{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;max-width:430px}
   .login-col .disclaimer{margin:6px 0 0;border:none;padding:0 14px;text-align:center}
   .login-col .disclaimer p{font-size:10.5px}
-  /* FAQ accordion */
   .faq-list{display:flex;flex-direction:column;gap:10px;max-width:720px}
   .faq-item{background:var(--surface);border:1px solid var(--line-soft);border-radius:13px;overflow:hidden;cursor:pointer;transition:border-color .15s}
   .faq-item:hover{border-color:var(--line)}
@@ -470,37 +444,30 @@
   .faq-item.open .faq-arrow{transform:rotate(180deg)}
   .faq-a{max-height:0;overflow:hidden;padding:0 18px;color:var(--text-dim);font-size:13.5px;line-height:1.6;transition:max-height .25s,padding .25s}
   .faq-item.open .faq-a{max-height:240px;padding:0 18px 16px}
-  /* segmented buttons (product access type) */
   .seg-btn{flex:1;padding:11px;border-radius:10px;background:var(--bg-2);border:1px solid var(--line);
     color:var(--text-dim);font-size:13px;font-weight:600;transition:.15s;cursor:pointer}
   .seg-btn.on{background:rgba(255,107,44,.12);border-color:var(--fire);color:var(--fire-soft)}
-  /* access checkboxes */
   .acc-row{display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line-soft);
     border-radius:10px;cursor:pointer;font-size:13.5px;transition:.13s}
   .acc-row:hover{border-color:var(--line);background:var(--surface-2)}
   .acc-row input{width:18px;height:18px;accent-color:var(--fire);cursor:pointer}
-  /* PC picker */
   .pcs-pick{display:flex;gap:8px}
   .pcs-opt{flex:1;padding:13px 0;border-radius:11px;background:var(--bg-2);border:1px solid var(--line);
     color:var(--text);font-weight:700;font-family:var(--display);font-size:16px;cursor:pointer;transition:.13s}
   .pcs-opt:hover{border-color:var(--fire)}
   .pcs-opt.on{background:rgba(255,107,44,.14);border-color:var(--fire);color:var(--fire-soft)}
-  /* language toggle */
   .lang-toggle{display:flex;gap:0;align-self:center;margin-bottom:18px;background:var(--surface);
     border:1px solid var(--line);border-radius:10px;overflow:hidden}
   .lang-toggle button{padding:7px 16px;background:transparent;border:none;color:var(--text-dim);
     font-size:12.5px;font-weight:700;font-family:var(--display);letter-spacing:.04em;cursor:pointer;transition:.13s}
   .lang-toggle button.on{background:var(--fire);color:#0a0a0a}
-  /* product view toggle */
   .view-toggle{display:flex;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;height:fit-content}
   .view-toggle button{padding:8px 12px;background:transparent;border:none;color:var(--text-dim);cursor:pointer;display:grid;place-items:center;transition:.13s}
   .view-toggle button.on{background:var(--fire);color:#0a0a0a}
-  /* discounts */
   .disc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
   .disc-card{background:linear-gradient(160deg,var(--surface),#0D1420);border:1px solid var(--line);
     border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px;transition:.15s}
   .disc-card:hover{border-color:var(--fire);transform:translateY(-2px)}
-  /* ── MI BALANCE ─────────────────────────────────────────── */
   .bal-tot{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;margin-bottom:18px}
   .bal-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:15px 17px}
   .bal-card .l{font-size:12px;color:var(--text-faint);margin-bottom:6px}
@@ -545,7 +512,6 @@
   .bal-cerrado h3{margin:14px 0 8px;font-family:var(--display);font-size:18px;color:var(--text)}
   .bal-cerrado p{margin:0 auto;max-width:400px;font-size:13.5px;color:var(--text-dim);line-height:1.65}
 
-  /* ── MIS CUENTAS por fases ─────────────────────────────── */
   .cta-fase{margin-bottom:20px}
   .cta-fh{display:flex;align-items:center;gap:9px;margin-bottom:10px;flex-wrap:wrap}
   .cta-fh h3{margin:0;font-family:var(--display);font-size:15px;font-weight:600;color:var(--text)}
@@ -604,8 +570,6 @@
     border-radius:6px;flex-shrink:0;opacity:0;transition:.14s}
   .cta:hover .cta-x{opacity:1}
   .cta-x:hover{color:var(--red);background:rgba(255,77,94,.1)}
-  /* Casilla propia: la del navegador sale blanca sobre fondo oscuro
-     y no se distingue si esta marcada o no. */
   .cta-chk{appearance:none;-webkit-appearance:none;width:19px;height:19px;flex-shrink:0;
     border:2px solid var(--line);border-radius:5px;background:var(--bg-2);
     cursor:pointer;position:relative;transition:.13s;margin:0}
@@ -623,7 +587,6 @@
     width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;
     transform:rotate(45deg)}
 
-  /* fases y seleccion multiple en Mi Balance */
   .bal-fase{display:inline-block;font-size:10px;font-weight:600;letter-spacing:.04em;
     padding:2px 7px;border-radius:5px;margin-left:6px;vertical-align:1px}
   .f-FASE1{background:rgba(52,179,255,.16);color:var(--cyan)}
@@ -641,7 +604,6 @@
   .bal-rb b{display:block;font-size:13px;color:var(--text);font-weight:500;margin-top:5px}
   .bal-rb span{font-size:10.5px;color:var(--text-faint)}
 
-  /* valoracion de las prop firms */
   .val-row{display:flex;align-items:center;gap:9px;margin:11px 0 3px;flex-wrap:wrap}
   .val-stars{display:flex;gap:2px}
   .val-st{background:none;border:none;padding:0;cursor:default;line-height:1;
@@ -667,14 +629,12 @@
   .disc-go{display:flex;align-items:center;justify-content:center;gap:6px;background:var(--fire);color:#0a0a0a;
     border-radius:10px;padding:11px;font-size:13.5px;font-weight:700;text-decoration:none;transition:.13s}
   .disc-go:hover{background:var(--fire-soft)}
-  /* layout 2 columnas equilibrado */
   .two-col{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:20px;align-items:start;max-width:1000px}
   .col-stack{display:flex;flex-direction:column;gap:18px}
   .contact-side{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-content:start}
   .contact-side .contact-card:last-child{grid-column:1 / -1}
   @media(max-width:900px){.two-col{grid-template-columns:1fr}.contact-side{grid-template-columns:1fr}}
 
-  /* ── CENTRO DE AYUDA (boton flotante) ────────────────────── */
   .ay-btn{position:fixed;right:22px;bottom:22px;width:56px;height:56px;border-radius:18px;
     background:var(--fire);border:none;cursor:pointer;z-index:900;color:#fff;
     display:flex;align-items:center;justify-content:center;
@@ -707,7 +667,6 @@
     border-top:1px solid var(--line-soft);margin-top:0;padding-top:11px}
   .ay-item.open .ay-a{display:block}
   .ay-nada{text-align:center;padding:26px 18px;color:var(--text-dim);font-size:13.5px;line-height:1.6}
-  /* conversacion */
   .ay-msg{max-width:86%;padding:11px 14px;border-radius:14px;font-size:13.3px;line-height:1.6;
     margin-bottom:9px;animation:ayIn .22s ease}
   @keyframes ayIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -735,8 +694,6 @@
     .ay-panel{right:12px;left:12px;width:auto;bottom:84px}
     .ay-btn{right:16px;bottom:16px}
   }
-  /* Rejilla ancha SOLO para Mi Perfil de admin: mosaico de 3 columnas.
-     No toca .two-col, que la usan el perfil de cliente y la pagina de contacto. */
   .perfil-wide{columns:3 360px;column-gap:20px;max-width:1500px}
   .perfil-wide>.card{break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;
                      display:inline-block;width:100%;margin:0 0 18px}
@@ -748,7 +705,6 @@
   .ref-sh.wa:hover{background:rgba(37,211,102,.2)}
   .ref-sh.tg{background:rgba(52,179,255,.12);color:var(--cyan);border:1px solid rgba(52,179,255,.3)}
   .ref-sh.tg:hover{background:rgba(52,179,255,.2)}
-  /* centro de ayuda */
   .help-quick{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;max-width:860px;margin-bottom:22px}
   .hq{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);
     border-radius:13px;padding:14px 15px;cursor:pointer;transition:.14s;color:var(--fire)}
@@ -772,11 +728,9 @@
     border-radius:15px;padding:18px 20px;max-width:760px;margin-top:26px}
   .help-cta-t{font-family:var(--display);font-size:15.5px;font-weight:600;color:var(--text)}
   .help-cta-s{font-size:12.5px;color:var(--text-dim);margin-top:3px}
-  /* encabezado de sección */
   .sec-h{font-family:var(--display);font-size:15px;font-weight:600;color:var(--text);margin:0 0 14px;
     padding-bottom:8px;border-bottom:1px solid var(--line-soft);display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
   .sec-h span{font-size:11.5px;color:var(--text-faint);font-weight:400}
-  /* estrellas */
   .stars{display:inline-flex;gap:1px;vertical-align:middle}
   .star{color:var(--line-strong);line-height:1}
   .star.on{color:#F5A623}
@@ -785,7 +739,6 @@
   .pd-rate span{color:var(--text-faint)}
   .card-rate{display:inline-flex;align-items:center;gap:4px;margin-left:8px;font-size:11px;color:var(--text-dim)}
   .card-rate span{color:var(--text-faint)}
-  /* reseñas cliente */
   .rev-wrap{margin-top:38px;padding-top:26px;border-top:1px solid var(--line-soft)}
   .rev-list{display:flex;flex-direction:column;gap:12px}
   .rev-item{background:var(--surface);border:1px solid var(--line);border-radius:13px;padding:15px 16px}
@@ -806,7 +759,6 @@
   .rev-note{font-size:11px;color:var(--text-faint);margin-top:9px}
   .rev-locked{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px dashed var(--line-strong);
     border-radius:13px;padding:18px;font-size:12.5px;color:var(--text-faint);height:fit-content}
-  /* reseñas admin */
   .arev-list{display:flex;flex-direction:column;gap:14px;max-width:820px}
   .arev{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
   .arev-top{display:flex;align-items:center;gap:11px;margin-bottom:11px;flex-wrap:wrap}
@@ -814,18 +766,15 @@
   .arev-meta{font-size:11px;color:var(--text-faint);margin-top:2px;word-break:break-all}
   .arev-text{font-size:13px;color:var(--text-dim);line-height:1.6;background:var(--bg-2);border-radius:10px;padding:12px 14px}
   .arev-act{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-  /* fila oculta al cliente */
   .row-off{opacity:.5}
   .row-off:hover{opacity:.8}
   .off-tag{font-size:10px;background:var(--bg-2);border:1px solid var(--line-strong);color:var(--text-faint);
     border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle;font-weight:600}
   .ibtn.on{color:var(--green);border-color:rgba(39,215,150,.3)}
   .ibtn.on:hover{color:var(--fire-soft);border-color:var(--fire)}
-  /* telefono en mensajes */
   .msg-tel{display:inline-flex;align-items:center;gap:6px;margin-top:5px;font-size:12px;color:#25D366}
   .msg-tel .mono{color:var(--text)}
   .msg-tel.off{color:var(--text-faint)}
-  /* guias privadas */
   .gacc-box{max-height:210px;overflow-y:auto;border:1px solid var(--line);border-radius:11px;padding:8px;background:var(--bg-2)}
   .gacc-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;flex-wrap:wrap}
   .gacc-search{display:flex;align-items:center;gap:6px;background:var(--bg-2);border:1px solid var(--line);
@@ -836,7 +785,6 @@
   .gacc-info{font-size:11.5px;color:var(--text-faint);margin-top:7px}
   .gacc-info.on{color:var(--fire-soft)}
   .gacc-info b{color:var(--text)}
-  /* flecha flotante ir arriba/abajo */
   .scrollbtn{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:60;
     width:44px;height:44px;border-radius:50%;background:var(--fire);border:none;color:#0a0a0a;
     display:grid;place-items:center;cursor:pointer;opacity:0;pointer-events:none;transition:.22s;
@@ -846,7 +794,6 @@
   .scrollbtn svg{transition:.25s}
   .scrollbtn.up svg{transform:rotate(180deg)}
   @media(max-width:640px){.scrollbtn{width:40px;height:40px;bottom:16px}}
-  /* referidos plegables */
   .ref-hd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer;padding:9px 12px;
     border-radius:12px;border:1px solid transparent;transition:.13s;user-select:none}
   .ref-hd:hover{background:var(--surface);border-color:var(--line)}
@@ -861,7 +808,6 @@
   .ref-prod{font-size:11px;font-weight:600;background:rgba(255,107,44,.1);color:var(--fire-soft);
     border:1px solid rgba(255,107,44,.25);border-radius:7px;padding:3px 9px}
   .ref-prod.none{background:transparent;border:1px dashed var(--line-strong);color:var(--text-faint);font-weight:400}
-  /* ── cartel de mantenimiento ── */
   .maint-bar{position:fixed;top:0;left:0;right:0;z-index:70;display:none;overflow:hidden;
     background:linear-gradient(90deg,#3a1e05,#7a3a0a,#3a1e05);
     border-bottom:1px solid rgba(255,107,44,.55);
@@ -883,7 +829,6 @@
   body.has-maint .login-wrap{padding-top:60px}
   body.has-maint .emblem-wrap{top:62px}
   @media(prefers-reduced-motion:reduce){.maint-track{animation:none}}
-  /* interruptor */
   .maint-row{display:flex;align-items:center;gap:14px}
   .maint-state{font-family:var(--display);font-size:15px;font-weight:700;color:var(--text-faint)}
   .maint-state.on{color:var(--amber);text-shadow:0 0 14px rgba(255,194,71,.5)}
@@ -894,7 +839,6 @@
     background:var(--text-faint);transition:.22s cubic-bezier(.2,.9,.25,1)}
   .switch.on{background:rgba(255,194,71,.18);border-color:var(--amber)}
   .switch.on span{left:26px;background:var(--amber);box-shadow:0 0 12px rgba(255,194,71,.8)}
-  /* ── barra de confianza en la portada ── */
   .trust-wrap{margin-top:22px;width:100%;max-width:520px}
   .trust-title{display:flex;align-items:center;gap:7px;justify-content:center;font-size:11px;
     color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;text-align:center}
@@ -913,20 +857,17 @@
   .trust-shine{position:absolute;top:0;left:-70%;width:50%;height:100%;pointer-events:none;
     background:linear-gradient(90deg,transparent,rgba(255,255,255,.06),transparent);transform:skewX(-20deg)}
   .trust-card:hover .trust-shine{animation:trustshine .7s ease}
-  /* botón de telegram del producto */
   .btn-tg{display:inline-flex;align-items:center;gap:8px;padding:13px 18px;border-radius:12px;
     font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;transition:.15s;
     background:linear-gradient(135deg,#29B6F6,#0088CC);color:#fff;border:none}
   .btn-tg:hover{filter:brightness(1.08);box-shadow:0 8px 22px -8px rgba(0,136,204,.7)}
   .btn-tg svg{color:#fff}
-  /* pago: pestañas WhatsApp / PayPal */
   .pay-tabs{display:flex;gap:8px;margin-bottom:16px}
   .pay-tab{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;border-radius:11px;
     background:var(--bg-2);border:1px solid var(--line);color:var(--text-dim);font-size:13.5px;font-weight:600;
     font-family:var(--body);cursor:pointer;transition:.14s}
   .pay-tab:hover{color:var(--text)}
   .pay-tab.on{background:var(--surface-2);border-color:var(--fire);color:var(--text)}
-  /* con 3 metodos las pestañas se aprietan: bajamos texto y relleno en pantallas chicas */
   @media(max-width:430px){.pay-tabs{gap:6px}.pay-tab{padding:10px 6px;font-size:12px;gap:5px}}
   .tj-hero{text-align:center;padding:18px 14px 14px;color:var(--fire-soft)}
   .tj-hero h3{margin:10px 0 6px;font-family:var(--display);font-size:17px;font-weight:600;color:var(--text)}
@@ -946,7 +887,6 @@
   .pp-qr img{cursor:zoom-in;transition:.15s}
   .pp-qr img:hover{transform:scale(1.03)}
   .pp-cap svg{vertical-align:-2px;opacity:.7}
-  /* QR a pantalla completa */
   .qr-zoom{position:fixed;inset:0;z-index:300;background:rgba(4,7,12,.92);backdrop-filter:blur(6px);
     display:none;align-items:center;justify-content:center;padding:24px}
   .qr-zoom.show{display:flex;animation:fadein .18s}
@@ -957,13 +897,11 @@
   .qr-zoom-x{margin-top:16px;padding:11px 26px;border-radius:12px;background:var(--surface);
     border:1px solid var(--line);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:var(--body)}
   .qr-zoom-x:hover{border-color:var(--fire);color:var(--fire-soft)}
-  /* toast */
   .toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);z-index:400;
     background:var(--surface-2);border:1px solid var(--line-strong);color:var(--text);font-size:13.5px;
     font-weight:600;padding:12px 20px;border-radius:12px;box-shadow:0 16px 40px -12px rgba(0,0,0,.7);
     opacity:0;pointer-events:none;transition:.25s;max-width:90vw}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  /* botones de comprobante */
   .proof-wrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line-soft)}
   .proof-lbl{font-size:12px;color:var(--text-dim);margin-bottom:10px;display:flex;align-items:center;gap:6px}
   .proof-lbl svg{color:var(--green)}
@@ -981,7 +919,6 @@
     border-radius:9px;padding:8px 11px;margin-top:10px;line-height:1.5;display:flex;align-items:flex-start;gap:6px}
   .proof-tg-note svg{flex-shrink:0;margin-top:1px}
   .proof-tg-note.copied{color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)}
-  /* banner producto nuevo */
   .np-banner{display:flex;align-items:center;gap:13px;margin-bottom:22px;padding:14px 16px;border-radius:14px;
     background:linear-gradient(135deg,rgba(255,107,44,.16),rgba(52,179,255,.1));
     border:1px solid rgba(255,107,44,.4);box-shadow:0 8px 26px -12px rgba(255,107,44,.5);
@@ -1009,14 +946,12 @@
     border-radius:10px;padding:10px 12px;margin-bottom:14px;line-height:1.5}
   .stat-real b{color:var(--text)}
   .stat-real span{display:block;color:var(--text-faint);margin-top:3px;font-size:11px}
-  /* toggles de métodos de pago */
   .pay-toggle{display:flex;align-items:center;gap:14px}
   .pay-tg-name{font-family:var(--display);font-size:15px;font-weight:600;color:var(--text)}
   .pay-tg-hint{font-size:11.5px;color:var(--text-faint);margin-top:3px}
   .pay-tg-hint.on{color:var(--green)}
   .pay-warn{margin-top:14px;font-size:12px;color:var(--amber);background:rgba(245,166,35,.08);
     border:1px solid rgba(245,166,35,.28);border-radius:10px;padding:10px 12px;line-height:1.5}
-  /* pago no disponible */
   .pay-off{text-align:center;padding:26px 16px;color:var(--text-faint)}
   .pay-off svg{color:var(--amber);opacity:.8}
   .pay-off h3{font-family:var(--display);font-size:17px;color:var(--text);margin:12px 0 6px}
@@ -1024,7 +959,6 @@
   .pay-tab .on{color:var(--fire-soft)}
   @media(max-width:540px){.trust-grid{grid-template-columns:repeat(2,1fr)}.trust-v{font-size:20px}}
   @media(prefers-reduced-motion:reduce){.trust-card:hover{transform:none}.trust-shine{display:none}}
-  /* ventana de cuenta creada */
   .ok-ic{width:56px;height:56px;border-radius:50%;margin:4px auto 14px;display:grid;place-items:center;
     background:rgba(39,215,150,.12);border:1px solid rgba(39,215,150,.35);color:var(--green)}
   .ok-t{font-family:var(--display);font-size:20px;font-weight:700;text-align:center;margin:0 0 5px;color:var(--text)}
@@ -1044,14 +978,12 @@
   .priv-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--cyan);
     background:rgba(52,179,255,.12);border:1px solid rgba(52,179,255,.28);border-radius:6px;padding:1px 6px;
     vertical-align:middle;margin-left:5px}
-  /* referral */
   .ref-stat{text-align:center;padding:14px 0 18px}
   .ref-num{font-family:var(--display);font-size:44px;font-weight:800;color:var(--fire);line-height:1}
   .ref-lbl{font-size:12px;color:var(--text-dim);margin-top:4px}
   .ref-link-box{display:flex;align-items:center;gap:8px;background:var(--bg-2);border:1px dashed var(--line-strong);
     border-radius:10px;padding:10px 12px;flex-wrap:wrap}
   .ref-link{font-family:var(--mono);font-size:11.5px;color:var(--fire-soft);flex:1;min-width:0;word-break:break-all}
-  /* economic calendar */
   .cal-list{display:flex;flex-direction:column;gap:2px}
   .cal-day{font-family:var(--display);font-size:12px;font-weight:700;color:var(--fire-soft);text-transform:uppercase;
     letter-spacing:.05em;margin:14px 0 6px;padding-bottom:5px;border-bottom:1px solid var(--line-soft)}
@@ -1067,11 +999,9 @@
   .cal-main{flex:1;min-width:0;font-size:12.5px;color:var(--text);line-height:1.35}
   .cal-flag{margin-right:3px}
   .cal-meta{font-size:10.5px;color:var(--text-faint);margin-top:2px}
-  /* product detail page */
   .prod-click{cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s}
   .prod-click:hover{transform:translateY(-2px)}
   .card.prod-click:hover{border-color:var(--fire);box-shadow:0 12px 30px -14px rgba(255,107,44,.5)}
-  /* efecto de luz recorriendo el borde de las tarjetas de producto */
   .card.prod-click{position:relative}
   .card.prod-click::before{
     content:'';position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;
@@ -1083,13 +1013,11 @@
   .card.prod-click:hover::before{opacity:1;animation:bordeGira 2.5s linear infinite}
   @property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
   @keyframes bordeGira{to{--ang:360deg}}
-  /* pista de "toca para ver" */
   .prod-row-more,.card-more{display:flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;
     color:var(--fire-soft);margin-top:6px;opacity:.85;transition:.15s}
   .card-more{margin:8px 0 2px}
   .prod-click:hover .prod-row-more,.prod-click:hover .card-more{opacity:1;gap:7px}
   .prod-row-more svg,.card-more svg{transform:rotate(-90deg)}
-  /* flecha al final de la fila */
   .prod-row-arrow{color:var(--text-faint);flex-shrink:0;transition:.16s}
   .prod-row-arrow svg{transform:rotate(-90deg)}
   .prod-row:hover .prod-row-arrow{color:var(--fire-soft);transform:translateX(3px)}
@@ -1110,9 +1038,7 @@
     background-repeat:no-repeat;border:1px solid var(--line);cursor:zoom-in;background-color:var(--bg-2)}
   .pd-noimg{display:grid;place-items:center;color:var(--text-faint);cursor:default}
 
-  /* ── Verificación por código (6 cajitas) ── */
   .otp-wrap{position:relative;margin:22px 0 6px}
-  /* lienzo del circuito: 320x190, centrado */
   .otp-grid{position:relative;width:320px;height:190px;margin:0 auto;transition:opacity .3s}
   .otp-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;overflow:visible}
   .trace{stroke:#7af5e8;stroke-width:2;fill:none;stroke-dasharray:200;stroke-dashoffset:200;opacity:0;
@@ -1134,7 +1060,6 @@
     color:#7af5e8;border:2px solid #7af5e8;background:rgba(122,245,232,.09);
     box-shadow:0 0 22px rgba(122,245,232,.30)}
   .otp-ok-t{color:#7af5e8;font-size:13.5px;font-weight:700}
-  /* Perfil del admin, agrupado por temas */
   .perfil-sec{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
     letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);
     margin:26px 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line-soft)}
@@ -1146,26 +1071,22 @@
   .nav-sep{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-faint);
     padding:14px 16px 6px;opacity:.7}
 
-  /* ── Separador "O" con brillo ── */
   .or-sep{display:flex;align-items:center;gap:14px;margin:18px 0;color:var(--text-dim);
     font-size:11px;font-weight:600;letter-spacing:2px}
   .or-sep::before,.or-sep::after{content:'';flex:1;height:1px;
     background:linear-gradient(90deg,transparent,var(--line-soft),transparent)}
 
-  /* ── Botón Google premium ── */
   .btn-google{position:relative;width:100%;display:flex;align-items:center;justify-content:center;
     gap:11px;padding:14px;font-size:14.5px;font-weight:600;cursor:pointer;overflow:hidden;
     color:var(--text);border-radius:13px;border:1.5px solid var(--line);
     background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));
     transition:transform .18s cubic-bezier(.34,1.56,.64,1),border-color .25s,box-shadow .25s}
-  /* borde con gradiente de la marca al pasar el mouse */
   .btn-google::before{content:'';position:absolute;inset:0;border-radius:13px;padding:1.5px;
     background:linear-gradient(120deg,#4285F4,#EA4335,#FBBC05,#34A853,#4285F4);
     background-size:300% 100%;
     -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;
     opacity:0;transition:opacity .3s}
-  /* barrido de luz que cruza el botón */
   .btn-google::after{content:'';position:absolute;top:0;left:-120%;width:70%;height:100%;
     background:linear-gradient(100deg,transparent,rgba(255,255,255,.14),transparent);
     transform:skewX(-18deg);transition:none}
@@ -1195,7 +1116,6 @@
   .pd-actions{display:flex;gap:12px;flex-wrap:wrap}
   .pd-actions .btn-primary{width:auto;padding:13px 24px}
   @media(max-width:640px){.pd-name{font-size:23px}}
-  /* product list rows */
   .prod-list{display:flex;flex-direction:column;gap:10px}
   .prod-row{display:flex;align-items:center;gap:16px;background:var(--surface);border:1px solid var(--line);
     border-radius:14px;padding:16px 18px;transition:.15s}
@@ -1210,14 +1130,12 @@
     .prod-row-main{flex:1 1 100%}
     .prod-row-actions{flex:1 1 100%}
   }
-  /* install steps */
   .inst-list{display:flex;flex-direction:column;gap:14px}
   .inst-step{display:flex;gap:14px;align-items:flex-start;background:var(--surface);border:1px solid var(--line-soft);border-radius:13px;padding:16px 18px}
   .inst-num{width:30px;height:30px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:14px;
     background:linear-gradient(135deg,var(--fire),#E8551C);color:#0A0A0A}
   .inst-step h4{font-family:var(--display);font-size:14.5px;font-weight:600;margin-bottom:4px}
   .inst-step p{font-size:13px;color:var(--text-dim);line-height:1.55}
-  /* admin messages */
   .msg-list{display:flex;flex-direction:column;gap:14px;max-width:760px}
   .msg-card{background:var(--surface);border:1px solid var(--line-soft);border-radius:14px;padding:18px 20px;transition:border-color .15s}
   .msg-card:hover{border-color:var(--line)}
@@ -1227,7 +1145,6 @@
   .msg-date{font-family:var(--mono);font-size:11px;color:var(--text-faint);flex-shrink:0}
   .msg-body{font-size:13.5px;color:var(--text-dim);line-height:1.6;background:var(--bg-2);border-radius:10px;padding:13px 15px;margin-bottom:13px;white-space:pre-wrap}
   .msg-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-  /* market news */
   .mkt-list{display:flex;flex-direction:column;gap:8px}
   .mkt-item{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line-soft);
     border-radius:12px;padding:13px 15px;transition:.15s;color:var(--text)}
@@ -1246,10 +1163,6 @@
 
 <div class="app" id="app"></div>
 
-<!-- ── CENTRO DE AYUDA ────────────────────────────────────────
-     Boton flotante con las preguntas frecuentes. No usa IA:
-     solo muestra las respuestas que tu has escrito, asi que no
-     puede inventarse nada ni prometer resultados. -->
 <button class="ay-btn" id="ayBtn" onclick="ayudaToggle()" title="¿Necesitas ayuda?" aria-label="Ayuda">
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
        stroke-linecap="round" stroke-linejoin="round">
@@ -1270,9 +1183,7 @@
   </div>
   <div class="ay-body" id="ayBody"></div>
   <div class="ay-foot">
-    <!-- Antes iba a WhatsApp. Ahora al formulario del portal: los
-         mensajes llegan ordenados a la pestaña Mensajes, solo escriben
-         clientes registrados, y no entra spam. -->
+    
     <button class="ay-wa" onclick="ayudaEscribir()">
       Escríbeme desde el portal
     </button>
@@ -1291,8 +1202,6 @@
     <div class="modal-body" id="payBody"></div></div>
 </div>
 
-<!-- Ventana de confirmacion propia. La del navegador sale con el
-     nombre del dominio y rompe el aspecto del portal. -->
 <div class="modal-bg" id="confModal">
   <div class="modal" style="max-width:400px">
     <div class="modal-head"><h3 id="confTitulo">¿Seguro?</h3>
@@ -1305,7 +1214,6 @@
   </div>
 </div>
 
-<!-- ventana para apuntar un movimiento en Mi Balance -->
 <div class="modal-bg" id="movModal">
   <div class="modal"><div class="modal-head"><h3 id="movTitle">Nuevo movimiento</h3>
     <button class="modal-x" onclick="closeModal('movModal')">✕</button></div>
@@ -1395,7 +1303,6 @@
 <script>
 const CLIENT={name:'',email:''};
 const FAQ=[
-  // ── CUENTA Y PORTAL ──
   {c:'Cuenta',q:'¿Cómo entro al portal?',a:'Con el correo y la contraseña que registraste. Si tu cuenta aún está pendiente de aprobación, te aviso en cuanto la libere. Puedes marcar "Recordar mi contraseña" para no escribirla cada vez.'},
   {c:'Cuenta',q:'Me registré y no puedo entrar todavía',a:'Cada cuenta la apruebo manualmente para mantener el portal solo para clientes. Normalmente es rápido. Si llevas más de un día esperando, escríbeme desde Contacto (menú de la izquierda) y lo reviso.'},
   {c:'Cuenta',q:'Olvidé mi contraseña, ¿qué hago?',a:'En la pantalla de inicio toca "¿Olvidaste tu contraseña?", pon tu correo y te llega una nueva al instante. Luego cámbiala en Mi Perfil por una que recuerdes.'},
@@ -1404,7 +1311,6 @@ const FAQ=[
   {c:'Cuenta',q:'¿Puedo cambiar el correo de mi cuenta?',a:'Sí, pero hay que hacerlo a mano porque tu correo también es tu licencia en los productos. Escríbeme desde Contacto con el correo viejo y el nuevo y lo cambio en todo.'},
   {c:'Cuenta',q:'¿Puedo usar el portal desde el celular?',a:'Sí, el portal funciona en celular, tablet y computadora. Los productos en sí (AddOns y apps) sí requieren Windows con NinjaTrader 8.'},
 
-  // ── LICENCIAS ──
   {c:'Licencias',q:'¿Cómo activo mi licencia?',a:'Tu correo es tu licencia. Abre el producto, ingresa el mismo correo con el que entras al portal y se activa solo. Si queda pendiente, me llega aviso y la apruebo.'},
   {c:'Licencias',q:'Mi licencia dice "Pendiente", ¿qué significa?',a:'Que ya registró tu solicitud y estoy por aprobarla. En cuanto la apruebo, cierra y vuelve a abrir el producto y ya entra normal.'},
   {c:'Licencias',q:'¿En cuántas PCs puedo usar mi licencia?',a:'Depende de lo que hayas adquirido. Cada licencia tiene un número de PCs asignado. Si necesitas más equipos, escríbeme y lo ajusto.'},
@@ -1412,7 +1318,6 @@ const FAQ=[
   {c:'Licencias',q:'Me dice que llegué al máximo de PCs',a:'Ya usaste todos los equipos permitidos de tu licencia. Escríbeme, te libero un espacio o te amplío la cantidad de PCs.'},
   {c:'Licencias',q:'Formateé mi PC y ahora no activa',a:'Al formatear cambia la identificación del equipo y cuenta como PC nueva. Avísame y libero la anterior para que actives sin problema.'},
 
-  // ── PRODUCTOS Y DESCARGAS ──
   {c:'Productos',q:'¿Cómo descargo un producto?',a:'En "Mis Productos" toca el producto para ver toda su información y fotos, y usa el botón "Descargar". Si es privado, primero debes comprarlo y que te lo libere.'},
   {c:'Productos',q:'¿Por qué no puedo descargar un producto?',a:'Si dice "Privado", necesitas comprarlo. Toca el botón de comprar, realiza el pago y te lo libero. Mientras, puedes ver su video para conocerlo.'},
   {c:'Productos',q:'¿Cómo compro un producto privado?',a:'Toca "Comprar" en el producto, te muestra el precio y un botón para escribirme. En cuanto confirme el pago, te lo libero y ya podrás descargarlo.'},
@@ -1423,20 +1328,17 @@ const FAQ=[
   {c:'Productos',q:'¿Funciona en Mac?',a:'No directamente. NinjaTrader 8 y las apps son para Windows. En Mac puedes usar Parallels o una máquina virtual con Windows, pero para operar en real recomiendo Windows nativo o un VPS.'},
   {c:'Productos',q:'¿Necesito dejar la PC prendida?',a:'Sí, para que un bot opere solo, NinjaTrader debe estar abierto y con conexión. Muchos traders usan un VPS para no depender de su PC ni de la luz o el internet de casa.'},
 
-  // ── CUENTAS DE FONDEO ──
   {c:'Fondeo',q:'¿Con qué prop firms funcionan?',a:'Trabajo con las principales del mercado: TopStep, Lucid, MyFundedFutures, FuturesElite, Funded Futures Network y plataformas tipo ProjectX. Si usas otra, pregúntame antes de comprar.'},
   {c:'Fondeo',q:'¿Los bots respetan las reglas de la prop firm?',a:'Las herramientas incluyen control de riesgo, break-even y trailing, pero las reglas (drawdown, consistencia, horarios) las controlas tú. Configúralo acorde a tu firma y pruébalo primero en SIM.'},
   {c:'Fondeo',q:'¿Me garantiza pasar el reto?',a:'No, y desconfía de quien te lo prometa. Estas son herramientas de ejecución y gestión que te ayudan a operar con disciplina y sin errores manuales. El resultado depende del mercado y de tu gestión.'},
   {c:'Fondeo',q:'¿Puedo usarlo en varias cuentas a la vez?',a:'Sí, para eso están los replicadores: operas en una cuenta maestra y replica las órdenes a las demás. Consulta el producto de replicación que te encaje.'},
   {c:'Fondeo',q:'¿Hay descuentos para comprar cuentas de fondeo?',a:'Sí, en la sección "Descuentos" publico los códigos vigentes de varias prop firms. Copia el código y úsalo al pagar.'},
 
-  // ── PROBLEMAS ──
   {c:'Problemas',q:'El bot no me manda órdenes',a:'Revisa tres cosas: que tengas conexión al feed, que la cuenta seleccionada sea la correcta y que el panel esté activado. Si sigue igual, mándame captura del Log de NinjaTrader.'},
   {c:'Problemas',q:'Me salió un error, ¿qué te mando?',a:'Lo que más ayuda: captura de la pantalla del error, captura del Log de NinjaTrader (Control Center → Log), qué producto usabas y si era SIM o cuenta real. Con eso lo ubico rápido.'},
   {c:'Problemas',q:'Se me quedó una posición sin stop',a:'Cierra manualmente desde NinjaTrader para protegerte primero, y luego me escribes. Nunca dejes una posición abierta sin protección mientras se revisa algo.'},
   {c:'Problemas',q:'¿En cuánto tiempo respondes?',a:'Contesto lo más rápido que puedo, normalmente el mismo día. Si es algo urgente de una cuenta en real, avísame y le doy prioridad.'},
 
-  // ── SEGURIDAD Y RIESGO ──
   {c:'Riesgo',q:'¿Puedo probar antes de operar en real?',a:'Siempre. Prueba primero en cuenta de simulación (SIM) o Playback antes de usarlo en cuenta real o fondeada. Es la regla número uno.'},
   {c:'Riesgo',q:'¿Esto es asesoría financiera?',a:'No. SNIPER PORTAL vende software y herramientas de apoyo. No damos señales ni asesoría de inversión. Las decisiones y el riesgo son tuyos.'},
   {c:'Riesgo',q:'¿Puedo compartir el producto con un amigo?',a:'No. Cada licencia es personal y está ligada a tu correo y tus equipos. Compartirla puede bloquear tu propia licencia. Si tu amigo quiere, dale tu link de referido desde Mi Perfil.'},
@@ -1472,22 +1374,13 @@ const orb=(big)=> big
   ? `<div class="scope"><span class="ring"></span><span class="ring2"></span><span class="ring3"></span><span class="cross t"></span><span class="cross b"></span><span class="cross l"></span><span class="cross r"></span><div class="orb"></div></div>`
   : `<div class="orb-wrap"><div class="orb"></div><div class="brand-txt"><div class="brand-name">SNIPER<span> PORTAL</span></div><div class="brand-sub">TRADING SYSTEMS</div></div></div>`;
 
-/* ============================================================
-   👇  PEGA AQUÍ TU URL DE APPS SCRIPT (la que termina en /exec)
-   Si la dejas vacía, el portal funciona en modo DEMO.
-   ============================================================ */
 const API_URL = "https://script.google.com/macros/s/AKfycbxRmcVmyKWd6mTTonNrsIDbG1PZSoz6dGgO5FUMWylW80FcOD4PyyKyLB03Fuy8It-jdQ/exec";
-// servicio de correos (Apps Script solo para enviar emails)
 const MAIL_URL = "https://script.google.com/macros/s/AKfycbwA9nhd7SRlMDDK3hVEU1vjgoy8HlaMQX4UsJEjo5AT0LuOaGPkddCeGOSOLWuW9zUMmQ/exec";
-// manda un correo por detrás (no bloquea; si falla, no rompe nada)
-// freno de correos: máximo unos pocos por minuto, evita disparos en masa/bucle
 let _correosEnviados=[], _correoBloqueado=false;
 function enviarCorreo(params){
   try{
     const ahora=Date.now();
-    // limpiar registro de más de 1 minuto
     _correosEnviados=_correosEnviados.filter(t=>ahora-t<60000);
-    // si ya se mandaron 15 en el último minuto, bloquear (señal de bucle/masa)
     if(_correosEnviados.length>=15){
       if(!_correoBloqueado){ _correoBloqueado=true; console.warn('Correos bloqueados: demasiados de golpe'); }
       return;
@@ -1496,7 +1389,6 @@ function enviarCorreo(params){
     const qs=Object.keys(params).map(k=>k+'='+encodeURIComponent(params[k])).join('&');
     const url=MAIL_URL+'?'+qs;
     console.log('[CORREO] enviando ->', params.accion, params.email);
-    // no-cors: el navegador no bloquea el envio aunque no pueda leer la respuesta
     fetch(url,{mode:'no-cors'})
       .then(()=>console.log('[CORREO] pedido enviado', params.email))
       .catch(err=>{
@@ -1506,11 +1398,6 @@ function enviarCorreo(params){
   }catch(e){ console.warn('[CORREO] error', e); }
 }
 
-/* ============================================================
-   👇 LICENCIAS DE PRODUCTOS (las de HWID, cada una en su hoja)
-   Por cada producto pega: nombre + su URL /exec.
-   Agrega más conforme me mandes cada Apps Script.
-   ============================================================ */
 const LICENSE_APIS = [
   { name:"SNIPEROCKET HISTORIAL", url:"https://script.google.com/macros/s/AKfycbzXHQoVbCQE0a-d4g8hgQLO1BNGQRMUUuI_PeXs7_QnYi7a8i0yCkKlKkILQLDhWin4kQ/exec", pcs:false, del:true },
   { name:"AUTO PRO ROCKET", url:"https://script.google.com/macros/s/AKfycbwrZzkyO33LF9_Qa3urD2NPoiOGTWD015y92-CQtbkvEwTUgkkDxIcMb5J8sB-tDMym/exec", pcs:true, del:true },
@@ -1529,15 +1416,11 @@ let REMEMBER={email:'',pass:'',on:false};
 let CONTACT_TEL='';
 try{CONTACT_TEL=localStorage.getItem('sp_tel')||'';}catch(e){}
 let REF_CODE='';
-// ── Números de la barra de confianza (respaldo si el servidor no carga) ──
 const STATS={ clientes:'', anios:'3+', productos:'8' };
-// ── PayPal: pon aquí tu link de PayPal.Me y el link directo de tu QR ──
 const PAYPAL_LINK='https://www.paypal.com/paypalme/LLCQuintana';
 const PAYPAL_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-PARA-MI-PORTAL-WEB/main/WhatsApp%20Image%202026-07-19%20at%202.16.14%20PM.jpeg';
-// ── Zelle ──
 const ZELLE_TEL='832 640 9105';
 const ZELLE_QR='https://raw.githubusercontent.com/quintanausa2024-design/FOTOS-PARA-MI-PORTAL-WEB/main/WhatsApp%20Image%202026-07-19%20at%202.37.57%20PM.jpeg';
-// ── comprobante ──
 const CONTACT_MAIL='sniperocket2028@gmail.com';
 const TELEGRAM_USER='CEOSOPORTE';  // usuario de Telegram sin @
 let SRV_STATS=null, SRV_STATS_LOADING=false;
@@ -1548,7 +1431,6 @@ async function loadStats(){
   SRV_STATS_LOADING=false;
   if(view==='login') repintarTrust(); else render();
 }
-// repinta SOLO la barra de confianza, sin redibujar toda la portada (evita el parpadeo)
 function repintarTrust(){
   const cont=document.getElementById('trustSlot');
   if(cont) cont.innerHTML=trustBar();
@@ -1636,18 +1518,13 @@ async function loadReviews(){
 try{const pv=localStorage.getItem('sp_prodview');if(pv==='list'||pv==='cards')PROD_VIEW=pv;}catch(e){}
 let GUIDES=null, GUIDES_LOADING=false, MSGS=null, MSGS_LOADING=false, MYNEWS=null, MKTNEWS=null, MKTCAL=null, NEWS_LOADING=false, ADMIN_NEWS=null, ADMIN_NEWS_LOADING=false;
 function setView(v){
-  // Al entrar o salir cambian las preguntas que puede responder el
-  // centro de ayuda, asi que se reinicia la conversacion.
   try{ AY_SALUDADO_EN = null; if (AY_ABIERTO) ayudaToggle(); }catch(e){}
-  // y se borra el balance del anterior, para que nadie vea lo de otro
   try{ BALANCE = null; BAL_ACCESO = null; VALORACIONES = null; }catch(e){}
   view=v;if(v==='login'){tab='auth_login';SESS={email:'',pass:''};ADMIN_USERS=null;ADMIN_PRODS=null;CLIENT_PRODS=null;GUIDES=null;MSGS=null;ALL_LICS=null;MYNEWS=null;MKTNEWS=null;MKTCAL=null;ADMIN_NEWS=null;DISCOUNTS=null;ADMIN_DISC=null;MYREF=null;ADMIN_REF=null;REVIEWS=null;ADMIN_REV=null;MAINT_LOADED=false;SRV_STATS=null;NEWPROD=null;clearSession();}else if(v==='admin'){tab='clients'; if(MSGS===null)loadMsgs();} else tab='products';authMsg='';render()}
 
-// ── recordar sesión al refrescar la página ──
 let ADMIN_PEND=null;
 let ROL_ACTUAL='';   // 'ADMIN' | 'ADMIN_LIMITADO' | 'CLIENTE'
 function esRolAdmin(r){ r=(r||'').toUpperCase(); return r==='ADMIN'||r==='ADMIN_LIMITADO'; }
-// marca de dispositivo de confianza (por admin)
 function claveDisp(email){ return 'sp_trust_'+btoa(email).replace(/=/g,''); }
 function dispositivoConfiable(email){
   try{ return localStorage.getItem(claveDisp(email))==='SI'; }catch(e){ return false; }
@@ -1658,7 +1535,6 @@ function marcarDispositivo(email){
 function saveSession(role){ROL_ACTUAL=role;try{localStorage.setItem('sp_sess',JSON.stringify({email:SESS.email,pass:SESS.pass,role:role,name:CLIENT.name}));}catch(e){}}
 function clearSession(){
   try{localStorage.removeItem('sp_sess');}catch(e){}
-  // cerrar tambien el vale en Railway, para que no quede vivo
   try{ if(RW_TOKEN){ fetch(RAILWAY_URL+'/auth/salir',{method:'POST',
         headers:{'content-type':'application/json'},
         body:JSON.stringify({token:RW_TOKEN})}); } }catch(e){}
@@ -1802,18 +1678,11 @@ function loginView(){
     <button class="${LANG==='en'?'on':''}" onclick="setLang('en')">EN</button></div>`;
   return `<div class="login-wrap">${sniperBG()}<div class="login-col">${langToggle}${card}<div id="trustSlot">${trustBar()}</div>${footerHTML()}</div></div>`;
 }
-// ── barra de confianza (clientes, reseñas, años, productos) ──
 function trustBar(){
   const isEn=LANG==='en';
   const rs=REVIEWS||[];
   const nRes=rs.length;
   const avg=nRes?(rs.reduce((s,r)=>s+(r.estrellas||0),0)/nRes):0;
-  // OJO con los nombres: el servidor manda 'traders' y 'herramientas',
-  // no 'clientes' ni 'productos'. Aqui se leian los nombres viejos y
-  // por eso la portada no mostraba lo que guardabas en el panel.
-  //
-  // El servidor ya devuelve el numero real cuando el campo esta vacio,
-  // asi que basta con leerlo tal cual.
   const cli = (SRV_STATS&&SRV_STATS.traders) ? SRV_STATS.traders
             : (SRV_STATS&&SRV_STATS.reales!=null&&SRV_STATS.reales>0) ? (SRV_STATS.reales+'')
             : (STATS.clientes||'—');
@@ -1871,28 +1740,6 @@ function sniperBG(){
 }
 function goAuth(t){tab=t;authMsg='';render()}
 
-// ════════════════════════════════════════════════════════════
-//  PUENTE A RAILWAY
-//
-//  El portal habla como siempre: apiCall({action:'login'...}).
-//  Este puente desvia a Railway TODO lo que toca clientes, y deja
-//  en Firebase lo demas (productos, mensajes, guias, licencias).
-//
-//  Asi la mudanza va por partes: si algo falla, se cambia una
-//  linea (RAILWAY_ON = false) y todo vuelve a Firebase.
-// ════════════════════════════════════════════════════════════
-// ═══════════════════════════════════════════════════════════
-//  CONSOLA EN SILENCIO
-//
-//  Nadie ve mensajes al abrir F12. Los errores se guardan en
-//  memoria para poder consultarlos si hace falta:
-//     verErrores()   <- escribelo en la consola
-//
-//  OJO: esto oculta los MENSAJES, no el codigo. El index.html
-//  sigue siendo visible en F12 > Sources, como en cualquier
-//  pagina web. Lo importante (contrasenas, licencias, datos)
-//  vive en el servidor, no aqui.
-// ═══════════════════════════════════════════════════════════
 (function(){
   const guardados = [];
   const real = { log:console.log, warn:console.warn, error:console.error,
@@ -1915,7 +1762,6 @@ function goAuth(t){tab=t;authMsg='';render()}
   console.info = callar('info');
   console.debug = callar('debug');
 
-  // errores que no pasan por console.error
   window.addEventListener('error', e=>{
     try{ guardados.push({ tipo:'error', hora:new Date().toISOString(),
       texto:(e.message||'')+' @ '+(e.filename||'')+':'+(e.lineno||'') }); }catch(x){}
@@ -1925,7 +1771,6 @@ function goAuth(t){tab=t;authMsg='';render()}
       texto:'promesa: '+String(e.reason) }); }catch(x){}
   });
 
-  // Para ti: escribe verErrores() en la consola y los ves.
   window.verErrores = function(){
     if (!guardados.length){ real.log('Sin errores guardados.'); return; }
     for (const g of guardados) real.log(g.hora.slice(11,19), '['+g.tipo+']', g.texto);
@@ -1937,13 +1782,10 @@ function goAuth(t){tab=t;authMsg='';render()}
 const RAILWAY_URL = 'https://sniper-sniper-server-production.up.railway.app';
 const RAILWAY_ON  = true;   // ponlo en false para volver a Firebase
 
-// Acciones que ya viven en Railway
 const EN_RAILWAY = new Set([
-  // clientes y acceso
   'login','signup','verificarcodigo','changepass','reset','adminreset',
   'listusers','listusersfresh','approve','revoke','deleteuser',
   'setclientproducts',
-  // catalogo y contenido
   'listproducts','adminproducts','saveproduct','addproduct','editproduct',
   'deleteproduct','reorderproducts',
   'listguides','saveguide','addguide','editguide','deleteguide',
@@ -1957,7 +1799,6 @@ const EN_RAILWAY = new Set([
   'rechazartodos','deletebasura'
 ]);
 
-// El vale de sesion. Sustituye a mandar la contraseña en cada peticion.
 let RW_TOKEN = null;
 try { RW_TOKEN = localStorage.getItem('rw_token') || null; } catch(e){}
 function rwGuardarToken(t){
@@ -1976,7 +1817,6 @@ async function rwFetch(ruta, cuerpo, metodo='POST'){
   return await r.json();
 }
 
-// Si el vale caduco, se saca uno nuevo con las credenciales guardadas.
 async function rwAsegurarSesion(){
   if (RW_TOKEN) return true;
   if (!SESS || !SESS.email || !SESS.pass) return false;
@@ -1996,8 +1836,6 @@ async function llamarRailway(p){
   }
 
   if (a === 'signup') {
-    // 'ref' es el codigo de quien lo trajo. Sin esto, quien se registre
-    // con el codigo de otro no quedaria apuntado como su referido.
     const r = await rwFetch('/registro/pedir-codigo',
       { email:p.email, pass:p.pass, nombre:p.nombre, ref:p.ref || '' });
     if (r.ok) return { ok:true, verificar:true };
@@ -2015,7 +1853,6 @@ async function llamarRailway(p){
     if (!await rwAsegurarSesion()) return { ok:false, error:'NO_SESION' };
     const r = await rwFetch('/auth/cambiar-pass',
       { actual:p.oldpass||p.pass, nueva:p.newpass });
-    // al cambiarla, la guardada en memoria ya no sirve
     if (r.ok && SESS) { SESS.pass = p.newpass; try{ saveSession(ROL_ACTUAL); }catch(e){} }
     return r;
   }
@@ -2034,7 +1871,6 @@ async function llamarRailway(p){
     if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
     const r = await rwFetch('/admin/clientes', null, 'GET');
     if (!r.ok) return r;
-    // dejarlo con la misma forma que esperaba el portal
     const users = (r.clientes||[]).map(c=>({
       email: c.email, nombre: c.nombre||'', name: c.nombre||'',
       aprobado: c.aprobado||'NO', rol: c.rol||'CLIENTE',
@@ -2063,7 +1899,6 @@ async function llamarRailway(p){
       { email:p.target, productos:p.productos||'' });
   }
 
-  // ── CATALOGO Y CONTENIDO ────────────────────────────────
   const cred = { email:(SESS&&SESS.email)||'', pass:(SESS&&SESS.pass)||'' };
 
   if (a === 'listproducts')  return await rwFetch('/productos/mios', cred);
@@ -2071,9 +1906,6 @@ async function llamarRailway(p){
                                return await rwFetch('/admin/productos', null, 'GET'); }
   if (a === 'saveproduct' || a === 'addproduct' || a === 'editproduct') {
     if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
-    // OJO: el formulario manda 'desc' (no 'descripcion'), y ademas
-    // 'download' y 'video'. Si no se reenvian, el enlace de descarga
-    // y la descripcion NO se guardan aunque los escribas.
     return await rwFetch('/admin/productos/guardar', {
       id:p.pid||p.id||'', nombre:p.nombre, categoria:p.categoria,
       descripcion: p.descripcion || p.desc || '',
@@ -2083,9 +1915,6 @@ async function llamarRailway(p){
   if (a === 'deleteproduct') { if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
                                return await rwFetch('/admin/productos/borrar', {id:p.pid||p.id}); }
   if (a === 'reorderproducts'){ if(!await rwAsegurarSesion()) return {ok:false,error:'NO_ADMIN'};
-    // El portal manda el campo 'orden' (no 'ids'). Si no se lee bien,
-    // llega vacio y el orden NO se guarda: por eso al recargar volvia
-    // a salir como estaba.
     const lista = p.orden || p.ids || '';
     return await rwFetch('/admin/productos/orden',
       { ids: (typeof lista === 'string' ? lista.split(',').filter(Boolean) : (lista || [])) }); }
@@ -2165,8 +1994,6 @@ async function llamarRailway(p){
   return { ok:false, error:'ACCION_NO_MIGRADA' };
 }
 
-// Las fechas llegan como 2026-08-11T18:53:00Z; el portal las espera
-// en dd/MM/yyyy HH:mm
 function fechaCorta(v){
   if(!v) return '';
   const d = new Date(v);
@@ -2178,10 +2005,6 @@ function fechaCorta(v){
   return `${dd}/${mm}/${d.getFullYear()} ${hh}:${mi}`;
 }
 
-// Descargar un producto.
-// El enlace real ya no viaja al navegador: se pide un permiso de un
-// solo uso que dura 60 segundos. Asi no se puede copiar con F12 ni
-// pasarselo a alguien que no lo tenga comprado.
 async function descargarProducto(pid, boton){
   const antes = boton ? boton.innerHTML : '';
   if (boton) { boton.disabled = true; boton.textContent = 'Preparando...'; }
@@ -2203,20 +2026,9 @@ async function descargarProducto(pid, boton){
   if (boton) { boton.disabled = false; boton.innerHTML = antes; }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  CENTRO DE AYUDA
-//  Busca en las preguntas que TU escribiste. Sin IA: no puede
-//  inventarse respuestas ni prometer resultados.
-// ═══════════════════════════════════════════════════════════
 let AY_TEMAS = null, AY_ABIERTO = false, AY_APUNTADO = 0;
-// Guarda si se saludo estando DENTRO o FUERA. Si cambia (entras o
-// sales del portal), la conversacion se reinicia con los temas que
-// tocan. Antes se saludaba una sola vez y el widget se quedaba con
-// las preguntas de la portada aunque ya hubieras entrado.
 let AY_SALUDADO_EN = null;
 
-// Pasa las preguntas que ya estaban escritas aqui al centro de ayuda.
-// Se ejecuta UNA vez desde la consola del navegador (F12):  importarAyuda()
 async function importarAyuda(){
   if (!await rwAsegurarSesion()) { console.error('Entra como admin primero'); return; }
   const r = await rwFetch('/admin/ayuda/importar', { temas: FAQ });
@@ -2225,17 +2037,9 @@ async function importarAyuda(){
   else console.error('No se pudo:', r.error);
 }
 
-// ¿Esta el cliente dentro del portal o en la pantalla de entrada?
-// En la entrada solo hablamos de cuenta y acceso; dentro, de todo.
 function ayudaDentro(){
   return !!(SESS && SESS.email) && view !== 'login';
 }
-// FUERA del portal (portada y pantalla de entrada) solo se responden
-// preguntas de REGISTRO y ACCESO. Quien todavia no ha entrado no
-// necesita saber de licencias, AddOns ni prop firms: eso solo le
-// confunde, y ademas no puede hacer nada con esa informacion.
-// Se filtra por palabras de la propia pregunta, no por categoria:
-// "Problemas" incluye cosas de bots que aqui no pintan nada.
 const AY_FUERA_PALABRAS = [
   'entro al portal', 'registr', 'contrasena', 'contraseña',
   'correo de bienvenida', 'cambiar el correo', 'desde el celular',
@@ -2268,7 +2072,6 @@ async function ayudaCargar(){
   if (AY_SALUDADO_EN !== donde) { AY_SALUDADO_EN = donde; ayudaSaludo(); }
 }
 
-// Solo los temas que tocan segun donde este
 function ayudaMisTemas(){
   const t = AY_TEMAS || [];
   if (ayudaDentro()) return t;             // dentro: todas
@@ -2286,25 +2089,19 @@ function ayudaSaludo(){
   ayudaSugerencias();
 }
 
-// Botones con las preguntas mas habituales
 function ayudaSugerencias(){
   const todos = ayudaMisTemas();
   if (!todos.length) return;
 
   let t;
   if (!ayudaDentro()){
-    // fuera: las de registro y acceso, tal cual
     t = todos.slice(0, 4);
   } else {
-    // DENTRO: una de cada tema, no las 4 primeras de la lista.
-    // Antes salian siempre las de "entrar al portal" y "contraseña",
-    // que son justo las que ya vio en la portada.
     const porTema = {};
     for (const x of todos){
       const c = String(x.categoria || 'General');
       if (!porTema[c]) porTema[c] = x;
     }
-    // primero los temas que mas le sirven ya estando dentro
     const orden = ['Licencias','Productos','Problemas','Fondeo','Riesgo','Cuenta'];
     t = orden.map(c => porTema[c]).filter(Boolean).slice(0, 4);
     if (t.length < 4) t = Object.values(porTema).slice(0, 4);
@@ -2330,7 +2127,6 @@ function ayudaDice(html, mio){
   if (!mio) ayudaSonido();
 }
 
-// Un tono corto y suave al responder. Se genera solo, sin archivos.
 function ayudaSonido(){
   try{
     const A = window.AudioContext || window.webkitAudioContext;
@@ -2360,14 +2156,10 @@ function ayudaQuitarEscribiendo(){
   const e = document.getElementById('ayEsc'); if (e) e.remove();
 }
 
-// Quita tildes y mayusculas: asi "instalacion" encuentra "instalación"
 function ayNorm(t){
   return String(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 }
 
-// Palabras que salen en casi todas las respuestas y no dicen nada
-// por si solas. Si cuentan, "que es el par cruzado" acaba devolviendo
-// la respuesta de "no puedo descargar" solo porque comparten "puedo".
 const AY_VACIAS = new Set(['que','como','cual','cuando','donde','para','por','con','los','las',
   'una','uno','del','mas','pero','este','esta','esto','tengo','puedo','hacer','todo','muy',
   'cuenta','producto','productos','portal','sniper']);
@@ -2390,24 +2182,16 @@ function ayudaBuscarTemas(texto){
       if (enP.includes(w))      { p += 14; acertadas++; }
       else if (todo.includes(w)){ p += 5;  acertadas++; }
       else {
-        // por la RAIZ: "instalar" encuentra "instalo", "instalación"...
         const raiz = w.length > 5 ? w.slice(0, -2) : w;
         if (raiz.length > 3 && todo.includes(raiz)) { p += 4; acertadas++; }
       }
     }
 
-    // Si la pregunta trae varias palabras con significado, tienen que
-    // coincidir al menos la mitad. Si no, es casualidad, no respuesta.
     if (clave.length >= 2 && acertadas < Math.ceil(clave.length / 2)) p = 0;
-    // Y si ninguna palabra con significado coincide, no vale.
     if (clave.length >= 1 && acertadas === 0) p = 0;
 
     return { t, p };
   })
-  // Se exige un MINIMO de parecido. Sin esto, "que es el par cruzado"
-  // devolvia la respuesta de "no puedo descargar" solo porque ambas
-  // llevan la palabra "puedo". Contestar cualquier cosa es peor que
-  // decir "no te entendi": el cliente piensa que esto no sirve.
   .filter(x => x.p >= 12)
   .sort((a,b) => b.p - a.p).map(x => x.t);
 }
@@ -2426,7 +2210,6 @@ async function ayudaPreguntar(){
   const res = ayudaBuscarTemas(texto);
 
   if (!res.length){
-    // No lo entendio: se dice claro y se apunta para escribir esa respuesta
     ayudaDice(!ayudaDentro()
       ? 'No te entendí, o esa pregunta es de dentro del portal.<br><br>Aquí solo puedo ayudarte a <b>registrarte</b> y <b>entrar</b>. Si ya tienes cuenta, entra y pregúntame ahí.'
       : 'No te entendí. Prueba con otras palabras, o escríbeme desde <b>Contacto</b> y te respondo yo mismo.');
@@ -2446,7 +2229,6 @@ async function ayudaPreguntar(){
   try{ fetch(RAILWAY_URL + '/ayuda/visto', {method:'POST',
     headers:{'content-type':'application/json'}, body: JSON.stringify({ id: mejor.id })}); }catch(e){}
 
-  // si habia mas parecidas, se ofrecen
   const otras = res.slice(1, 4);
   if (otras.length){
     const b = document.getElementById('ayBody');
@@ -2458,9 +2240,7 @@ async function ayudaPreguntar(){
   }
 }
 
-// Al tocar una sugerencia
 function ayudaResponderA(id){
-  // el id viene del HTML como texto; se compara como numero
   const t = (AY_TEMAS||[]).find(x => Number(x.id) === Number(id));
   if (!t) return;
   ayudaDice(escapeHtml(t.pregunta), true);
@@ -2474,7 +2254,6 @@ function ayudaResponderA(id){
   }, 380);
 }
 
-// Lleva al formulario del portal. Si aun no ha entrado, al correo.
 function ayudaEscribir(){
   ayudaToggle();
   if (ayudaDentro()) { setTab('contact'); }
@@ -2486,21 +2265,10 @@ function escapeHtml(t){
     ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'})[c]);
 }
 
-// cerrar con Escape
 document.addEventListener('keydown', e=>{
   if (e.key === 'Escape' && AY_ABIERTO) ayudaToggle();
 });
 
-// ═══════════════════════════════════════════════════════════
-//  CERRAR VENTANAS AL TOCAR FUERA
-//
-//  Antes cada ventana miraba DONDE SOLTASTE el raton. Si
-//  seleccionabas texto dentro y arrastrabas un poco fuera del
-//  borde, al soltar se cerraba y perdias lo escrito.
-//
-//  Ahora se apunta DONDE EMPEZO el clic: solo se cierra si
-//  empezaste Y terminaste fuera de la ventana.
-// ═══════════════════════════════════════════════════════════
 let _clicEmpezoFuera = false;
 
 document.addEventListener('mousedown', e=>{
@@ -2515,14 +2283,12 @@ document.addEventListener('mouseup', e=>{
   if (fondo && e.target.id) closeModal(e.target.id);
 }, true);
 
-// en movil: cerrar al tocar fuera, sin el lio del arrastre
 document.addEventListener('touchend', e=>{
   const t = e.target;
   if (t && t.classList && t.classList.contains('modal-bg') && t.id) closeModal(t.id);
 }, true);
 
 async function apiCall(params){
-  // Lo de clientes va a Railway; lo demas sigue en Firebase.
   if (RAILWAY_ON && params && EN_RAILWAY.has(params.action)) {
     try { return await llamarRailway(params); }
     catch(e){
@@ -2530,8 +2296,6 @@ async function apiCall(params){
       return { ok:false, error:'CONN' };
     }
   }
-  // Antes preguntaba "¿ya esta?" cada 50 ms: se perdian hasta 50 ms por
-  // llamada. Ahora Firebase avisa en cuanto esta listo y arrancamos al instante.
   if(typeof window.fbCall!=='function'){
     await new Promise(resolve=>{
       const listo=()=>resolve();
@@ -2541,11 +2305,9 @@ async function apiCall(params){
     });
   }
   if(typeof window.fbCall==='function'){ return await window.fbCall(params); }
-  // si por lo que sea Firebase no cargó, error claro
   return {ok:false, error:'FIREBASE_NO_CARGO'};
 }
 
-// ── Botón "Continuar con Google" ──
 function btnGoogle(){
   const txt = LANG==='en' ? 'Continue with Google' : 'Continuar con Google';
   return `<div class="or-sep"><span>${LANG==='en'?'OR':'O'}</span></div>
@@ -2559,15 +2321,11 @@ async function doGoogle(){
   const btn=document.getElementById('gbtn');
   if(btn){ btn.classList.add('loading'); const sp=btn.querySelector('span'); if(sp) sp.textContent=LANG==='en'?'Opening...':'Abriendo...'; }
   try{
-    // el popup de Google lo abre el bloque de módulo (que sí tiene Firebase Auth)
     const res = await window.__googleSignIn();
     const email=(res.email||'').toLowerCase().trim();
     const nombre=res.nombre||email;
     if(!email){ throw new Error('sin correo'); }
 
-    // Va a RAILWAY. Antes iba al portero, que escribia en Firebase:
-    // por eso las cuentas creadas con Google no aparecian en el panel
-    // ni te llegaba aviso de la solicitud.
     const r = await rwFetch('/auth/google', { email, nombre, ref: REF_CODE || '' });
 
     if(!r.ok){ authMsg='No se pudo entrar con Google. Intenta de nuevo.'; return render(); }
@@ -2607,7 +2365,6 @@ async function doLogin(){
     const r=await apiCall({action:'login',email,pass});
     if(r.ok){
       CLIENT.name=r.name||email; CLIENT.email=email; SESS={email,pass};
-      // ADMIN desde dispositivo NUEVO -> pedir código al correo antes de entrar
       if(esRolAdmin(r.role) && !dispositivoConfiable(email)){
         ADMIN_PEND={email,pass,role:r.role,name:r.name||email};
         try{ await fetch(MAIL_URL+'?'+new URLSearchParams({accion:'admincode',email,pass}).toString()); }catch(e){}
@@ -2627,7 +2384,6 @@ async function doLogin(){
   }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
 }
 
-// muestra un error en el formulario sin borrar lo que el cliente ya escribio
 function errAuth(msg, focoId){
   authMsg=msg;
   const card=document.querySelector('.login-card');
@@ -2654,7 +2410,6 @@ async function doSignup(){
   const btn=document.getElementById('sbtn');btn.textContent='Creando...';
   try{
     const r=await apiCall({action:'signup',email,pass,nombre,ref:REF_CODE});
-    // guardados para poder pedir OTRO codigo si no le llega el primero
     SIGNUP_PASS=pass; SIGNUP_NOMBRE=nombre;
     if(r.ok && r.verificar){ authMsg=''; VERIF_EMAIL=email; tab='auth_codigo'; return render(); }
     if(r.ok){ authMsg=''; tab='auth_login'; render(); showBienvenida(email); }
@@ -2672,7 +2427,6 @@ async function doSignup(){
       errAuth(msgs[r.error] || 'No se pudo crear la cuenta.','semail'); }
   }catch(e){ btn.textContent=t('crear_cuenta'); errAuth('Error de conexión. Intenta de nuevo.'); }
 }
-// ── Cajitas del código: escribir, borrar, pegar ──
 function otpVal(){
   let v='';
   for(let i=0;i<6;i++){ const el=document.getElementById('otp'+i); v+=(el&&el.value)||''; }
@@ -2686,7 +2440,6 @@ function otpPinta(){
     if(el){
       const lleno=!!el.value;
       el.classList.toggle('lleno', lleno);
-      // al llenar una cajita, se dibuja su línea de neón hacia la siguiente
       if(lleno && traces[i]) traces[i].classList.add('on');
     }
   }
@@ -2716,7 +2469,6 @@ function otpPaste(e){
   const ult=document.getElementById('otp'+Math.min(txt.length,5)); if(ult) ult.focus();
   if(txt.length===6) otpConfirmar();
 }
-// decide qué verificación disparar según la pantalla activa
 function otpConfirmar(){
   if(tab==='auth_admincode') return doAdminVerify();
   return doVerificar();
@@ -2738,7 +2490,6 @@ function otpExito(){
   if(ok) ok.classList.add('on');
 }
 
-// ── verificar el código de admin (dispositivo nuevo) ──
 let ADMINVERIF=false;
 async function doAdminVerify(){
   if(ADMINVERIF || !ADMIN_PEND) return;
@@ -2777,7 +2528,6 @@ async function doAdminResend(){
   }catch(e){ errAuth('No se pudo reenviar.','otp0'); }
 }
 
-// ── confirmar el codigo que le llego por correo ──
 let VERIFICANDO=false;
 async function doVerificar(){
   if(VERIFICANDO) return;
@@ -2786,7 +2536,6 @@ async function doVerificar(){
   VERIFICANDO=true;
   const btn=document.getElementById('vbtn'); if(btn) btn.textContent='Comprobando...';
   try{
-    // va por Railway (antes: portero). apiCall lo desvia solo.
     const r=await apiCall({action:'verificarcodigo',email:VERIF_EMAIL,codigo});
     if(r.ok){
       otpExito();
@@ -2813,7 +2562,6 @@ async function doVerificar(){
 
 async function doReenviar(){
   try{
-    // pedir un codigo nuevo a Railway
     const r=await apiCall({action:'signup',email:VERIF_EMAIL,
                            pass:(SIGNUP_PASS||''),nombre:(SIGNUP_NOMBRE||'')});
     errAuth(r.ok?'Te reenvié el código. Revisa tu correo y el spam.'
@@ -2821,7 +2569,6 @@ async function doReenviar(){
   }catch(e){ errAuth('No se pudo reenviar. Intenta de nuevo.','otp0'); }
 }
 
-// ── ventana de "cuenta creada" con el aviso del correo y el spam ──
 function showBienvenida(email){
   const isEn=LANG==='en';
   document.getElementById('okBody').innerHTML=`
@@ -2849,9 +2596,6 @@ async function doReset(){
   if(!email||!email.includes('@')){authMsg='Escribe un correo válido.';return render();}
   const btn=document.getElementById('rbtn');btn.textContent='Enviando...';
   try{
-    // El PORTERO genera la temporal, la guarda Y manda el correo.
-    // OJO: antes el navegador generaba otra temporal y mandaba un SEGUNDO
-    // correo con ella. Llegaban dos correos y solo servia el del portero.
     const r=await apiCall({action:'reset',email});
     if(r.ok){
       authMsg='✅ Te mandé una contraseña temporal a tu correo. Revísalo (y la carpeta de spam) y entra con ella.';
@@ -2860,7 +2604,6 @@ async function doReset(){
     else{authMsg = r.error==='MUCHOS'?'Ya pediste varias. Espera un rato e inténtalo otra vez.':'No se pudo enviar. Intenta de nuevo.';render();}
   }catch(e){authMsg='Error de conexión. Intenta de nuevo.';render();}
 }
-// genera una contraseña temporal fácil de leer
 function genTempPass(){
   const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   let s='';for(let i=0;i<8;i++)s+=c[Math.floor(Math.random()*c.length)];
@@ -2891,7 +2634,6 @@ function shell(nav,content){
       <button class="logout" onclick="setView('login')">${sv(I.logout)} ${view==='client'?t('logout'):'Cerrar sesión'}</button></div>
     </aside><main class="main" id="mainSlot">${saludo}${content}${footerHTML()}</main>
     <button class="scrollbtn" id="scrollBtn" onclick="scrollToggle()" title="Ir abajo">${sv(I.chev,20)}</button></div>`}
-// ── flecha flotante: baja al final / sube al inicio ──
 function scrollToggle(){
   const abajo=(window.innerHeight+window.scrollY)>=(document.body.scrollHeight-80);
   window.scrollTo({top:abajo?0:document.body.scrollHeight,behavior:'smooth'});
@@ -2919,7 +2661,6 @@ function clientView(){const nav=navBtn('products',I.box,t('nav_productos'))+navB
   else if(tab==='contact')content=contactPage();
   else content=profilePage();
   return shell(nav, newProdBanner()+content)}
-// ── banner de producto nuevo ──
 let NEWPROD=null, NEWPROD_LOADING=false;
 async function loadNewProd(){
   if(NEWPROD_LOADING||!API_URL)return; NEWPROD_LOADING=true;
@@ -3075,7 +2816,6 @@ function productDetailPage(p){
   const vid = (p.video && !soon)
     ? `<button class="btn-vid" style="padding:13px 18px" onclick='openVid(${JSON.stringify({n:p.nombre,v:p.video}).replace(/'/g,"&#39;")})'>${sv(I.play,16)} ${t('ver_video')}</button>`
     : '';
-  // aviso corto: solo si de verdad va a descargar y activar
   const notaLic = can && !soon
     ? `<div style="display:flex;gap:7px;align-items:flex-start;margin-top:12px;font-size:12px;
                   color:var(--text-dim);line-height:1.5">
@@ -3105,7 +2845,6 @@ function productDetailPage(p){
     </div>
     ${reviewsBlock(p)}`;
 }
-// ── RESEÑAS ──
 function starsHTML(n,size){
   n=Math.round(n||0);
   let s='';
@@ -3279,15 +3018,7 @@ function discCard(d,isEn){
   </div>`;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  MI BALANCE
-//  La contabilidad privada de cada cliente. Los datos viven en
-//  el servidor filtrados por su correo: nadie mas los ve, ni el
-//  administrador. Solo para clientes con AUTO PRO.
-// ═══════════════════════════════════════════════════════════
 let BALANCE=null, BAL_ACCESO=null, BAL_CARGANDO=false;
-
-
 
 function dinero(n){
   const v = Math.abs(Number(n)||0);
@@ -3380,7 +3111,6 @@ function balancePage(){
         ${isEn?'Buy your first ones in Phase 1.':'Empieza comprando en Fase 1.'}</div></div>`;
   }
 
-  // Las cuentas agrupadas por la fase en la que estan
   const FASES_UI = [
     { k:'FASE1',        t:isEn?'Phase 1':'Fase 1',            c:'var(--cyan)',  bg:'rgba(52,179,255,.16)' },
     { k:'FASE2',        t:isEn?'Phase 2':'Fase 2',            c:'#B49CFF',      bg:'rgba(160,120,255,.16)' },
@@ -3404,8 +3134,6 @@ function balancePage(){
     </div>`;
   }).join('');
 
-  // Las archivadas: siguen contando como invertido, pero ya no
-  // estan en juego. Asi ves cuantas has quemado.
   const arch = d.cuentas.filter(c=>c.eliminada);
   const listaArch = arch.length ? `<div class="arch-caja">
     <div class="arch-cab" onclick="ARCH_ABIERTO=!ARCH_ABIERTO;renderKeep()">
@@ -3449,14 +3177,11 @@ function balancePage(){
         : 'Tus cifras se guardan solo en tu cuenta. El administrador no puede verlas.'}</span></div>`;
 }
 
-// Una cuenta, con sus botones para avanzar de fase
 function tarjetaCuenta(c, F, isEn){
   const nombre = [c.firma, c.tamano].filter(Boolean).join(' ') || (isEn?'Account':'Cuenta');
   const fecha = String(c.fecha||'').slice(0,10).split('-').reverse().join('/');
   const marcada = BAL_SEL.has(Number(c.id));
 
-  // Solo el paso SIGUIENTE. Antes salian dos y era facil saltarse
-  // una fase por error.
   let botones = '';
   if (c.fase === 'FASE1'){
     botones = `<button class="cta-b go" onclick="moverCuenta(${c.id},'FASE2')">→ ${isEn?'Phase 2':'Fase 2'}</button>`;
@@ -3504,14 +3229,11 @@ function tarjetaCuenta(c, F, isEn){
   </div>`;
 }
 
-// ── seleccionar varias cuentas ──
 let BAL_SELMODO = false, BAL_SEL = new Set();
 
 let ARCH_ABIERTO = false;
 let _confirmarOK = null;
 
-// Ventana de confirmacion propia. La del navegador sale con el
-// nombre del dominio y rompe el aspecto del portal.
 function confirmar(texto, titulo, textoSi, peligro){
   return new Promise(resolve=>{
     document.getElementById('confTitulo').textContent = titulo || (LANG==='en'?'Are you sure?':'¿Seguro?');
@@ -3531,14 +3253,12 @@ function cerrarConfirmar(si){
 
 function toggleSeleccion(){ BAL_SELMODO = !BAL_SELMODO; BAL_SEL.clear(); renderKeep(); }
 
-// Marcar o desmarcar todas las cuentas vivas de golpe
 function marcarTodas(si){
   BAL_SEL.clear();
   if (si) for (const c of (BALANCE?.cuentas||[])) if (!c.eliminada) BAL_SEL.add(Number(c.id));
   renderKeep();
 }
 
-// Volver a la fase anterior, por si la marcaste por error
 async function volverAtras(id, faseActual){
   const anterior = { FASE2:'FASE1', PRO:'FASE2', CONSISTENCIA:'PRO' }[faseActual];
   if (!anterior) return;
@@ -3547,7 +3267,6 @@ async function volverAtras(id, faseActual){
   if (r.ok) await recargarCuentas();
 }
 
-// Editar una cuenta: numero, firma, tamaño, coste y nota
 function editarCuenta(id){
   const isEn = LANG==='en';
   const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
@@ -3599,7 +3318,6 @@ async function guardarEdicion(id){
   }
 }
 
-// Quitar un retiro desde la propia tarjeta
 async function quitarRetiro(id){
   const isEn = LANG==='en';
   if (!await confirmar(isEn
@@ -3610,8 +3328,6 @@ async function quitarRetiro(id){
   if (r.ok){ await recargarCuentas(); toast(isEn?'Deleted':'Borrado'); }
 }
 
-// Borrar del todo una cuenta archivada. Distinto de archivar:
-// aqui SI sale de los totales, porque fue un error.
 async function borrarDelTodo(id){
   const isEn = LANG==='en';
   const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
@@ -3630,7 +3346,6 @@ async function borrarDelTodo(id){
   else toast(isEn?"Couldn't delete.":'No se pudo borrar.');
 }
 
-// Vaciar el archivo entero
 async function vaciarArchivo(){
   const isEn = LANG==='en';
   const cuantas = (BALANCE?.cuentas||[]).filter(c=>c.eliminada).length;
@@ -3645,7 +3360,6 @@ async function vaciarArchivo(){
   if (r.ok){ await recargarCuentas(); toast(isEn?`${r.borradas} deleted`:`${r.borradas} borradas`); }
 }
 
-// Sacar una cuenta del archivo
 async function recuperarCuenta(id){
   const r = await rwFetch('/cuentas/recuperar', { email:SESS.email, pass:SESS.pass, id });
   if (r.ok){ await recargarCuentas(); toast(LANG==='en'?'Restored':'Recuperada'); }
@@ -3688,7 +3402,6 @@ async function recargarCuentas(){
   await cargarBalance();
 }
 
-// ── mover una cuenta de fase ──
 async function moverCuenta(id, fase){
   const r = await rwFetch('/cuentas/fase', { email:SESS.email, pass:SESS.pass, id, fase });
   if (r.ok){ await recargarCuentas(); }
@@ -3718,8 +3431,6 @@ async function reiniciarBalance(){
   if (r.ok){ await recargarCuentas(); toast(isEn?`${r.borradas} deleted`:`${r.borradas} borradas`); }
 }
 
-// Precios aproximados de cada cuenta, para no escribirlos a mano
-// cada vez. Es solo una sugerencia: el cliente puede cambiarlos.
 const BAL_PRECIOS = {
   'TopStep':           { '50K':49,  '100K':99,  '150K':149 },
   'Blue Guardian':     { '25K':97,  '50K':167,  '100K':297 },
@@ -3733,14 +3444,11 @@ const BAL_PRECIOS = {
   'Fund Your Edge':    { '50K':90,  '100K':165 }
 };
 
-// ── comprar cuentas (Fase 1) ──
 function abrirCompra(){
   const isEn = LANG==='en';
   const firmas = Object.keys(BAL_PRECIOS);
   const hoy = new Date().toISOString().slice(0,10);
 
-  // si la ventana no existe (index a medio actualizar), avisarlo
-  // en vez de quedarse callado
   const modal = document.getElementById('movModal');
   const body  = document.getElementById('movBody');
   if (!modal || !body){
@@ -3847,7 +3555,6 @@ async function guardarCompra(){
   }
 }
 
-// ── al pasar a CONSISTENCIA: pedir el PnL ──
 function pedirPnl(id){
   const isEn = LANG==='en';
   const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
@@ -3886,7 +3593,6 @@ async function guardarPnl(id){
   else err.innerHTML = `<div class="login-err show">${isEn?"Couldn't save.":'No se pudo guardar.'}</div>`;
 }
 
-// ── apuntar un retiro de una cuenta ──
 function abrirRetiro(id){
   const isEn = LANG==='en';
   const c = (BALANCE?.cuentas||[]).find(x=>Number(x.id)===Number(id));
@@ -3940,12 +3646,6 @@ async function borrarRetiro(id){
   if (r.ok){ closeModal('movModal'); await recargarCuentas(); toast(LANG==='en'?'Deleted':'Borrado'); }
 }
 
-// ═══════════════════════════════════════════════════════════
-//  VALORACION DE LAS PROP FIRMS
-//  El cliente pone estrellas y se publica al momento, sin que
-//  tengas que aprobar nada. Un voto por cliente y firma: si
-//  vuelve a votar, cambia el suyo en vez de sumar otro.
-// ═══════════════════════════════════════════════════════════
 let VALORACIONES = null;   // { medias:{id:{media,votos}}, mios:{id:estrellas} }
 
 async function cargarValoraciones(forzar){
@@ -3971,7 +3671,6 @@ function valoracionHTML(id, isEn){
   const v = VALORACIONES || { medias:{}, mios:{} };
   const dato = v.medias[id] || { media:0, votos:0 };
   const mio  = v.mios[id] || 0;
-  // solo puede votar un cliente que ha entrado
   const puedo = !!(SESS && SESS.email) && view !== 'login';
   const pintadas = mio || Math.round(dato.media);
 
@@ -4019,7 +3718,6 @@ async function votarFirma(id, estrellas, btn){
 function discountsPage(){
   const isEn=LANG==='en';
   if(!API_URL) return `<div class="page-head"><h1>${isEn?'Discounts':'Descuentos'}</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet.</div>`;
-  // las valoraciones se piden una vez, junto con los descuentos
   if(VALORACIONES===null){ cargarValoraciones().then(()=>{ if(tab==='discounts') renderKeep(); }); }
   if(DISCOUNTS===null){ loadDiscounts();
     return `<div class="page-head"><h1>${isEn?'Discounts':'Descuentos'}</h1><p>${isEn?'Loading...':'Cargando...'}</p></div><div style="color:var(--text-dim);padding:50px;text-align:center">${isEn?'Loading...':'Cargando descuentos...'}</div>`; }
@@ -4119,8 +3817,6 @@ async function sendContact(){
   try{ if(tel) localStorage.setItem('sp_tel',tel); }catch(e){}
   if(!API_URL){contactDone='OK';return render();}
   const btn=document.getElementById('cbtn');btn.textContent=t('enviando_msg');
-  // Va por el PORTERO, no directo a Firestore. El portero comprueba que seas
-  // cliente aprobado y aplica frenos que no se pueden saltar desde el navegador.
   try{
     const qs=new URLSearchParams({accion:'contacto',email:CLIENT.email,
       nombre:CLIENT.name||'',mensaje:m,telefono:tel}).toString();
@@ -4130,7 +3826,6 @@ async function sendContact(){
   }catch(e){contactDone='ERR';render();}
 }
 
-// ── MODO MANTENIMIENTO ──
 let MAINT={on:false,msg:''}, MAINT_LOADED=false, MAINT_SAVING=false, MAINT_LOADING=false;
 function maintTexto(){
   return MAINT.msg && MAINT.msg.trim()
@@ -4144,7 +3839,6 @@ function pintarMaint(){
   if(!MAINT.on){ bar.classList.remove('show'); document.body.classList.remove('has-maint'); bar.innerHTML=''; return; }
   const txt=maintTexto();
   const tira=`<span class="maint-item">${sv(I.tool,15)} ${txt}</span>`;
-  // 4 copias en 2 mitades iguales → el -50% del keyframe hace un loop perfecto y lento
   bar.innerHTML=`<div class="maint-track">${tira.repeat(4)}</div>`;
   bar.classList.add('show'); document.body.classList.add('has-maint');
 }
@@ -4156,7 +3850,6 @@ async function loadMaint(){
   try{ const r=await apiCall({action:'getmaint'});
     if(r.ok){ MAINT={on:!!r.maint,msg:r.msg||''}; } }catch(e){}
   MAINT_LOADED=true; MAINT_LOADING=false; pintarMaint();
-  // si estoy en mi perfil de admin y cambió el estado, refrescar el switch
   if(view==='admin' && tab==='aprofile' && antes!==MAINT.on) renderKeep();
 }
 async function toggleMaint(){
@@ -4211,16 +3904,6 @@ function pagosCard(){
     </div></div>`;
 }
 
-// ═══════════════════════════════════════════════════════════
-//  ANUNCIOS POR CORREO
-//  Escribes un mensaje y sale a todos los clientes, o solo a
-//  los de un producto. Antes de enviar SIEMPRE se puede mirar
-//  a cuantos va: 80 correos no tienen marcha atras.
-//
-//  Lo escrito se guarda en ANUN, no en el HTML. Antes, al
-//  cambiar un desplegable se repintaba la pagina y se perdia
-//  todo lo que llevabas escrito.
-// ═══════════════════════════════════════════════════════════
 const ANUN = { grupo:'TODOS', producto:'AUTO PRO ROCKET', filtro:'',
                email:'', nombre:'', cabecera:'SNIPER PORTAL',
                asunto:'', texto:'', boton:true };
@@ -4231,17 +3914,13 @@ const ANUN_PRODUCTOS = ['AUTO PRO ROCKET','SNIPER MANAGER','SNIPER CONNECT','SNI
   'SNIPER COPY ONLINE','REPLICADOR NT8 Y TOSTEP','ESTRATEGIA NT8 VS TS Y NT8 VS NT8',
   'SNIPEROCKET HISTORIAL'];
 
-// Guarda lo escrito SIN repintar, para no perder el texto
 function anunGuarda(campo, valor){ ANUN[campo] = valor; }
 
-// Cambia algo que afecta a los destinatarios: hay que repintar
 function anunCambia(campo, valor){
   ANUN[campo] = valor;
   ANUN_TOTAL = null; ANUN_RESULTADO = null;
   if (campo === 'grupo'){ ANUN_BUSCA = null; ANUN.email=''; ANUN.nombre=''; }
-  // al elegir un producto, la cabecera se pone sola con su nombre
   if (campo === 'producto') ANUN.cabecera = valor;
-  // si ya hay una persona elegida, el total es 1
   if (ANUN.grupo === 'UNO' && ANUN.email) ANUN_TOTAL = 1;
   renderKeep();
 }
@@ -4378,7 +4057,6 @@ function anuncioPage(){
       Nadie ve los correos de los demás.</span></div>`;
 }
 
-// Buscar un cliente por nombre o correo
 async function anuncioBuscar(){
   const txt = (document.getElementById('anBuscar')?.value || '').trim();
   ANUN.busqueda = txt;
@@ -4388,7 +4066,6 @@ async function anuncioBuscar(){
   renderKeep();
 }
 
-// Elegir a quien de la lista
 function anuncioElegir(email, nombre){
   ANUN.email = email; ANUN.nombre = nombre;
   ANUN_BUSCA = null; ANUN_TOTAL = 1; ANUN_RESULTADO = null;
@@ -4458,9 +4135,6 @@ async function anuncioEnviar(){
   }
 }
 
-
-// Interruptor para abrir "Mi balance" a los clientes de AUTO PRO.
-// Mientras este apagado, solo lo ves tu.
 function balanceCard(){
   const on = BAL_ACCESO ? !!BAL_ACCESO.abierto : false;
   return `<div class="card"><div class="card-top">
@@ -4509,8 +4183,6 @@ async function togglePago(metodo,activar){
 function statsCard(){
   if(view!=='admin')return '';
   if(SRV_STATS===null) loadStats();
-  // OJO con los nombres: el servidor manda 'traders' y 'herramientas',
-  // no 'clientes' ni 'productos'. Por eso los campos salian vacios.
   const reales=(SRV_STATS&&SRV_STATS.reales!=null)?SRV_STATS.reales:'—';
   const herr=(SRV_STATS&&SRV_STATS.herramientas_reales!=null)?SRV_STATS.herramientas_reales:'—';
   const cli=(SRV_STATS&&SRV_STATS.traders)||'';
@@ -4536,9 +4208,6 @@ function statsCard(){
     </div></div>`;
 }
 async function saveStats(){
-  // OJO con los nombres: el servidor espera 'traders' y 'herramientas'.
-  // Antes se mandaba 'clientes' y 'productos' y no se guardaba nada:
-  // solo los años funcionaban, porque ese nombre si coincidia.
   const traders=(document.getElementById('stCli')||{}).value||'';
   const anios=(document.getElementById('stAn')||{}).value||'';
   const herramientas=(document.getElementById('stPr')||{}).value||'';
@@ -4570,10 +4239,8 @@ function maintCard(){
       <button class="btn-ghost" id="maintSave" style="padding:8px 14px" onclick="saveMaintMsg()">Guardar aviso</button>
     </div></div>`;
 }
-// cuadro con el número de productos disponibles para descargar del cliente
 function prodCountCard(){
   const isEn=LANG==='en';
-  // NO disparar carga aquí (evita bucle). Si aún no hay datos, mostrar guion.
   if(CLIENT_PRODS===null){
     return `<div class="card"><div class="card-top">
         <div class="card-name">${isEn?'Your products':'Tus productos'}</div>
@@ -4596,7 +4263,6 @@ function prodCountCard(){
     </div></div>`;
 }
 function profilePage(){
-  // cargar productos una sola vez para el contador (sin bucle)
   if(CLIENT_PRODS===null && !CLIENT_PRODS_LOADING){ loadClientProds(); }
   const ok = profileMsg ? `<div class="login-err show" style="max-width:480px;color:var(--green);background:rgba(39,215,150,.1);border-color:rgba(39,215,150,.3)">${profileMsg}</div>` : '';
   const err = profileErr ? `<div class="login-err show" style="max-width:480px">${profileErr}</div>` : '';
@@ -4626,8 +4292,6 @@ function profilePage(){
         </div></div>`;
     }
   }
-  // Cada tarjeta se calcula UNA SOLA VEZ (varias disparan cargas al servidor;
-  // llamarlas dos veces revive el bucle de render que ya nos mordio antes).
   const cIdent = `<div class="card"><div class="card-top" style="display:flex;align-items:center;gap:13px">
           <div class="avatar" style="width:44px;height:44px;font-size:15px">${(CLIENT.name||'?').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase()}</div>
           <div style="min-width:0"><div class="card-name">${CLIENT.name}</div><div class="card-cat">${CLIENT.email}</div></div></div></div>`;
@@ -4649,10 +4313,6 @@ function profilePage(){
   const cStats = statsCard(), cPagos = pagosCard(), cMaint = maintCard(), cAdmins = adminsCard();
   const head = `<div class="page-head"><h1>${t('perfil_h')}</h1><p>${t('perfil_sub')}</p></div>`;
 
-  // Admin: agrupado por temas, no todo suelto en un mosaico.
-  //   TU CUENTA        -> quien eres, productos, contraseña
-  //   LO QUE VE EL CLIENTE -> numeros de portada, pagos, mantenimiento
-  //   GESTION          -> administradores, balance, referidos
   if(view==='admin'){
     const bal = (typeof balanceCard==='function') ? balanceCard() : '';
     return head + `
@@ -4670,7 +4330,6 @@ function profilePage(){
       <div class="col-stack">${cStats}${cPagos}${cMaint}${cAdmins}${refCard}</div>
     </div>`}
 
-// ── Tarjeta: gestionar administradores (solo la ve el admin) ──
 let ADMINS_LIST=null, ADMINS_LOADING=false;
 function adminsCard(){
   if(view!=='admin') return '';
@@ -4796,7 +4455,6 @@ function openPay(p){
   const zeOn=SRV_STATS?SRV_STATS.pay_zelle!==false:true;
   const ppOn=SRV_STATS?SRV_STATS.pay_paypal!==false:true;
   const tjOn=SRV_STATS?SRV_STATS.pay_tarjeta!==false:true;
-  // abrir en la primera pestaña que esté activa
   const start = zeOn ? 'ze' : (ppOn ? 'pp' : (tjOn ? 'tj' : 'ze'));
   document.getElementById('payBody').innerHTML = `
     <div style="text-align:center;margin-bottom:16px">
@@ -4812,7 +4470,6 @@ function openPay(p){
   document.getElementById('payModal').classList.add('show');
 }
 let PAY_CTX={};
-// arma el mensaje de comprobante con nombre, correo y producto del cliente
 function comprobanteTexto(metodo){
   const isEn=LANG==='en';
   const nom=(CLIENT&&CLIENT.name)||'';
@@ -4821,7 +4478,6 @@ function comprobanteTexto(metodo){
     ? `Hi, I just paid by ${metodo}. Here's my proof.\nName: ${nom}\nEmail: ${mail}\nProduct: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`
     : `Hola, acabo de pagar por ${metodo}. Aquí está mi comprobante.\nNombre: ${nom}\nCorreo: ${mail}\nProducto: ${PAY_CTX.nombre||''}${PAY_CTX.precio?(' ($'+PAY_CTX.precio+')'):''}`;
 }
-// mensaje de "quiero pagar con tarjeta" — ya lleva producto, precio y datos del cliente
 function pedirTarjetaTexto(){
   const isEn=LANG==='en';
   const nom=(CLIENT&&CLIENT.name)||'';
@@ -4832,16 +4488,13 @@ function pedirTarjetaTexto(){
     ? `Hi, I want to buy ${prod}${pre} and pay by debit/credit card.\nName: ${nom}\nEmail: ${mail}\nCould you send me the payment link?`
     : `Hola, quiero comprar ${prod}${pre} y pagar con tarjeta de débito o crédito.\nNombre: ${nom}\nCorreo: ${mail}\n¿Me mandas el link de pago?`;
 }
-// botones de comprobante: WhatsApp, Telegram y correo
 function comprobanteBtns(metodo){
   const isEn=LANG==='en';
   const txt=comprobanteTexto(metodo);
-  // WhatsApp quitado a proposito: quedan correo y Telegram.
   const tg='https://t.me/'+TELEGRAM_USER;   // Telegram NO permite pre-llenar texto en chat directo
   const asunto=encodeURIComponent((isEn?'Payment proof · ':'Comprobante de pago · ')+(PAY_CTX.nombre||''));
   const mail='mailto:'+CONTACT_MAIL+'?subject='+asunto+'&body='+encodeURIComponent(txt);
   const lbl=isEn?'Send proof by:':'Enviar comprobante por:';
-  // guardamos el texto para copiarlo si usa Telegram
   window.__proofTxt=txt;
   return `<div class="proof-wrap">
     <div class="proof-lbl">${sv(I.check,13)} ${lbl}</div>
@@ -4853,7 +4506,6 @@ function comprobanteBtns(metodo){
     <div class="proof-note">${isEn?'Attach the payment screenshot in the chat.':'Adjunta la captura del pago en el chat.'}</div>
   </div>`;
 }
-// copia el texto del comprobante al abrir Telegram (para que solo lo pegue)
 function copiarProof(){
   const t=window.__proofTxt||'';
   try{ navigator.clipboard.writeText(t); }catch(e){
@@ -4869,7 +4521,6 @@ function payTab(t){
   if(pp)pp.classList.toggle('on',t==='pp'); if(ze)ze.classList.toggle('on',t==='ze');
   if(tjb)tjb.classList.toggle('on',t==='tj');
   const pane=document.getElementById('payPane'); if(!pane)return;
-  // ¿está activo este método?
   const activo = t==='ze'
     ? (SRV_STATS?SRV_STATS.pay_zelle!==false:true)
     : t==='pp'
@@ -4885,7 +4536,6 @@ function payTab(t){
   const monto = PAY_CTX.precio?`<b>$${PAY_CTX.precio}</b>`:'';
   if(t==='tj'){
     const txt = pedirTarjetaTexto();
-    // WhatsApp quitado: se pide por correo o Telegram.
     const tg  = TELEGRAM_USER ? ('https://t.me/'+TELEGRAM_USER) : '';
     const mailTj = 'mailto:' + CONTACT_MAIL + '?subject=' +
       encodeURIComponent('Link de pago con tarjeta · ' + (PAY_CTX.nombre||'')) +
@@ -4937,7 +4587,6 @@ function payTab(t){
   }
 }
 function closeModal(id){document.getElementById(id).classList.remove('show')}
-// ── aviso chico abajo (toast) ──
 let TOAST_T=null;
 function toast(msg){
   let el=document.getElementById('toast');
@@ -4945,7 +4594,6 @@ function toast(msg){
   el.textContent=msg; el.classList.add('show');
   clearTimeout(TOAST_T); TOAST_T=setTimeout(()=>el.classList.remove('show'),2600);
 }
-// ── QR grande a pantalla completa para escanear desde otro celular ──
 function zoomQR(src,metodo){
   const isEn=LANG==='en';
   let ov=document.getElementById('qrZoom');
@@ -4958,7 +4606,6 @@ function zoomQR(src,metodo){
   ov.classList.add('show');
 }
 
-// ── confirmación bonita (reemplaza el confirm() feo del navegador) ──
 let _cfCb=null;
 function confirmAction(title,msg,okLabel,cb){
   _cfCb=cb;
@@ -4999,19 +4646,15 @@ function adminView(){
       +navBtn('aanuncio',I.send,'Anuncios')
       +`<div class="nav-sep">MÍO</div>`
       +navBtn('balance',I.chart,'Mi balance')+navBtn('aprofile',I.user,'Mi Perfil');
-  // el admin limitado NO puede entrar a estas de admin
   if(limitado && ['aprod','arev','aref','adisc','aguides','anews','amsg','aanuncio'].indexOf(tab)>=0){ tab='clients'; }
   let content;
-  // Mi balance: lo ven los dos (el CEO para probarlo, el socio como cliente)
   if(tab==='balance')                   content=balancePage();
-  // pestañas de USUARIO (para el limitado)
   else if(limitado && tab==='products')  content=productsPage();
   else if(limitado && tab==='guides')   content=guidesPage();
   else if(limitado && tab==='discounts')content=discountsPage();
   else if(limitado && tab==='news')     content=newsPage();
   else if(limitado && tab==='help')     content=faqPage();
   else if(limitado && tab==='contact')  content=contactPage();
-  // pestañas de ADMIN
   else if(tab==='clients')content=clientsPage();
   else if(tab==='aprod')content=adminProductsPage();
   else if(tab==='alic')content=adminLicensesPage();
@@ -5038,9 +4681,7 @@ async function loadUsers(){
   catch(e){ ADMIN_USERS=[]; }
   ADMIN_LOADING=false; render();
 }
-// ── vuelve a dibujar sin perder el lugar donde estabas ──
 let _lastView=null;
-// repinta SOLO la zona central (no el menu lateral) -> sin parpadeo
 function renderKeep(){
   const y=window.scrollY;
   const slot=document.getElementById('mainSlot');
@@ -5060,21 +4701,9 @@ function renderKeep(){
   render(); window.scrollTo(0,y);
 }
 
-// ═══════════════════════════════════════════════════════════
-//  ACTUALIZAR SIN PANTALLAZO
-//
-//  Antes se hacia  slot.innerHTML = nuevo  : el navegador tiraba
-//  TODO y lo reconstruia, aunque solo cambiara un numero. Eso es
-//  lo que se veia como un parpadeo feo.
-//
-//  Ahora se comparan el viejo y el nuevo, y solo se toca lo que
-//  de verdad cambio. Lo que no cambia, ni se entera: no parpadea,
-//  no se pierde el foco del teclado ni lo que estabas escribiendo.
-// ═══════════════════════════════════════════════════════════
 function parchear(viejo, nuevo){
   const a = viejo.childNodes, b = nuevo.childNodes;
 
-  // sobran hijos: se quitan los de mas
   while (a.length > b.length) viejo.removeChild(viejo.lastChild);
 
   for (let i = 0; i < b.length; i++){
@@ -5083,14 +4712,12 @@ function parchear(viejo, nuevo){
 
     if (!na){ viejo.appendChild(nb.cloneNode(true)); continue; }
 
-    // tipos distintos o etiqueta distinta: se cambia entero
     if (na.nodeType !== nb.nodeType ||
         (na.nodeType === 1 && na.tagName !== nb.tagName)){
       viejo.replaceChild(nb.cloneNode(true), na);
       continue;
     }
 
-    // texto: solo si cambio
     if (na.nodeType === 3){
       if (na.nodeValue !== nb.nodeValue) na.nodeValue = nb.nodeValue;
       continue;
@@ -5098,12 +4725,9 @@ function parchear(viejo, nuevo){
 
     if (na.nodeType !== 1) continue;
 
-    // Lo que el usuario esta usando NO se toca: si estas escribiendo
-    // en una caja, reemplazarla te borraria el texto y el cursor.
     const escribiendo = document.activeElement === na &&
       /^(INPUT|TEXTAREA|SELECT)$/.test(na.tagName);
 
-    // atributos
     for (const at of Array.from(nb.attributes)){
       if (escribiendo && (at.name === 'value' || at.name === 'checked')) continue;
       if (na.getAttribute(at.name) !== at.value) na.setAttribute(at.name, at.value);
@@ -5112,7 +4736,6 @@ function parchear(viejo, nuevo){
       if (!nb.hasAttribute(at.name)) na.removeAttribute(at.name);
     }
 
-    // el valor de las cajas no viaja en los atributos
     if (!escribiendo && /^(INPUT|TEXTAREA)$/.test(na.tagName)){
       const v = nb.value !== undefined ? nb.value : nb.getAttribute('value');
       if (v !== null && v !== undefined && na.value !== v) na.value = v;
@@ -5122,9 +4745,6 @@ function parchear(viejo, nuevo){
       }
     }
     if (!escribiendo && na.tagName === 'SELECT'){
-      // La opcion marcada con selected. Si NINGUNA lo esta, vale la
-      // primera: es lo que hace el navegador. Antes se dejaba el
-      // desplegable en blanco cuando el valor era cadena vacia.
       const sel = nb.querySelector('option[selected]') || nb.querySelector('option');
       if (sel){
         const v = sel.hasAttribute('value') ? sel.getAttribute('value') : sel.textContent;
@@ -5132,11 +4752,9 @@ function parchear(viejo, nuevo){
       }
     }
 
-    // y hacia dentro
     parchear(na, nb);
   }
 }
-// ── refresca la lista por detrás, sin mostrar "Cargando..." ──
 async function refreshUsersSilent(){
   try{ const r=await apiCall({action:'listusers',email:SESS.email,pass:SESS.pass});
     if(r.ok) ADMIN_USERS=r.users; }catch(e){}
@@ -5146,8 +4764,6 @@ async function approveUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
   if(u){ u.aprobado='SI'; renderKeep(); }          // se ve el cambio al instante
   try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:em}); }catch(e){}
-  // El correo de bienvenida lo manda el SERVIDOR al aprobar.
-  // Aqui habia otro envio: por eso llegaban DOS correos.
 }
 async function revokeUser(em){
   const u=(ADMIN_USERS||[]).find(x=>x.email===em);
@@ -5157,7 +4773,6 @@ async function revokeUser(em){
 function deleteUser(em){ confirmAction('Eliminar usuario',
   `¿Eliminar a <b>${em}</b>? Se borra del portal de forma permanente.`,'Eliminar',async()=>{
   try{
-    // el borrado va por el PORTERO (clave de servidor); las reglas siguen cerradas
     const qs=new URLSearchParams({accion:'borrarcliente',padmin:SESS.email,ppass:SESS.pass,email:em}).toString();
     const r=await (await fetch(MAIL_URL+'?'+qs)).json();
     if(r&&r.ok){
@@ -5174,11 +4789,9 @@ function deleteUser(em){ confirmAction('Eliminar usuario',
   }catch(e){ toast('Error de conexión'); console.warn('[DEL]',e); }
 }); }
 function refreshUsers(){ refrescarDesdeFirebase(); }
-// lee lo REAL de Firebase por detras, SIN borrar la lista (evita el parpadeo)
 let REFRESCANDO=false;
 async function refrescarDesdeFirebase(){
   if(REFRESCANDO) return; REFRESCANDO=true;
-  // marcar el boton como "cargando" sin tocar el resto de la pagina
   const btns=[...document.querySelectorAll('.admin-toolbar .btn-ghost')]
     .filter(b=>/Actualizar/i.test(b.textContent));
   const orig=btns.map(b=>b.innerHTML);
@@ -5197,15 +4810,12 @@ function aprobarTodosClientes(n){
     pend.forEach(u=>u.aprobado='SI'); renderKeep();   // se ven aprobados al instante
     for(const u of pend){
       try{ await apiCall({action:'approve',email:SESS.email,pass:SESS.pass,target:u.email}); }catch(e){}
-      // NO se manda correo aquí (evita cientos de correos de golpe)
     }
     toast('✓ '+pend.length+' clientes aprobados');
   });
 }
-// rechazar (ocultar) todos los pendientes de golpe — para limpiar spam/basura
 function rechazarTodosPendientes(n){
   confirmAction('Rechazar pendientes',`¿Quitar los ${n} registros pendientes? Se ocultarán de tu lista (no tendrán acceso). Úsalo para limpiar spam o registros basura.`,'Rechazar todos',async()=>{
-    // quitar de la vista al instante
     if(ADMIN_USERS){ ADMIN_USERS=ADMIN_USERS.filter(u=>(u.aprobado||'').toUpperCase().trim()==='SI' || (u.rol||'').toUpperCase().trim()==='ADMIN'); }
     renderKeep();
     try{
@@ -5229,7 +4839,6 @@ function clientsPage(){
   const up=s=>(s||'').toUpperCase().trim();
   const activos=users.filter(u=>up(u.aprobado)==='SI').length;
   const pend=users.filter(u=>up(u.aprobado)!=='SI').length;
-  // pendientes de aprobar arriba de todo; el resto ya viene ordenado (más nuevos primero)
   const ordenados=[...users].sort((a,b)=>{
     const pa=up(a.aprobado)!=='SI'?0:1, pb=up(b.aprobado)!=='SI'?0:1;
     return pa-pb;   // 0 (pendiente) antes que 1 (aprobado); estable conserva el orden por fecha
@@ -5269,7 +4878,6 @@ function clientsPage(){
 function filterRows(){const q=(document.getElementById('cfilter').value||'').toLowerCase();
   document.querySelectorAll('#ctable .trow:not(.head)').forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q)?'':'none';});}
 
-// ════════ ADMIN: PRODUCTOS ════════
 async function loadAdminProds(){
   if(ADMIN_PRODS_LOADING)return; ADMIN_PRODS_LOADING=true;
   try{ const r=await apiCall({action:'adminproducts',email:SESS.email,pass:SESS.pass});
@@ -5315,7 +4923,6 @@ function adminProductsPage(){
       <div></div><div>Producto</div><div class="col-hide">Acceso</div><div style="text-align:right">Acciones</div></div>${rows}</div>`;
 }
 
-// ── arrastrar productos para reordenar ──
 let _dragProdFrom=null;
 function dragProdStart(e,idx){ _dragProdFrom=idx; e.dataTransfer.effectAllowed='move';
   e.currentTarget.style.opacity='.4'; }
@@ -5327,13 +4934,11 @@ async function dragProdDrop(e,idx){
   e.preventDefault();
   document.querySelectorAll('.prod-drag').forEach(r=>{r.style.borderTop='';r.style.borderBottom='';});
   if(_dragProdFrom===null||_dragProdFrom===idx){ _dragProdFrom=null; return; }
-  // mover en el array
   const arr=ADMIN_PRODS;
   const [movido]=arr.splice(_dragProdFrom,1);
   arr.splice(idx,0,movido);
   _dragProdFrom=null;
   renderKeep();   // se ve el nuevo orden al instante
-  // guardar el orden en Firebase (campo 'orden' 0,1,2,...)
   try{
     await apiCall({action:'reorderproducts', email:SESS.email, pass:SESS.pass,
       orden: arr.map(p=>p.id).join(',')});
@@ -5342,7 +4947,6 @@ async function dragProdDrop(e,idx){
 }
 function openProd(p){
   const e=p||{id:'',descripcion:'',nombre:'',video:'',download:'',tipo:'PUBLICO',precio:'',fotos:'',telegram:''};
-  // en Firebase el campo se llama 'descripcion'; 'desc' se deja por compatibilidad
   const descActual = e.descripcion || e.desc || '';
   const fotosArr=(e.fotos||'').split('|').map(x=>x.trim());
   document.getElementById('prodTitle').textContent = p?'Editar producto':'Añadir producto';
@@ -5396,9 +5000,7 @@ function delProd(id,nombre){
   });
 }
 
-// ════════ ADMIN: ACCESO POR CLIENTE ════════
 async function openAccess(c){
-  // asegurar lista de productos cargada
   if(ADMIN_PRODS===null){ try{const r=await apiCall({action:'adminproducts',email:SESS.email,pass:SESS.pass});ADMIN_PRODS=r.ok?r.products:[];}catch(e){ADMIN_PRODS=[];} }
   const liberados=(c.p||'').split(',').map(x=>x.trim()).filter(Boolean);
   const privs=ADMIN_PRODS.filter(p=>p.tipo==='PRIVADO');
@@ -5424,7 +5026,6 @@ async function saveAccess(){
   }catch(e){document.getElementById('accMsg').innerHTML='<div class="login-err show">Error de conexión.</div>';}
 }
 
-// ════════ ADMIN: GUÍAS ════════
 function adminGuidesPage(){
   if(!API_URL) return `<div class="page-head"><h1>Guías</h1></div><div style="color:var(--text-dim);padding:40px">Sube el portal a internet para administrar guías.</div>`;
   if(GUIDES===null){ loadGuides();
@@ -5452,7 +5053,6 @@ function adminGuidesPage(){
 async function openGuide(g){
   const e=g||{id:'',titulo:'',descripcion:'',video:'',tipo:'PUBLICO',acceso:''};
   const tp=(e.tipo||'PUBLICO').toUpperCase();
-  // asegurar lista de clientes cargada para poder elegir quién lo ve
   if(ADMIN_USERS===null){ try{const r=await apiCall({action:'listusers',email:SESS.email,pass:SESS.pass});ADMIN_USERS=r.ok?r.users:[];}catch(x){ADMIN_USERS=[];} }
   const permitidos=(e.acceso||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
   const clientes=(ADMIN_USERS||[]).filter(c=>(c.rol||'').toUpperCase()!=='ADMIN');
@@ -5518,7 +5118,6 @@ function gaccFilter(q){
   gaccCount();
 }
 function gaccAll(on){
-  // solo los que se ven ahora (respeta la búsqueda)
   document.querySelectorAll('.gacc-row').forEach(r=>{
     if(r.style.display==='none')return;
     const c=r.querySelector('.gacc'); if(c)c.checked=!!on;
@@ -5553,8 +5152,6 @@ function delGuide(id,titulo){
   });
 }
 
-// ════════ ADMIN: MENSAJES ════════
-// ── contador de mensajes sin leer ──
 function msgsVistos(){ try{ return JSON.parse(localStorage.getItem('sp_msgs_seen')||'[]')||[]; }catch(e){ return []; } }
 function unreadMsgs(){
   if(!MSGS||!MSGS.length) return 0;
@@ -5574,10 +5171,8 @@ async function loadMsgs(){
   catch(e){ MSGS=[]; }
   MSGS_LOADING=false;
   if(tab==='amsg') marcarMsgsVistos();
-  // solo redibujar si de verdad cambió algo (evita bucles de render)
   if(MSGS.length!==antes) renderKeep();
 }
-// actualiza solo el globito de mensajes en el menú (sin redibujar todo)
 function actualizarBadgeMsg(){
   const btns=document.querySelectorAll('.nav button');
   btns.forEach(b=>{ if(b.getAttribute('onclick')==="setTab('amsg')"){
@@ -5597,7 +5192,6 @@ function adminMessagesPage(){
       <div class="empty-state"><div class="empty-ic">${sv(I.mail,28)}</div><h3>Sin mensajes</h3><p>Cuando un cliente te escriba, aparecerá aquí.</p></div>`;
   const items=MSGS.map(m=>{
     m=m||{};
-    // si un mensaje viene sin nombre NI correo, no debe tumbar toda la pagina
     const base=String(m.nombre||m.email||'?').trim()||'?';
     const init=base.split(' ').filter(Boolean).map(x=>x[0]).slice(0,2).join('').toUpperCase()||'?';
     const wamsg=encodeURIComponent('Hola '+(m.nombre||'')+', sobre tu mensaje: ');
@@ -5640,7 +5234,6 @@ function delMsg(id){
   });
 }
 
-// ── Borrar TODOS los mensajes basura (sin nombre, correo ni texto) ──
 function borrarMsgsBasura(){
   const vacio=x=>!String(x||'').trim() || String(x).trim()==='undefined';
   const basura=(MSGS||[]).filter(m=> vacio(m.mensaje) || (vacio(m.nombre) && vacio(m.email)) );
@@ -5649,7 +5242,6 @@ function borrarMsgsBasura(){
     `¿Borrar los ${basura.length} mensajes vacíos? Los mensajes reales no se tocan.`,
     'Borrar', async()=>{
     try{
-      // el servidor los busca y borra todos de una vez (no depende del id del cliente)
       const r=await apiCall({action:'deletebasura',email:SESS.email,pass:SESS.pass});
       MSGS=null; render();
       toast(r&&r.ok ? `Listo, ${r.borrados} borrados` : 'No se pudo borrar');
@@ -5657,7 +5249,6 @@ function borrarMsgsBasura(){
   });
 }
 
-// ════════ ADMIN: NOTICIAS ════════
 async function loadAdminNews(){
   if(ADMIN_NEWS_LOADING)return; ADMIN_NEWS_LOADING=true;
   try{ const r=await apiCall({action:'listnews'}); ADMIN_NEWS = r.ok ? r.news : []; }catch(e){ ADMIN_NEWS=[]; }
@@ -5719,7 +5310,6 @@ function delNews(id){
   });
 }
 
-// ════════ ADMIN: REFERIDOS ════════
 let ADMIN_REF=null, ADMIN_REF_LOADING=false;
 async function loadAdminRef(){
   if(ADMIN_REF_LOADING)return; ADMIN_REF_LOADING=true;
@@ -5778,7 +5368,6 @@ function refAll(abrir){
   saveRefClosed(); renderKeep();
 }
 
-// ════════ ADMIN: RESEÑAS ════════
 let ADMIN_REV=null, ADMIN_REV_LOADING=false, REV_MODE='pending';
 async function loadAdminRev(){
   if(ADMIN_REV_LOADING)return; ADMIN_REV_LOADING=true;
@@ -5844,7 +5433,6 @@ function adminReviewsPage(){
   return head+`<div class="arev-list">${cards}</div>`;
 }
 
-// ════════ ADMIN: DESCUENTOS ════════
 let ADMIN_DISC=null, ADMIN_DISC_LOADING=false;
 async function loadAdminDisc(){
   if(ADMIN_DISC_LOADING)return; ADMIN_DISC_LOADING=true;
@@ -5931,22 +5519,16 @@ function delDisc(id){
   });
 }
 
-// ════════ ADMIN: LICENCIAS DE PRODUCTOS (HWID) ════════
 let LIC_SEL=0, LIC_MODE='pending', ALL_LICS=null, ALL_LICS_LOADING=false;
 let LIC_TS='', LIC_ERRORES='';
-// Aprobar, quitar y borrar licencias YA van a Railway. Los Apps
-// Script de cada producto se quedan solo para atender a los AddOns
-// de NinjaTrader: el portal no los necesita para nada.
 async function licCall(url,params){
   if (RAILWAY_ON && params && String(params.action||'').indexOf('portal_') === 0) {
     try {
-      // saber de que producto es, por su direccion
       const api = LICENSE_APIS.find(x => x.url === url);
       const producto = api ? api.name : '';
       if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
 
       if (params.action === 'portal_set') {
-        // 'liberar' suelta las PCs para que pueda activar en otra maquina
         if (String(params.liberar||'') === '1') {
           return await rwFetch('/licencias/liberar-pcs',
             { producto, email: params.hwid || params.correo || params.email });
@@ -5963,7 +5545,6 @@ async function licCall(url,params){
         return await rwFetch('/licencias/borrar',
           { producto, email: params.hwid || params.correo || params.email });
       }
-      // portal_list ya no se usa: la lista entera viene de /licencias
       return { ok:true, licencias: [] };
     } catch(e) {
       console.error('[LICENCIA] fallo:', e);
@@ -5974,23 +5555,17 @@ async function licCall(url,params){
   try{
     const res=await fetch(url+'?'+qs, {redirect:'follow'});
     const txt=await res.text();
-    // Apps Script a veces devuelve HTML de error en vez de JSON
     try{ return JSON.parse(txt); }
     catch(parseErr){
-      // no era JSON válido → probablemente error del servidor
       return {ok:false, error:'RESP_NO_JSON'};
     }
   }catch(e){
     return {ok:false, error:'CONN'};
   }
 }
-// El portal ya NO pregunta a los 8 Apps Script. Lee UNA lista que el
-// portero recoge solo cada 10 minutos. Una llamada, siempre completa.
 async function loadAllData(silent){
   if(ALL_LICS_LOADING)return; ALL_LICS_LOADING=true;
   try{
-    // Las licencias viven en Railway: una consulta directa, sin esperar
-    // al portero ni a los 8 Apps Script.
     if(!await rwAsegurarSesion()) return;
     const r=await rwFetch('/licencias', null, 'GET');
     if(r.ok && Array.isArray(r.productos) && r.productos.length){
@@ -6008,7 +5583,6 @@ async function loadAllData(silent){
   }catch(e){ console.warn('[LICENCIAS] portero no respondió, uso el modo antiguo'); }
   ALL_LICS_LOADING=true;
 
-  // 1) COPIA RÁPIDA: mostrar al instante lo guardado en Firebase
   let mostróCopia=false;
   if(!ALL_LICS){
     try{
@@ -6025,7 +5599,6 @@ async function loadAllData(silent){
     if(!ALL_LICS) ALL_LICS=LICENSE_APIS.map(()=>null);
   }
 
-  // 2) REAL: consultar los 8 servidores
   const frescos=LICENSE_APIS.map(()=>null);
   await Promise.all(LICENSE_APIS.map(async(api,i)=>{
     if(!api.url||api.url.startsWith('PEGA_AQUI')){ frescos[i]={skip:true}; return; }
@@ -6039,9 +5612,7 @@ async function loadAllData(silent){
     console.warn('[LICENCIAS] '+LICENSE_APIS[i].name+' fallo: '+d.error); });
   pintarLicencias();
 
-  // actualizar la vista SIN parpadeo:
   if(view==='admin'&&tab==='alic'){
-    // no regenerar si hay un modal abierto (el usuario está aprobando)
     const modalAbierto=document.querySelector('.modal-bg.show');
     if(!modalAbierto){
       if(mostróCopia){ refrescarTablaLic(); actualizarTotalesLic(); }
@@ -6049,15 +5620,8 @@ async function loadAllData(silent){
     }
   }
 
-  // 3) GUARDAR copia — SOLO si los 8 contestaron bien.
-  //    Antes se guardaba igualmente, poniendo {licencias:[]} en los que
-  //    fallaban. Esa lista vacia quedaba guardada como si fuera real y
-  //    por eso "desaparecian" licencias al recargar.
   await guardarCacheLic();
 }
-// Guarda la copia rapida SOLO si los 8 productos contestaron.
-// Si alguno fallo, no se guarda nada: mejor una copia vieja completa
-// que una nueva a medias.
 async function guardarCacheLic(){
   try{
     const d=ALL_LICS||[];
@@ -6081,14 +5645,11 @@ function refrescarTablaLic(){
   const w=document.getElementById('licTablaWrap');
   if(w){ w.innerHTML = LIC_MODE==='pending' ? filasPendHTML() : filasProdHTML(); }
 }
-// recarga las licencias SIN borrar la pantalla (no parpadea)
 async function actualizarLicSuave(){
   if(ALL_LICS_LOADING)return;
   ALL_LICS_LOADING=true;
   const scrollY0=window.scrollY;
   try{
-    // Las licencias viven en Railway: una consulta directa, sin esperar
-    // al portero ni a los 8 Apps Script.
     if(!await rwAsegurarSesion()) return;
     const r=await rwFetch('/licencias', null, 'GET');
     if(r.ok && Array.isArray(r.productos) && r.productos.length){
@@ -6127,7 +5688,6 @@ async function setLic(pi,hwid,valor,maxpcs){
   const d=ALL_LICS&&ALL_LICS[pi];
   const l=d&&d.licencias&&d.licencias.find(x=>x.hwid===hwid);
   if(!l)return;
-  // marcar "guardando..." mientras esperamos al servidor
   l._guardando=true; refrescarTablaLic();
   const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
   if(maxpcs)params.maxpcs=maxpcs;
@@ -6135,15 +5695,12 @@ async function setLic(pi,hwid,valor,maxpcs){
     const r=await licCall(api.url,params);
     l._guardando=false;
     if(r && r.ok===true){
-      // el servidor CONFIRMÓ el cambio → ahora sí lo mostramos
       l.aprobado=(valor==='SI'); if(maxpcs)l.maxpcs=parseInt(maxpcs);
       refrescarTablaLic(); actualizarTotalesLic();
-      // refrescar en el portero SOLO este producto (rapido, ~2s)
       try{ fetch(MAIL_URL+'?'+new URLSearchParams({accion:'recoger_uno',i:String(pi),
              email:SESS.email,pass:SESS.pass}).toString()); }catch(e){}
       toast(valor==='SI'?'✓ Licencia activada':'Licencia desactivada');
     } else {
-      // el servidor NO guardó → decimos POR QUE, que "no se guardó" no ayuda
       refrescarTablaLic();
       const cod=(r&&r.error)||'DESCONOCIDO';
       const motivos={
@@ -6165,7 +5722,6 @@ function approveLic(pi,hwid){
   const api=LICENSE_APIS[pi];
   if(api.pcs){ openPcs(pi,hwid); } else setLic(pi,hwid,'SI');
 }
-// aprueba TODAS las licencias pendientes de todos los productos
 function aprobarTodasLic(){
   let pend=[];
   (ALL_LICS||[]).forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
@@ -6185,7 +5741,6 @@ function aprobarTodasLic(){
     toast('Listo, licencias aprobadas');
   });
 }
-// ── Borrar TODAS las licencias pendientes (las que no estan aprobadas) ──
 function borrarTodasLicPend(){
   let pend=[];
   (ALL_LICS||[]).forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
@@ -6205,14 +5760,12 @@ function borrarTodasLicPend(){
       let r=null;
       for(let intento=0;intento<2;intento++){
         r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid});
-        // NO_ENCONTRADO tambien vale: ya no esta en la hoja
         if(r && (r.ok || r.error==='NO_ENCONTRADO')) break;
         await new Promise(res=>setTimeout(res,600));   // esperar antes de reintentar
       }
 
       if(r && (r.ok || r.error==='NO_ENCONTRADO')){
         n++;
-        // quitar de la vista solo lo que de verdad se borro
         const d=ALL_LICS&&ALL_LICS[pi];
         if(d&&d.licencias) d.licencias=d.licencias.filter(x=>x.hwid!==l.hwid);
       } else {
@@ -6267,7 +5820,6 @@ function delLic(pi,hwid){
     }catch(e){ if(borrado&&d){ d.licencias.push(borrado); refrescarTablaLic(); actualizarTotalesLic(); toast('Sin conexión'); } }
   });
 }
-// actualiza solo los números de arriba sin redibujar todo
 function actualizarTotalesLic(){
   const cont=document.getElementById('licTotales');
   if(!cont)return;
@@ -6296,7 +5848,6 @@ function licRow(l,pi,cols){
     : `<button class="btn-add" style="padding:7px 13px" onclick="approveLic(${pi},'${hwid}')">✓ Aprobar</button>${delBtn}`;
   return {hwid,init,badge,pcsTxt,act};
 }
-// genera solo las filas de pendientes (según licQuery) — sin redibujar toda la página
 function filasPendHTML(){
   let pend=[];
   (ALL_LICS||[]).forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
@@ -6315,17 +5866,10 @@ function filasPendHTML(){
   return `<div class="table"><div class="trow head" style="grid-template-columns:1.3fr 1.2fr 1fr auto">
     <div>Cliente</div><div class="col-hide">Correo</div><div class="col-hide">Producto</div><div style="text-align:right">Acción</div></div>${rows}</div>`;
 }
-// actualiza SOLO la tabla al escribir (sin parpadeo)
 function filtrarLicPend(){
   const w=document.getElementById('licTablaWrap'); if(w) w.innerHTML=filasPendHTML();
   const x=document.getElementById('licX'); if(x) x.style.display=licQuery?'':'none';
 }
-// Cuando llegan las licencias hay DOS situaciones distintas:
-//  a) la pantalla aun dice "Cargando..." -> no existe ninguna tabla que
-//     refrescar, hay que DIBUJAR la pagina entera.
-//  b) la tabla ya esta puesta -> solo refrescar filas (sin parpadeo).
-// Antes siempre se hacia (b), y por eso al entrar por primera vez en
-// Licencias la pantalla se quedaba en gris hasta cambiar de pestaña.
 function pintarLicencias(){
   if(view!=='admin' || tab!=='alic') return;
   const yaHayTabla = !!document.getElementById('licTotales');
@@ -6347,7 +5891,6 @@ function adminLicensesPage(){
     <button class="seg-btn ${LIC_MODE==='product'?'on':''}" onclick="LIC_MODE='product';render()">Por producto</button></div>`;
   const head=`<div class="page-head"><h1>Licencias</h1><p>Aprueba o quita licencias sin abrir la hoja.</p></div>${totals}`;
 
-  // ── MODO PENDIENTES (todas juntas) ──
   if(LIC_MODE==='pending'){
     let pend=[];
     ALL_LICS.forEach((d,pi)=>{ if(d&&d.licencias){ d.licencias.filter(l=>!l.aprobado).forEach(l=>pend.push({l,pi})); } });
@@ -6364,7 +5907,6 @@ function adminLicensesPage(){
     return head+toolbar+`<div id="licTablaWrap">${filasPendHTML()}</div>`;
   }
 
-  // ── MODO POR PRODUCTO ──
   const apis=LICENSE_APIS;
   const sel=`<select onchange="LIC_SEL=parseInt(this.value);render()" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 13px;color:var(--text);font-size:13.5px;font-family:var(--body)">
     ${apis.map((a,i)=>`<option value="${i}" ${i===LIC_SEL?'selected':''}>${a.name}</option>`).join('')}</select>`;
@@ -6386,7 +5928,6 @@ function adminLicensesPage(){
       <div class="stat"><div class="v amber">${pend}</div><div class="l">Pendientes</div></div></div>
     <div id="licTablaWrap">${filasProdHTML()}</div>`;
 }
-// genera solo la tabla del producto seleccionado (según licQuery)
 function filasProdHTML(){
   const d=ALL_LICS[LIC_SEL]; if(!d||!d.licencias) return '';
   const lics=d.licencias;
@@ -6412,7 +5953,6 @@ function filtrarLicProd(){
 
 let _renderCount=0, _renderWindowStart=Date.now();
 function render(){
-  // freno anti-bucle: si se renderiza demasiado rápido, parar
   const ahora=Date.now();
   if(ahora-_renderWindowStart>1000){ _renderCount=0; _renderWindowStart=ahora; }
   _renderCount++;
@@ -6427,18 +5967,14 @@ function render(){
   if(!MAINT_LOADED && !MAINT_LOADING) loadMaint();
   if(view==='login'){ if(REVIEWS===null && !REVIEWS_LOADING) loadReviews(); if(SRV_STATS===null && !SRV_STATS_LOADING) loadStats(); }
   setTimeout(updateScrollBtn,0);}
-// actualiza SOLO el contenido central (no el menú lateral) → sin parpadeo del sidebar
 function renderContent(){ const y=window.scrollY; render(); window.scrollTo(0,y); }
-// revisa cada minuto por si activo el mantenimiento mientras el cliente está adentro
 setInterval(()=>{ if(!MAINT_SAVING && !document.hidden && view==='client') loadMaint(); }, 120000);
-// revisar mensajes nuevos cada 3 min (solo en admin, en silencio, solo si la pestaña está visible)
 setInterval(async()=>{
   if(view!=='admin'||MSGS_LOADING||document.hidden)return;
   try{ const r=await apiCall({action:'listmessages',email:SESS.email,pass:SESS.pass});
     if(r.ok){
       const antes=MSGS?MSGS.length:0;
       MSGS=r.messages;
-      // solo redibuja si llegó mensaje nuevo Y estás viendo mensajes (no interrumpe otras pestañas)
       if(MSGS.length!==antes && tab==='amsg'){ marcarMsgsVistos(); renderKeep(); }
     } }catch(e){}
 }, 180000);
@@ -6447,10 +5983,6 @@ render();
 </script>
 
 <script type="module">
-// ═══════════════════════════════════════════════════════════════
-//  CAPA FIREBASE — reemplaza a Google Apps Script para todo el portal
-//  (las licencias de producto siguen yendo por licCall a Apps Script)
-// ═══════════════════════════════════════════════════════════════
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app-check.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
@@ -6469,7 +6001,6 @@ const firebaseConfig = {
 };
 const fbApp = initializeApp(firebaseConfig);
 
-// ── App Check (reCAPTCHA v3): solo tu web puede tocar la base ──
 try {
   initializeAppCheck(fbApp, {
     provider: new ReCaptchaV3Provider('6LfUe3QtAAAAAHI4n-BSMMf1BUkyqSKY7rdgL3Ud'),
@@ -6481,15 +6012,10 @@ const db = getFirestore(fbApp);
 const fbAuth = getAuth(fbApp);
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-// puente: el bloque de arriba llama a esto para abrir el popup de Google
 window.__googleSignIn = async function(){
   const res = await signInWithPopup(fbAuth, googleProvider);
   return { email: res.user.email || '', nombre: res.user.displayName || '' };
 };
-
-// Aqui habia un SALT a la vista y una funcion que hasheaba contrasenas
-// en el navegador. Ya no hacen falta: las contrasenas se comprueban en
-// el portero y ningun hash llega hasta aqui.
 
 function genCodigo(){
   const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let s="SNP";
@@ -6502,10 +6028,7 @@ function nowStr(){
   return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-// ── caché de clientes en memoria (evita releer 383 docs a cada rato) ──
 let _usersCache=null, _usersCacheT=0;
-// El caché guardado ANTES de este cambio lleva pass_hash dentro. Se borra
-// una sola vez, para que ningun navegador se quede con hashes viejos.
 try{
   if(localStorage.getItem('sp_cache_v')!=='2'){
     localStorage.removeItem('sp_users_cache');
@@ -6516,7 +6039,6 @@ try{
 async function getAllUsers(force){
   const now=Date.now();
   if(!force && _usersCache && (now-_usersCacheT)<600000) return _usersCache;   // 10 min en memoria
-  // intentar caché del navegador (evita releer al recargar la página)
   if(!force){
     try{
       const raw=localStorage.getItem('sp_users_cache');
@@ -6527,17 +6049,12 @@ async function getAllUsers(force){
       }
     }catch(e){}
   }
-  // La lista viene del PORTERO y llega SIN pass_hash. Antes se bajaba
-  // la coleccion entera desde el navegador, hashes incluidos, y se
-  // guardaba en localStorage: cualquiera con F12 la veia.
   const qs=new URLSearchParams({accion:'lista_clientes',
     email:(SESS&&SESS.email)||'',pass:(SESS&&SESS.pass)||''}).toString();
   const rr=await (await fetch(MAIL_URL+'?'+qs)).json();
   if(!rr.ok) return _usersCache||[];
   _usersCache=rr.clientes||[];
   _usersCacheT=now;
-  // Si la lectura vino a medias, NO la guardamos: si no, te quedas 10
-  // minutos viendo una lista corta creyendo que esa es toda.
   if(rr.incompleta){
     console.warn('[CLIENTES] lectura incompleta, no se guarda en cache');
     _usersCacheT=0;
@@ -6551,7 +6068,6 @@ function invalidateUsers(){
   _usersCache=null;
   try{ localStorage.removeItem('sp_users_cache'); localStorage.removeItem('sp_users_cache_t'); }catch(e){}
 }
-// actualiza UN usuario en el caché sin releer los 386 (ahorra lecturas)
 function actualizarUserEnCache(email, cambios){
   if(_usersCache){
     const u=_usersCache.find(x=>x.email===email);
@@ -6566,8 +6082,6 @@ function borrarUserDeCache(email){
   }
 }
 
-// Lee UN cliente por el PORTERO. Ya NO trae pass_hash: ese campo no
-// sale del servidor. Si necesitas comprobar la contrasena, usa authUser.
 async function getUser(email){
   try{
     const qs=new URLSearchParams({accion:'cliente_uno',email:String(email||'').toLowerCase().trim()}).toString();
@@ -6575,8 +6089,6 @@ async function getUser(email){
     return r.ok ? r.cliente : null;
   }catch(e){ return null; }
 }
-// Comprueba correo+contrasena EN EL SERVIDOR y devuelve el cliente.
-// Devuelve null si la contrasena no es correcta.
 async function authUser(email,pass){
   try{
     const qs=new URLSearchParams({accion:'cliente_auth',
@@ -6585,11 +6097,6 @@ async function authUser(email,pass){
     return r.ok ? r.cliente : null;
   }catch(e){ return null; }
 }
-// ── Quien eres lo dice RAILWAY ─────────────────────────────
-// Los clientes ya viven ahi. Estas funciones las usan trozos del
-// portal que siguen en Firebase (guias, resenas, catalogo), y
-// tienen que preguntar donde estan los datos de verdad: si no,
-// quien se registre nuevo "no existe" para ellas.
 async function quienSoyRailway(email, pass){
   try{
     const r = await fetch(RAILWAY_URL + '/auth/login', {
@@ -6607,9 +6114,6 @@ async function verifyAdmin(email,pass){
   return !!u && (u.rol||'').toUpperCase()==='ADMIN';
 }
 
-// Igual que verifyAdmin pero TAMBIEN deja pasar al socio (ADMIN_LIMITADO).
-// Solo se usa en las acciones que le tocan: ver clientes, aprobar/quitar
-// acceso y dar productos. Todo lo demas sigue exigiendo ADMIN total.
 async function verifyAdminAny(email,pass){
   const u=await quienSoyRailway(email,pass);
   if(!u) return false;
@@ -6617,20 +6121,11 @@ async function verifyAdminAny(email,pass){
   return rol==='ADMIN' || rol==='ADMIN_LIMITADO';
 }
 
-// lee una colección entera → array
 async function getCol(name){
   const snap=await getDocs(collection(db,name));
-  // _docid = id REAL del documento en Firestore (los datos basura no traen campo 'id')
   return snap.docs.map(d=>({ ...d.data(), _docid:d.id }));
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  ROUTER PRINCIPAL — recibe {action, ...} y devuelve el mismo
-//  formato JSON que antes daba Apps Script
-// ═══════════════════════════════════════════════════════════════
-// ── Escrituras de admin: van por el PORTERO, no directo a Firestore.
-//    Asi las reglas de Firestore pueden quedar cerradas y nadie que
-//    copie la clave del HTML puede escribir en la base.
 async function pSet(col,id,datos,email,pass){
   const qs=new URLSearchParams({accion:'admin_set',col,id,
     datos:JSON.stringify(datos||{}),email:email||'',pass:pass||''}).toString();
@@ -6648,18 +6143,13 @@ window.fbCall = async function(p){
   const a = p.action;
   try {
 
-    // ---------- LOGIN ----------
     if(a==='login'){
       const u=await authUser(p.email,p.pass);
       if(!u) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
-      // el último acceso lo apunta el portero al validar la contraseña
       return {ok:true, role:(u.rol||'CLIENTE').toUpperCase(), name:u.nombre||''};
     }
 
-    // ---------- SIGNUP ----------
-    // El registro YA NO escribe en Firebase desde el navegador.
-    // Va al PORTERO (Apps Script), que valida y escribe con clave de servidor.
     if(a==='signup'){
       const qs = new URLSearchParams({
         accion:'signup',
@@ -6679,9 +6169,7 @@ window.fbCall = async function(p){
       }
     }
 
-    // ---------- CAMBIAR / RESET PASSWORD ----------
     if(a==='changepass'){
-      // el hash se calcula y se guarda EN EL PORTERO
       const qs=new URLSearchParams({accion:'cambiar_pass',modo:'normal',
         email:p.email,oldpass:p.oldpass||p.pass||'',newpass:p.newpass}).toString();
       const r=await (await fetch(MAIL_URL+'?'+qs)).json();
@@ -6689,15 +6177,12 @@ window.fbCall = async function(p){
       return r;
     }
     if(a==='reset'){
-      // El PORTERO genera la temporal y la manda por correo. El navegador
-      // ya no la elige: antes cualquiera podia resetear cualquier cuenta.
       const qs=new URLSearchParams({accion:'olvide_pass',
         email:(p.email||'').toLowerCase().trim()}).toString();
       const r=await (await fetch(MAIL_URL+'?'+qs)).json();
       invalidateUsers();
       return r;
     }
-    // el admin resetea la clave de un cliente
     if(a==='adminreset'){
       const em=(p.target||'').toLowerCase().trim();
       const u=await getUser(em);
@@ -6711,12 +6196,7 @@ window.fbCall = async function(p){
       return {ok:true, nombre:u.nombre||''};
     }
 
-    // ---------- LISTAR PRODUCTOS (cliente) ----------
     if(a==='listproducts'){
-      // Quien eres y que tienes liberado lo dice RAILWAY (ahi viven los
-      // clientes ahora). El catalogo de productos sigue en Firebase.
-      // Sin esto, quien se registra nuevo no existe en Firebase y no
-      // veria NINGUN producto.
       const u = await quienSoyRailway(p.email, p.pass);
       if(!u) return {ok:false,error:'WRONGPASS'};
       if((u.aprobado||'').toUpperCase()!=='SI') return {ok:false,error:'PENDING'};
@@ -6732,7 +6212,6 @@ window.fbCall = async function(p){
       return {ok:true, products:out};
     }
 
-    // ---------- ADMIN: PRODUCTOS ----------
     if(a==='adminproducts'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const prods=await getCol('productos');
@@ -6745,7 +6224,6 @@ window.fbCall = async function(p){
       let orden = 9999;
       if(a==='editproduct'){ const prev=(await getDoc(doc(db,'productos',id))).data(); if(prev&&prev.orden!==undefined)orden=prev.orden; }
       else { const all=await getCol('productos'); orden=all.length; }
-      // si al editar llega vacia, se conserva la que ya estaba (evita borrados accidentales)
       let descFinal=(p.desc||'').trim();
       if(a==='editproduct' && !descFinal){
         try{ const ant=(await getDoc(doc(db,'productos',id))).data();
@@ -6759,7 +6237,6 @@ window.fbCall = async function(p){
       if(a==='addproduct'){ await pSet('config','newprod',{id,nombre:obj.nombre,ts:Date.now()},p.email,p.pass); }
       return {ok:true, id};
     }
-    // guardar el nuevo orden de los productos (por arrastre)
     if(a==='reorderproducts'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const ids=(p.orden||'').split(',').filter(Boolean);
@@ -6775,23 +6252,19 @@ window.fbCall = async function(p){
       return await pDel('productos',p.pid,p.email,p.pass);
     }
 
-    // ---------- USUARIOS (admin) ----------
     if(a==='listusers' || a==='listusersfresh'){
       if(!await verifyAdminAny(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       if(a==='listusersfresh') invalidateUsers();   // forzar lectura fresca de Firebase
       const all=await getAllUsers(a==='listusersfresh');   // usa caché (no fuerza lectura de 386 docs cada vez)
-      // ocultar los rechazados (basura/spam marcado)
       const visibles=all.filter(u=>(u.aprobado||'').toUpperCase()!=='RECHAZADO');
       const users=visibles.map(u=>({ email:u.email, nombre:u.nombre, rol:u.rol,
         aprobado:u.aprobado, registro:u.fecha_registro, ultimo:u.ultimo_acceso, productos:u.productos||'' }));
-      // ordenar: más nuevos primero (por fecha de registro dd/mm/aaaa hh:mm)
       const parseF=s=>{ if(!s)return 0;
         const m=String(s).match(/(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
         if(!m)return 0;
         return new Date(+m[3],+m[2]-1,+m[1],+(m[4]||0),+(m[5]||0)).getTime();
       };
       users.sort((x,y)=>parseF(y.registro)-parseF(x.registro));
-      // aprovecha que ya leimos todo: guarda el conteo para que getstats no relea
       try{
         const reales=all.filter(u=>(u.rol||'').toUpperCase()!=='ADMIN'
                                 && (u.aprobado||'').toUpperCase()==='SI').length;
@@ -6811,9 +6284,7 @@ window.fbCall = async function(p){
       actualizarUserEnCache(em,{aprobado: a==='approve'?'SI':'NO'});
       return {ok:true};
     }
-    // marcar TODOS los pendientes como rechazados (se ocultan de la lista, no se borran)
     if(a==='rechazartodos'){
-      // lo hace el PORTERO de una pasada; el navegador ya no escribe en 'clientes'
       const qs=new URLSearchParams({accion:'rechazar_todos',
         email:p.email,pass:p.pass}).toString();
       const r=await (await fetch(MAIL_URL+'?'+qs)).json();
@@ -6842,7 +6313,6 @@ window.fbCall = async function(p){
       return {ok:true};
     }
 
-    // ---------- GUÍAS ----------
     if(a==='listguides'){
       const guias=await getCol('guias');
       let esAdm=false, quien='';
@@ -6881,7 +6351,6 @@ window.fbCall = async function(p){
       return await pDel('guias',p.gid,p.email,p.pass);
     }
 
-    // ---------- DESCUENTOS ----------
     if(a==='listdiscounts'){
       const ds=await getCol('descuentos');
       const out=ds.filter(d=>(d.visible||'SI').toUpperCase()!=='NO').map(d=>({
@@ -6918,7 +6387,6 @@ window.fbCall = async function(p){
       return await pDel('descuentos',p.did,p.email,p.pass);
     }
 
-    // ---------- RESEÑAS ----------
     if(a==='listreviews'){
       const rs=await getCol('resenas');
       const out=rs.filter(r=>(r.aprobado||'').toUpperCase()==='SI').map(r=>({
@@ -6938,11 +6406,8 @@ window.fbCall = async function(p){
     if(a==='addreview'){
       const u=await quienSoyRailway(p.email,p.pass);
       if(!u) return {ok:false,error:'WRONGPASS'};
-      // debe tener acceso al producto
       const liberados=(u.productos||'').split(',').map(x=>x.trim()).filter(Boolean);
       if(!liberados.includes(p.pid)) return {ok:false,error:'NO_ACCESS'};
-      // buscar si ya tiene reseña de ese producto → actualiza
-      // la escribe el PORTERO: comprueba clave y acceso al producto
       const qs=new URLSearchParams({accion:'resena_nueva',email:p.email,pass:p.pass,
         pid:String(p.pid),producto:p.producto||'',estrellas:String(p.estrellas||5),
         texto:(p.texto||'').slice(0,600)}).toString();
@@ -6959,7 +6424,6 @@ window.fbCall = async function(p){
       return await pDel('resenas',p.rid,p.email,p.pass);
     }
 
-    // ---------- NOTICIAS ----------
     if(a==='listnews'){
       const ns=await getCol('noticias'); ns.reverse();
       return {ok:true, news:ns.map(n=>({ id:n.id, fecha:n.fecha, tag:n.tag,
@@ -6985,10 +6449,6 @@ window.fbCall = async function(p){
       return await pDel('noticias',p.nid,p.email,p.pass);
     }
 
-    // ---------- MENSAJES / CONTACTO ----------
-    // PUERTA CERRADA: este endpoint no pedia NADA (ni cuenta, ni freno, ni
-    // validacion) y por ahi entraba el spam. Los mensajes ahora se mandan
-    // por el portero (accion=contacto), que si comprueba quien escribe.
     if(a==='contact'){
       return {ok:false,error:'USA_PORTERO'};
     }
@@ -7007,7 +6467,6 @@ window.fbCall = async function(p){
       if(!mid || mid==='undefined') return {ok:false,error:'SIN_ID'};
       return await pDel('mensajes',mid,p.email,p.pass);
     }
-    // borra de golpe todos los mensajes basura (sin tener que pasar cada id)
     if(a==='deletebasura'){
       if(!await verifyAdmin(p.email,p.pass)) return {ok:false,error:'NO_ADMIN'};
       const qs=new URLSearchParams({accion:'lista_mensajes',email:p.email,pass:p.pass}).toString();
@@ -7025,7 +6484,6 @@ window.fbCall = async function(p){
       return {ok:true, borrados:n};
     }
 
-    // ---------- REFERIDOS ----------
     if(a==='mireferido'){
       const u=await getUser(p.email);
       if(!u) return {ok:false,error:'NOTFOUND'};
@@ -7053,7 +6511,6 @@ window.fbCall = async function(p){
       return {ok:true, referidos:out};
     }
 
-    // ---------- CONFIG: mantenimiento, stats, nuevo producto ----------
     if(a==='getmaint'){
       const s=await getDoc(doc(db,'config','maint'));
       const d=s.exists()?s.data():{};
@@ -7071,7 +6528,6 @@ window.fbCall = async function(p){
     if(a==='getstats'){
       const s=await getDoc(doc(db,'config','stats'));
       const d=s.exists()?s.data():{};
-      // usa el numero guardado (1 lectura) en vez de leer toda la coleccion
       const reales = typeof d.reales==='number' ? d.reales : 0;
       return {ok:true, reales,
         clientes:d.clientes||'', anios:d.anios||'', productos:d.productos||'',
@@ -7092,19 +6548,15 @@ window.fbCall = async function(p){
       return await pSet('config','stats',upd,p.email,p.pass);
     }
 
-    // ---------- noticias de mercado (esas quedan sin datos por ahora) ----------
     if(a==='marketnews') return {ok:true, news:[]};
     if(a==='marketcal')  return {ok:true, eventos:[]};
 
-    // ---------- COPIA RÁPIDA DE LICENCIAS (para verlas al instante) ----------
-    // guardar la foto de las 8 licencias en Firebase
     if(a==='saveliccache'){
       try{
         await pSet('config','lic_cache',{ data: p.data||'[]', ts: Date.now() },p.email,p.pass);
         return {ok:true};
       }catch(e){ return {ok:false, error:'SAVE_FAIL'}; }
     }
-    // leer la foto guardada
     if(a==='getliccache'){
       try{
         const s=await getDoc(doc(db,'config','lic_cache'));
@@ -7122,8 +6574,6 @@ window.fbCall = async function(p){
   }
 };
 
-// Avisar a la pagina de que Firebase ya esta listo. Asi apiCall arranca
-// al instante en vez de estar preguntando cada 50 ms.
 try{ window.dispatchEvent(new Event('fb-listo')); }catch(e){}
 
 </script>
