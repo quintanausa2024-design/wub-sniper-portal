@@ -4191,180 +4191,188 @@ function pagosCard(){
         <button class="switch ${tj?'on':''}" onclick="togglePago('tarjeta',${tj?0:1})"><span></span></button>
       </div>
       ${(!ze&&!pp&&!tj)?`<div class="pay-warn">⚠️ Los tres están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
-    </div></div>` + balanceCard() + anuncioCard();
+    </div></div>` + balanceCard();
 }
 
-// ── ANUNCIOS POR CORREO ────────────────────────────────────
-// Escribes un mensaje y sale a todos los clientes, o solo a los
-// de un producto. Antes de enviar SIEMPRE se puede mirar a
-// cuantos va: 80 correos no tienen marcha atras.
-let ANUN_TOTAL = null, ANUN_ENVIANDO = false;
+// ═══════════════════════════════════════════════════════════
+//  ANUNCIOS POR CORREO
+//  Escribes un mensaje y sale a todos los clientes, o solo a
+//  los de un producto. Antes de enviar SIEMPRE se puede mirar
+//  a cuantos va: 80 correos no tienen marcha atras.
+//
+//  Lo escrito se guarda en ANUN, no en el HTML. Antes, al
+//  cambiar un desplegable se repintaba la pagina y se perdia
+//  todo lo que llevabas escrito.
+// ═══════════════════════════════════════════════════════════
+const ANUN = { grupo:'TODOS', producto:'AUTO PRO ROCKET', filtro:'',
+               asunto:'', texto:'', boton:true };
+let ANUN_TOTAL = null, ANUN_ENVIANDO = false, ANUN_RESULTADO = null;
 
-function anuncioCard(){
-  const prods = (ADMIN_PRODS||[]).map(p=>p.nombre).filter(Boolean);
-  const licProds = ['AUTO PRO ROCKET','SNIPER MANAGER','SNIPER CONNECT','SNIPER OPEN NY',
-    'SNIPER COPY ONLINE','REPLICADOR NT8 Y TOSTEP','ESTRATEGIA NT8 VS TS Y NT8 VS NT8',
-    'SNIPEROCKET HISTORIAL'];
+const ANUN_PRODUCTOS = ['AUTO PRO ROCKET','SNIPER MANAGER','SNIPER CONNECT','SNIPER OPEN NY',
+  'SNIPER COPY ONLINE','REPLICADOR NT8 Y TOSTEP','ESTRATEGIA NT8 VS TS Y NT8 VS NT8',
+  'SNIPEROCKET HISTORIAL'];
 
-  return `<div class="card"><div class="card-top">
-      <div class="card-name">${sv(I.mail,15)} Anuncios por correo</div>
-      <div class="card-cat">ESCRIBE UNA VEZ · LLEGA A TODOS</div></div>
-    <div style="padding:18px 20px">
+// Guarda lo escrito SIN repintar, para no perder el texto
+function anunGuarda(campo, valor){ ANUN[campo] = valor; }
 
-      <div class="mfield"><label>¿A quién?</label>
-        <select id="anGrupo" onchange="anuncioCambioGrupo()">
-          <option value="TODOS">Todos los clientes aprobados</option>
-          <option value="PRODUCTO">Solo los de un producto</option>
-        </select></div>
-
-      <div id="anProdBox" style="display:none">
-        <div class="mfield"><label>¿Qué producto?</label>
-          <select id="anProducto" onchange="ANUN_TOTAL=null;renderKeep()">
-            ${licProds.map(p=>`<option>${p}</option>`).join('')}
-          </select></div>
-        <div class="mfield"><label>¿Quiénes de ese producto?</label>
-          <select id="anFiltro" onchange="ANUN_TOTAL=null;renderKeep()">
-            <option value="">Todos los que lo tienen</option>
-            <option value="SIN">Solo los que NO han actualizado</option>
-            <option value="YA">Solo los que YA actualizaron</option>
-          </select></div>
-      </div>
-
-      <div class="mfield"><label>Asunto</label>
-        <input type="text" id="anAsunto" maxlength="120" placeholder="Ej: Actualización disponible"></div>
-
-      <div class="mfield"><label>Mensaje</label>
-        <textarea id="anTexto" rows="7" placeholder="Hola [NOMBRE],&#10;&#10;Escribe aquí tu mensaje..."
-          style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;
-                 padding:12px;color:var(--text);font-family:var(--body);font-size:13.5px;
-                 line-height:1.6;resize:vertical"></textarea></div>
-      <div style="font-size:11.5px;color:var(--text-faint);margin:-8px 0 14px;line-height:1.6">
-        Escribe <b>[NOMBRE]</b> donde quieras que aparezca el nombre de cada cliente.
-      </div>
-
-      <label style="display:flex;align-items:center;gap:9px;margin-bottom:16px;cursor:pointer">
-        <input type="checkbox" class="bal-chk" id="anBoton" checked>
-        <span style="font-size:12.5px;color:var(--text-dim)">Incluir botón "Entrar al portal"</span>
-      </label>
-
-      ${ANUN_TOTAL===null ? '' : `<div style="background:var(--bg-2);border-radius:10px;
-        padding:13px 15px;margin-bottom:14px;font-size:13px;color:var(--text-dim)">
-        Va a <b style="color:var(--fire-soft)">${ANUN_TOTAL}</b> ${ANUN_TOTAL===1?'persona':'personas'}.
-        ${ANUN_TOTAL>280?'<br><span style="color:var(--red)">Son más de 280 y el límite diario de Brevo es 300. Divídelo en dos días.</span>':''}
-      </div>`}
-
-      <div style="display:flex;gap:9px;flex-wrap:wrap">
-        <button class="btn-ghost" onclick="anuncioMirar()">${sv(I.users,15)} Ver a cuántos va</button>
-        <button class="btn-add" onclick="anuncioEnviar()"
-          ${(ANUN_TOTAL===null||ANUN_ENVIANDO||ANUN_TOTAL>280)?'disabled':''}>
-          ${ANUN_ENVIANDO?'Enviando...':`${sv(I.send,15)} Enviar`}</button>
-      </div>
-
-      <div id="anMsg" style="margin-top:14px"></div>
-
-      <div style="margin-top:16px;font-size:11.5px;color:var(--text-faint);line-height:1.6">
-        Los correos salen uno a uno, cada cliente recibe el suyo.
-        Nadie ve los correos de los demás.
-      </div>
-    </div></div>`;
+// Cambia algo que afecta a los destinatarios: hay que repintar
+function anunCambia(campo, valor){
+  ANUN[campo] = valor;
+  ANUN_TOTAL = null; ANUN_RESULTADO = null;
+  renderKeep();
 }
 
-function anuncioCambioGrupo(){
-  const esProd = document.getElementById('anGrupo').value==='PRODUCTO';
-  document.getElementById('anProdBox').style.display = esProd ? '' : 'none';
-  ANUN_TOTAL = null;
-  document.getElementById('anMsg').innerHTML = '';
+function anuncioPage(){
+  const esProd = ANUN.grupo === 'PRODUCTO';
+
+  return `<div class="page-head"><h1>Anuncios por correo</h1>
+      <p>Escribe una vez y llega a todos tus clientes, cada uno con su nombre.</p></div>
+
+    <div class="two-col" style="align-items:start">
+
+      <div class="card"><div class="card-top">
+          <div class="card-name">${sv(I.users,15)} ¿A quién?</div></div>
+        <div style="padding:18px 20px">
+
+          <div class="mfield"><label>Grupo</label>
+            <select onchange="anunCambia('grupo',this.value)">
+              <option value="TODOS" ${!esProd?'selected':''}>Todos los clientes aprobados</option>
+              <option value="PRODUCTO" ${esProd?'selected':''}>Solo los de un producto</option>
+            </select></div>
+
+          ${esProd ? `
+          <div class="mfield"><label>Producto</label>
+            <select onchange="anunCambia('producto',this.value)">
+              ${ANUN_PRODUCTOS.map(p=>`<option ${p===ANUN.producto?'selected':''}>${p}</option>`).join('')}
+            </select></div>
+
+          <div class="mfield"><label>¿Quiénes de ese producto?</label>
+            <select onchange="anunCambia('filtro',this.value)">
+              <option value=""    ${ANUN.filtro===''   ?'selected':''}>Todos los que lo tienen</option>
+              <option value="SIN" ${ANUN.filtro==='SIN'?'selected':''}>Solo los que NO han actualizado</option>
+              <option value="YA"  ${ANUN.filtro==='YA' ?'selected':''}>Solo los que YA actualizaron</option>
+            </select></div>` : ''}
+
+          <button class="btn-ghost" style="width:100%" onclick="anuncioMirar()">
+            ${sv(I.users,15)} Ver a cuántos va</button>
+
+          ${ANUN_TOTAL===null ? '' : `<div style="background:var(--bg-2);border-radius:10px;
+            padding:14px 15px;margin-top:14px;text-align:center">
+            <div style="font-size:30px;font-weight:600;font-family:var(--display);
+              color:${ANUN_TOTAL>280?'var(--red)':'var(--fire-soft)'}">${ANUN_TOTAL}</div>
+            <div style="font-size:12px;color:var(--text-faint)">
+              ${ANUN_TOTAL===1?'persona recibirá el correo':'personas recibirán el correo'}</div>
+            ${ANUN_TOTAL>280?`<div style="color:var(--red);font-size:11.5px;margin-top:8px;line-height:1.5">
+              El límite de Brevo son 300 al día. Divídelo en dos envíos.</div>`:''}
+          </div>`}
+
+          <div id="anLista" style="margin-top:12px"></div>
+        </div>
+      </div>
+
+      <div class="card"><div class="card-top">
+          <div class="card-name">${sv(I.mail,15)} El mensaje</div></div>
+        <div style="padding:18px 20px">
+
+          <div class="mfield"><label>Asunto</label>
+            <input type="text" id="anAsunto" maxlength="120" value="${escapeHtml(ANUN.asunto)}"
+              placeholder="Ej: Actualización disponible"
+              oninput="anunGuarda('asunto',this.value)"></div>
+
+          <div class="mfield"><label>Mensaje</label>
+            <textarea id="anTexto" rows="11" oninput="anunGuarda('texto',this.value)"
+              placeholder="Hola [NOMBRE],&#10;&#10;Escribe aquí tu mensaje..."
+              style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;
+                     padding:12px;color:var(--text);font-family:var(--body);font-size:13.5px;
+                     line-height:1.65;resize:vertical">${escapeHtml(ANUN.texto)}</textarea></div>
+
+          <div style="font-size:11.5px;color:var(--text-faint);margin:-8px 0 14px;line-height:1.6">
+            Escribe <b>[NOMBRE]</b> donde quieras que salga el nombre de cada cliente.
+          </div>
+
+          <label style="display:flex;align-items:center;gap:9px;margin-bottom:16px;cursor:pointer">
+            <input type="checkbox" class="bal-chk" ${ANUN.boton?'checked':''}
+              onchange="anunGuarda('boton',this.checked)">
+            <span style="font-size:12.5px;color:var(--text-dim)">Incluir botón "Entrar al portal"</span>
+          </label>
+
+          <button class="btn-add" style="width:100%" onclick="anuncioEnviar()"
+            ${(ANUN_TOTAL===null||ANUN_ENVIANDO||ANUN_TOTAL>280||!ANUN_TOTAL)?'disabled':''}>
+            ${ANUN_ENVIANDO?'Enviando...':`${sv(I.send,15)} Enviar${ANUN_TOTAL?' a '+ANUN_TOTAL:''}`}</button>
+
+          ${ANUN_TOTAL===null?`<div style="font-size:11.5px;color:var(--text-faint);
+            margin-top:10px;text-align:center">Mira primero a cuántos va</div>`:''}
+
+          ${ANUN_RESULTADO||''}
+        </div>
+      </div>
+    </div>
+
+    <div class="bal-priv" style="margin-top:18px">${sv(I.lock,15)}
+      <span>Los correos salen uno a uno: cada cliente recibe el suyo con su nombre.
+      Nadie ve los correos de los demás.</span></div>`;
 }
 
 function anuncioDatos(){
-  const grupo = document.getElementById('anGrupo').value;
-  const filtro = document.getElementById('anFiltro')?.value || '';
   return {
-    grupo,
-    producto: grupo==='PRODUCTO' ? document.getElementById('anProducto').value : '',
-    solo_sin_migrar: filtro==='SIN' ? 'SI' : 'NO',
-    solo_migrados:   filtro==='YA'  ? 'SI' : 'NO'
+    grupo: ANUN.grupo,
+    producto: ANUN.grupo==='PRODUCTO' ? ANUN.producto : '',
+    solo_sin_migrar: ANUN.filtro==='SIN' ? 'SI' : 'NO',
+    solo_migrados:   ANUN.filtro==='YA'  ? 'SI' : 'NO'
   };
 }
 
 async function anuncioMirar(){
-  const msg = document.getElementById('anMsg');
-  msg.innerHTML = '<span style="font-size:12.5px;color:var(--text-faint)">Mirando...</span>';
+  const caja = document.getElementById('anLista');
+  if (caja) caja.innerHTML = '<span style="font-size:12.5px;color:var(--text-faint)">Mirando...</span>';
   const r = await rwFetch('/admin/anuncio/destinatarios', anuncioDatos());
   if (r.ok){
-    ANUN_TOTAL = r.total;
-    msg.innerHTML = r.total
-      ? `<div style="font-size:12.5px;color:var(--text-faint)">Primeros: ${r.primeros.slice(0,5).join(', ')}${r.total>5?'...':''}</div>`
-      : '<div class="login-err show">No hay nadie en ese grupo.</div>';
+    ANUN_TOTAL = r.total; ANUN_RESULTADO = null;
     renderKeep();
-  } else msg.innerHTML = '<div class="login-err show">No se pudo consultar.</div>';
+    setTimeout(()=>{
+      const c = document.getElementById('anLista');
+      if (c) c.innerHTML = r.total
+        ? `<div style="font-size:11.5px;color:var(--text-faint);line-height:1.6">
+             Por ejemplo: ${r.primeros.slice(0,4).join(', ')}${r.total>4?'…':''}</div>`
+        : '<div class="login-err show">No hay nadie en ese grupo.</div>';
+    }, 60);
+  } else if (caja) caja.innerHTML = '<div class="login-err show">No se pudo consultar.</div>';
 }
 
 async function anuncioEnviar(){
-  const asunto = document.getElementById('anAsunto').value.trim();
-  const texto = document.getElementById('anTexto').value.trim();
-  const msg = document.getElementById('anMsg');
-
-  if (!asunto){ msg.innerHTML = '<div class="login-err show">Falta el asunto.</div>'; return; }
-  if (texto.length < 10){ msg.innerHTML = '<div class="login-err show">El mensaje es muy corto.</div>'; return; }
+  if (!ANUN.asunto.trim()){ toast('Falta el asunto'); return; }
+  if (ANUN.texto.trim().length < 10){ toast('El mensaje es muy corto'); return; }
 
   if (!await confirmar(
     `Vas a enviar este correo a <b>${ANUN_TOTAL}</b> ${ANUN_TOTAL===1?'persona':'personas'}.<br><br>` +
-    `<b>${escapeHtml(asunto)}</b><br><br>No se puede deshacer.`,
+    `<b>${escapeHtml(ANUN.asunto)}</b><br><br>No se puede deshacer.`,
     'Enviar anuncio', 'Enviar', false)) return;
 
   ANUN_ENVIANDO = true; renderKeep();
   const r = await rwFetch('/admin/anuncio/enviar', {
-    ...anuncioDatos(), asunto, texto,
-    boton: document.getElementById('anBoton')?.checked ? 'SI' : 'NO',
-    titulo: 'SNIPER PORTAL', confirmar: 'SI'
+    ...anuncioDatos(), asunto: ANUN.asunto, texto: ANUN.texto,
+    boton: ANUN.boton ? 'SI' : 'NO', titulo: 'SNIPER PORTAL', confirmar: 'SI'
   });
   ANUN_ENVIANDO = false;
 
-  const m = document.getElementById('anMsg');
   if (r.ok){
-    ANUN_TOTAL = null;
-    document.getElementById('anAsunto').value = '';
-    document.getElementById('anTexto').value = '';
+    ANUN_RESULTADO = `<div style="background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.3);
+      border-radius:10px;padding:13px 15px;margin-top:14px;font-size:13px;color:var(--green)">
+      ✓ Enviados: <b>${r.enviados}</b> de ${r.total}${r.fallos?` · fallaron ${r.fallos}`:''}
+      ${r.problemas&&r.problemas.length?`<div style="color:var(--text-faint);font-size:11.5px;margin-top:7px;line-height:1.5">
+        Correos mal escritos: ${r.problemas.join(', ')}</div>`:''}</div>`;
+    ANUN.asunto=''; ANUN.texto=''; ANUN_TOTAL=null;
     renderKeep();
     toast(`Enviados ${r.enviados} de ${r.total}`);
-    setTimeout(()=>{ const mm=document.getElementById('anMsg');
-      if(mm) mm.innerHTML = `<div style="background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.3);
-        border-radius:10px;padding:12px 14px;font-size:13px;color:var(--green)">
-        ✓ Enviados: <b>${r.enviados}</b>${r.fallos?` · fallaron ${r.fallos}`:''}
-        ${r.problemas&&r.problemas.length?`<div style="color:var(--text-faint);font-size:11.5px;margin-top:6px">
-          Correos mal escritos: ${r.problemas.join(', ')}</div>`:''}</div>`; }, 100);
   } else {
     const motivos = { SIN_BREVO:'Falta la clave de Brevo.', SIN_DESTINATARIOS:'No hay nadie en ese grupo.',
-      DEMASIADOS:r.aviso||'Son demasiados para un día.', TEXTO_CORTO:'El mensaje es muy corto.' };
-    m.innerHTML = `<div class="login-err show">${motivos[r.error]||'No se pudo enviar.'}</div>`;
+      DEMASIADOS:r.aviso||'Son demasiados para un día.', TEXTO_CORTO:'El mensaje es muy corto.',
+      SIN_ASUNTO:'Falta el asunto.' };
+    ANUN_RESULTADO = `<div class="login-err show" style="margin-top:14px">${motivos[r.error]||'No se pudo enviar.'}</div>`;
     renderKeep();
   }
 }
 
-// Interruptor para abrir "Mi balance" a los clientes de AUTO PRO.
-// Mientras este apagado, solo lo ves tu.
-function balanceCard(){
-  const on = BAL_ACCESO ? !!BAL_ACCESO.abierto : false;
-  return `<div class="card"><div class="card-top">
-      <div class="card-name">${sv(I.chart,15)} Mi balance</div>
-      <div class="card-cat">CONTABILIDAD PRIVADA DE CADA CLIENTE</div></div>
-    <div style="padding:18px 20px">
-      <div class="pay-toggle">
-        <div style="flex:1;min-width:0">
-          <div class="pay-tg-name">Abierto a los clientes</div>
-          <div class="pay-tg-hint ${on?'on':''}">${on
-            ? '✓ Lo ven los clientes con AUTO PRO ROCKET'
-            : '○ Apagado · solo lo ves tú'}</div>
-        </div>
-        <button class="switch ${on?'on':''}" onclick="toggleBalance(${on?0:1})"><span></span></button>
-      </div>
-      <div style="margin-top:12px;font-size:12px;color:var(--text-faint);line-height:1.6">
-        Cada cliente lleva ahí lo que invierte y lo que retira.
-        Los datos son suyos: <b>tú no puedes verlos</b>, ni ellos los de otro.
-      </div>
-    </div></div>`;
-}
 
 async function toggleBalance(activar){
   const r = await rwFetch('/admin/balance/activar', { activo: activar? 'SI':'NO' });
@@ -4858,10 +4866,11 @@ function adminView(){
       +navBtn('clients',I.users,'Clientes')+navBtn('alic',I.lock,'Licencias')
       +navBtn('aprofile',I.user,t('nav_perfil'))
     : navBtn('clients',I.users,'Clientes')+navBtn('aprod',I.box,'Productos')+navBtn('alic',I.lock,'Licencias')+navBtn('arev',I.star,'Reseñas')+navBtn('aref',I.link,'Referidos')+navBtn('adisc',I.tag,'Descuentos')+navBtn('aguides',I.play,'Guías')+navBtn('anews',I.news,'Noticias')+navBtn('amsg',I.mail,'Mensajes',nuevos)
+      +navBtn('aanuncio',I.send,'Anuncios')
       +`<div class="nav-sep">MÍO</div>`
       +navBtn('balance',I.chart,'Mi balance')+navBtn('aprofile',I.user,'Mi Perfil');
   // el admin limitado NO puede entrar a estas de admin
-  if(limitado && ['aprod','arev','aref','adisc','aguides','anews','amsg'].indexOf(tab)>=0){ tab='clients'; }
+  if(limitado && ['aprod','arev','aref','adisc','aguides','anews','amsg','aanuncio'].indexOf(tab)>=0){ tab='clients'; }
   let content;
   // Mi balance: lo ven los dos (el CEO para probarlo, el socio como cliente)
   if(tab==='balance')                   content=balancePage();
