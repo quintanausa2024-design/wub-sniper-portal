@@ -1134,6 +1134,15 @@
     color:#7af5e8;border:2px solid #7af5e8;background:rgba(122,245,232,.09);
     box-shadow:0 0 22px rgba(122,245,232,.30)}
   .otp-ok-t{color:#7af5e8;font-size:13.5px;font-weight:700}
+  /* Perfil del admin, agrupado por temas */
+  .perfil-sec{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);
+    margin:26px 0 12px;padding-bottom:9px;border-bottom:1px solid var(--line-soft)}
+  .perfil-sec:first-of-type{margin-top:6px}
+  .perfil-fila{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));
+    gap:14px;align-items:start}
+  @media(max-width:700px){.perfil-fila{grid-template-columns:1fr}}
+
   .nav-sep{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-faint);
     padding:14px 16px 6px;opacity:.7}
 
@@ -4191,7 +4200,7 @@ function pagosCard(){
         <button class="switch ${tj?'on':''}" onclick="togglePago('tarjeta',${tj?0:1})"><span></span></button>
       </div>
       ${(!ze&&!pp&&!tj)?`<div class="pay-warn">⚠️ Los tres están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
-    </div></div>` + balanceCard();
+    </div></div>`;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -4492,22 +4501,28 @@ async function togglePago(metodo,activar){
 function statsCard(){
   if(view!=='admin')return '';
   if(SRV_STATS===null) loadStats();
+  // OJO con los nombres: el servidor manda 'traders' y 'herramientas',
+  // no 'clientes' ni 'productos'. Por eso los campos salian vacios.
   const reales=(SRV_STATS&&SRV_STATS.reales!=null)?SRV_STATS.reales:'—';
-  const cli=(SRV_STATS&&SRV_STATS.clientes)||'';
+  const herr=(SRV_STATS&&SRV_STATS.herramientas_reales!=null)?SRV_STATS.herramientas_reales:'—';
+  const cli=(SRV_STATS&&SRV_STATS.traders)||'';
   const an=(SRV_STATS&&SRV_STATS.anios)||'';
-  const pr=(SRV_STATS&&SRV_STATS.productos)||'';
+  const pr=(SRV_STATS&&SRV_STATS.herramientas)||'';
   return `<div class="card"><div class="card-top">
       <div class="card-name">${sv(I.users,16)} Barra de confianza</div>
       <div class="card-cat">Los números que salen en la portada</div></div>
     <div style="padding:20px">
-      <div class="stat-real">${sv(I.check,13)} Tienes <b>${reales}</b> clientes aprobados reales.
-        <span>Déjalo vacío abajo para mostrar ese número, o escribe el tuyo (ej. 250+).</span></div>
+      <div class="stat-real">${sv(I.check,13)} Ahora mismo tienes <b>${reales}</b> clientes
+        y <b>${herr}</b> productos.
+        <span>Deja el campo vacío y sale el número real, siempre al día.</span></div>
       <div class="mfield"><label>Traders activos</label>
-        <input id="stCli" value="${cli.replace(/"/g,'&quot;')}" placeholder="Vacío = ${reales} (real)"></div>
+        <input id="stCli" value="${cli===String(reales)?'':cli.replace(/"/g,'&quot;')}"
+          placeholder="Vacío = ${reales} (se actualiza solo)"></div>
       <div class="mfield"><label>Años en el mercado</label>
         <input id="stAn" value="${an.replace(/"/g,'&quot;')}" placeholder="Ej: 3+"></div>
       <div class="mfield"><label>Herramientas pro</label>
-        <input id="stPr" value="${pr.replace(/"/g,'&quot;')}" placeholder="Ej: 6"></div>
+        <input id="stPr" value="${pr===String(herr)?'':pr.replace(/"/g,'&quot;')}"
+          placeholder="Vacío = ${herr} (se actualiza solo)"></div>
       <button class="btn-add" id="stSave" style="padding:9px 16px" onclick="saveStats()">Guardar números</button>
       <div style="font-size:11px;color:var(--text-faint);margin-top:9px;line-height:1.5">⭐ La calificación de estrellas sale sola de tus reseñas, esa no se toca.</div>
     </div></div>`;
@@ -4622,10 +4637,21 @@ function profilePage(){
   const cStats = statsCard(), cPagos = pagosCard(), cMaint = maintCard(), cAdmins = adminsCard();
   const head = `<div class="page-head"><h1>${t('perfil_h')}</h1><p>${t('perfil_sub')}</p></div>`;
 
-  // Admin: mosaico ancho de 3 columnas (aprovecha la pantalla).
-  // Cliente: se queda con las dos columnas de siempre.
+  // Admin: agrupado por temas, no todo suelto en un mosaico.
+  //   TU CUENTA        -> quien eres, productos, contraseña
+  //   LO QUE VE EL CLIENTE -> numeros de portada, pagos, mantenimiento
+  //   GESTION          -> administradores, balance, referidos
   if(view==='admin'){
-    return head + `<div class="perfil-wide">${cIdent}${cProd}${cPass}${cStats}${cPagos}${cMaint}${cAdmins}${refCard}</div>`;
+    const bal = (typeof balanceCard==='function') ? balanceCard() : '';
+    return head + `
+      <div class="perfil-sec">${sv(I.user,14)} Tu cuenta</div>
+      <div class="perfil-fila">${cIdent}${cProd}${cPass}</div>
+
+      <div class="perfil-sec">${sv(I.box,14)} Lo que ve el cliente</div>
+      <div class="perfil-fila">${cStats}${cPagos}${cMaint}</div>
+
+      <div class="perfil-sec">${sv(I.cog,14)} Gestión</div>
+      <div class="perfil-fila">${cAdmins}${bal}${refCard}</div>`;
   }
   return head + `<div class="two-col">
       <div class="col-stack">${cIdent}${cProd}${cPass}</div>
@@ -5084,9 +5110,14 @@ function parchear(viejo, nuevo){
       }
     }
     if (!escribiendo && na.tagName === 'SELECT'){
-      const sel = nb.querySelector('option[selected]');
-      const v = sel ? (sel.value || sel.textContent) : nb.value;
-      if (v && na.value !== v) na.value = v;
+      // La opcion marcada con selected. Si NINGUNA lo esta, vale la
+      // primera: es lo que hace el navegador. Antes se dejaba el
+      // desplegable en blanco cuando el valor era cadena vacia.
+      const sel = nb.querySelector('option[selected]') || nb.querySelector('option');
+      if (sel){
+        const v = sel.hasAttribute('value') ? sel.getAttribute('value') : sel.textContent;
+        if (na.value !== v) na.value = v;
+      }
     }
 
     // y hacia dentro
