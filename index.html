@@ -4191,7 +4191,151 @@ function pagosCard(){
         <button class="switch ${tj?'on':''}" onclick="togglePago('tarjeta',${tj?0:1})"><span></span></button>
       </div>
       ${(!ze&&!pp&&!tj)?`<div class="pay-warn">⚠️ Los tres están apagados. El cliente no podrá pagar por ningún método.</div>`:''}
-    </div></div>` + balanceCard();
+    </div></div>` + balanceCard() + anuncioCard();
+}
+
+// ── ANUNCIOS POR CORREO ────────────────────────────────────
+// Escribes un mensaje y sale a todos los clientes, o solo a los
+// de un producto. Antes de enviar SIEMPRE se puede mirar a
+// cuantos va: 80 correos no tienen marcha atras.
+let ANUN_TOTAL = null, ANUN_ENVIANDO = false;
+
+function anuncioCard(){
+  const prods = (ADMIN_PRODS||[]).map(p=>p.nombre).filter(Boolean);
+  const licProds = ['AUTO PRO ROCKET','SNIPER MANAGER','SNIPER CONNECT','SNIPER OPEN NY',
+    'SNIPER COPY ONLINE','REPLICADOR NT8 Y TOSTEP','ESTRATEGIA NT8 VS TS Y NT8 VS NT8',
+    'SNIPEROCKET HISTORIAL'];
+
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${sv(I.mail,15)} Anuncios por correo</div>
+      <div class="card-cat">ESCRIBE UNA VEZ · LLEGA A TODOS</div></div>
+    <div style="padding:18px 20px">
+
+      <div class="mfield"><label>¿A quién?</label>
+        <select id="anGrupo" onchange="anuncioCambioGrupo()">
+          <option value="TODOS">Todos los clientes aprobados</option>
+          <option value="PRODUCTO">Solo los de un producto</option>
+        </select></div>
+
+      <div id="anProdBox" style="display:none">
+        <div class="mfield"><label>¿Qué producto?</label>
+          <select id="anProducto" onchange="ANUN_TOTAL=null;renderKeep()">
+            ${licProds.map(p=>`<option>${p}</option>`).join('')}
+          </select></div>
+        <label style="display:flex;align-items:center;gap:9px;margin:-6px 0 14px;cursor:pointer">
+          <input type="checkbox" class="bal-chk" id="anSinMigrar" onchange="ANUN_TOTAL=null;renderKeep()">
+          <span style="font-size:12.5px;color:var(--text-dim)">Solo a los que no han actualizado</span>
+        </label>
+      </div>
+
+      <div class="mfield"><label>Asunto</label>
+        <input type="text" id="anAsunto" maxlength="120" placeholder="Ej: Actualización disponible"></div>
+
+      <div class="mfield"><label>Mensaje</label>
+        <textarea id="anTexto" rows="7" placeholder="Hola [NOMBRE],&#10;&#10;Escribe aquí tu mensaje..."
+          style="width:100%;background:var(--bg-2);border:1px solid var(--line);border-radius:11px;
+                 padding:12px;color:var(--text);font-family:var(--body);font-size:13.5px;
+                 line-height:1.6;resize:vertical"></textarea></div>
+      <div style="font-size:11.5px;color:var(--text-faint);margin:-8px 0 14px;line-height:1.6">
+        Escribe <b>[NOMBRE]</b> donde quieras que aparezca el nombre de cada cliente.
+      </div>
+
+      <label style="display:flex;align-items:center;gap:9px;margin-bottom:16px;cursor:pointer">
+        <input type="checkbox" class="bal-chk" id="anBoton" checked>
+        <span style="font-size:12.5px;color:var(--text-dim)">Incluir botón "Entrar al portal"</span>
+      </label>
+
+      ${ANUN_TOTAL===null ? '' : `<div style="background:var(--bg-2);border-radius:10px;
+        padding:13px 15px;margin-bottom:14px;font-size:13px;color:var(--text-dim)">
+        Va a <b style="color:var(--fire-soft)">${ANUN_TOTAL}</b> ${ANUN_TOTAL===1?'persona':'personas'}.
+        ${ANUN_TOTAL>280?'<br><span style="color:var(--red)">Son más de 280 y el límite diario de Brevo es 300. Divídelo en dos días.</span>':''}
+      </div>`}
+
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn-ghost" onclick="anuncioMirar()">${sv(I.users,15)} Ver a cuántos va</button>
+        <button class="btn-add" onclick="anuncioEnviar()"
+          ${(ANUN_TOTAL===null||ANUN_ENVIANDO||ANUN_TOTAL>280)?'disabled':''}>
+          ${ANUN_ENVIANDO?'Enviando...':`${sv(I.send,15)} Enviar`}</button>
+      </div>
+
+      <div id="anMsg" style="margin-top:14px"></div>
+
+      <div style="margin-top:16px;font-size:11.5px;color:var(--text-faint);line-height:1.6">
+        Los correos salen uno a uno, cada cliente recibe el suyo.
+        Nadie ve los correos de los demás.
+      </div>
+    </div></div>`;
+}
+
+function anuncioCambioGrupo(){
+  const esProd = document.getElementById('anGrupo').value==='PRODUCTO';
+  document.getElementById('anProdBox').style.display = esProd ? '' : 'none';
+  ANUN_TOTAL = null;
+  document.getElementById('anMsg').innerHTML = '';
+}
+
+function anuncioDatos(){
+  const grupo = document.getElementById('anGrupo').value;
+  return {
+    grupo,
+    producto: grupo==='PRODUCTO' ? document.getElementById('anProducto').value : '',
+    solo_sin_migrar: document.getElementById('anSinMigrar')?.checked ? 'SI' : 'NO'
+  };
+}
+
+async function anuncioMirar(){
+  const msg = document.getElementById('anMsg');
+  msg.innerHTML = '<span style="font-size:12.5px;color:var(--text-faint)">Mirando...</span>';
+  const r = await rwFetch('/admin/anuncio/destinatarios', anuncioDatos());
+  if (r.ok){
+    ANUN_TOTAL = r.total;
+    msg.innerHTML = r.total
+      ? `<div style="font-size:12.5px;color:var(--text-faint)">Primeros: ${r.primeros.slice(0,5).join(', ')}${r.total>5?'...':''}</div>`
+      : '<div class="login-err show">No hay nadie en ese grupo.</div>';
+    renderKeep();
+  } else msg.innerHTML = '<div class="login-err show">No se pudo consultar.</div>';
+}
+
+async function anuncioEnviar(){
+  const asunto = document.getElementById('anAsunto').value.trim();
+  const texto = document.getElementById('anTexto').value.trim();
+  const msg = document.getElementById('anMsg');
+
+  if (!asunto){ msg.innerHTML = '<div class="login-err show">Falta el asunto.</div>'; return; }
+  if (texto.length < 10){ msg.innerHTML = '<div class="login-err show">El mensaje es muy corto.</div>'; return; }
+
+  if (!await confirmar(
+    `Vas a enviar este correo a <b>${ANUN_TOTAL}</b> ${ANUN_TOTAL===1?'persona':'personas'}.<br><br>` +
+    `<b>${escapeHtml(asunto)}</b><br><br>No se puede deshacer.`,
+    'Enviar anuncio', 'Enviar', false)) return;
+
+  ANUN_ENVIANDO = true; renderKeep();
+  const r = await rwFetch('/admin/anuncio/enviar', {
+    ...anuncioDatos(), asunto, texto,
+    boton: document.getElementById('anBoton')?.checked ? 'SI' : 'NO',
+    titulo: 'SNIPER PORTAL', confirmar: 'SI'
+  });
+  ANUN_ENVIANDO = false;
+
+  const m = document.getElementById('anMsg');
+  if (r.ok){
+    ANUN_TOTAL = null;
+    document.getElementById('anAsunto').value = '';
+    document.getElementById('anTexto').value = '';
+    renderKeep();
+    toast(`Enviados ${r.enviados} de ${r.total}`);
+    setTimeout(()=>{ const mm=document.getElementById('anMsg');
+      if(mm) mm.innerHTML = `<div style="background:rgba(29,158,117,.12);border:1px solid rgba(29,158,117,.3);
+        border-radius:10px;padding:12px 14px;font-size:13px;color:var(--green)">
+        ✓ Enviados: <b>${r.enviados}</b>${r.fallos?` · fallaron ${r.fallos}`:''}
+        ${r.problemas&&r.problemas.length?`<div style="color:var(--text-faint);font-size:11.5px;margin-top:6px">
+          Correos mal escritos: ${r.problemas.join(', ')}</div>`:''}</div>`; }, 100);
+  } else {
+    const motivos = { SIN_BREVO:'Falta la clave de Brevo.', SIN_DESTINATARIOS:'No hay nadie en ese grupo.',
+      DEMASIADOS:r.aviso||'Son demasiados para un día.', TEXTO_CORTO:'El mensaje es muy corto.' };
+    m.innerHTML = `<div class="login-err show">${motivos[r.error]||'No se pudo enviar.'}</div>`;
+    renderKeep();
+  }
 }
 
 // Interruptor para abrir "Mi balance" a los clientes de AUTO PRO.
