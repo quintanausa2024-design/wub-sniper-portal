@@ -5012,8 +5012,7 @@ function renderKeep(){
       const tmp=document.createElement('div'); tmp.innerHTML=html;
       const nuevo=tmp.querySelector('#mainSlot');
       if(nuevo){
-        // si no cambio nada, ni tocamos el DOM (evita destellos innecesarios)
-        if(slot.innerHTML!==nuevo.innerHTML) slot.innerHTML=nuevo.innerHTML;
+        if(slot.innerHTML!==nuevo.innerHTML) parchear(slot, nuevo);
         window.scrollTo(0,y);
         setTimeout(updateScrollBtn,0);
         return;
@@ -5021,6 +5020,78 @@ function renderKeep(){
     }catch(e){}
   }
   render(); window.scrollTo(0,y);
+}
+
+// ═══════════════════════════════════════════════════════════
+//  ACTUALIZAR SIN PANTALLAZO
+//
+//  Antes se hacia  slot.innerHTML = nuevo  : el navegador tiraba
+//  TODO y lo reconstruia, aunque solo cambiara un numero. Eso es
+//  lo que se veia como un parpadeo feo.
+//
+//  Ahora se comparan el viejo y el nuevo, y solo se toca lo que
+//  de verdad cambio. Lo que no cambia, ni se entera: no parpadea,
+//  no se pierde el foco del teclado ni lo que estabas escribiendo.
+// ═══════════════════════════════════════════════════════════
+function parchear(viejo, nuevo){
+  const a = viejo.childNodes, b = nuevo.childNodes;
+
+  // sobran hijos: se quitan los de mas
+  while (a.length > b.length) viejo.removeChild(viejo.lastChild);
+
+  for (let i = 0; i < b.length; i++){
+    const nb = b[i];
+    const na = a[i];
+
+    if (!na){ viejo.appendChild(nb.cloneNode(true)); continue; }
+
+    // tipos distintos o etiqueta distinta: se cambia entero
+    if (na.nodeType !== nb.nodeType ||
+        (na.nodeType === 1 && na.tagName !== nb.tagName)){
+      viejo.replaceChild(nb.cloneNode(true), na);
+      continue;
+    }
+
+    // texto: solo si cambio
+    if (na.nodeType === 3){
+      if (na.nodeValue !== nb.nodeValue) na.nodeValue = nb.nodeValue;
+      continue;
+    }
+
+    if (na.nodeType !== 1) continue;
+
+    // Lo que el usuario esta usando NO se toca: si estas escribiendo
+    // en una caja, reemplazarla te borraria el texto y el cursor.
+    const escribiendo = document.activeElement === na &&
+      /^(INPUT|TEXTAREA|SELECT)$/.test(na.tagName);
+
+    // atributos
+    for (const at of Array.from(nb.attributes)){
+      if (escribiendo && (at.name === 'value' || at.name === 'checked')) continue;
+      if (na.getAttribute(at.name) !== at.value) na.setAttribute(at.name, at.value);
+    }
+    for (const at of Array.from(na.attributes)){
+      if (!nb.hasAttribute(at.name)) na.removeAttribute(at.name);
+    }
+
+    // el valor de las cajas no viaja en los atributos
+    if (!escribiendo && /^(INPUT|TEXTAREA)$/.test(na.tagName)){
+      const v = nb.value !== undefined ? nb.value : nb.getAttribute('value');
+      if (v !== null && v !== undefined && na.value !== v) na.value = v;
+      if (na.type === 'checkbox' || na.type === 'radio'){
+        const marcado = nb.hasAttribute('checked');
+        if (na.checked !== marcado) na.checked = marcado;
+      }
+    }
+    if (!escribiendo && na.tagName === 'SELECT'){
+      const sel = nb.querySelector('option[selected]');
+      const v = sel ? (sel.value || sel.textContent) : nb.value;
+      if (v && na.value !== v) na.value = v;
+    }
+
+    // y hacia dentro
+    parchear(na, nb);
+  }
 }
 // ── refresca la lista por detrás, sin mostrar "Cargando..." ──
 async function refreshUsersSilent(){
