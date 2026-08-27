@@ -1808,12 +1808,20 @@ function trustBar(){
   const rs=REVIEWS||[];
   const nRes=rs.length;
   const avg=nRes?(rs.reduce((s,r)=>s+(r.estrellas||0),0)/nRes):0;
-  // clientes: tu override si lo pusiste, si no el conteo real del servidor, si no el respaldo
-  const cli = (SRV_STATS&&SRV_STATS.clientes) ? SRV_STATS.clientes
+  // OJO con los nombres: el servidor manda 'traders' y 'herramientas',
+  // no 'clientes' ni 'productos'. Aqui se leian los nombres viejos y
+  // por eso la portada no mostraba lo que guardabas en el panel.
+  //
+  // El servidor ya devuelve el numero real cuando el campo esta vacio,
+  // asi que basta con leerlo tal cual.
+  const cli = (SRV_STATS&&SRV_STATS.traders) ? SRV_STATS.traders
             : (SRV_STATS&&SRV_STATS.reales!=null&&SRV_STATS.reales>0) ? (SRV_STATS.reales+'')
             : (STATS.clientes||'—');
   const anios = (SRV_STATS&&SRV_STATS.anios) ? SRV_STATS.anios : STATS.anios;
-  const prods = (SRV_STATS&&SRV_STATS.productos) ? SRV_STATS.productos : STATS.productos;
+  const prods = (SRV_STATS&&SRV_STATS.herramientas) ? SRV_STATS.herramientas
+              : (SRV_STATS&&SRV_STATS.herramientas_reales!=null&&SRV_STATS.herramientas_reales>0)
+                ? (SRV_STATS.herramientas_reales+'')
+              : STATS.productos;
   const stats=[
     {v:cli, l:isEn?'Active traders':'Traders activos', ic:I.users},
     {v:(nRes?avg.toFixed(1):'5.0'), l:isEn?`Rating · ${nRes} reviews`:`Calificación · ${nRes} reseñas`, ic:I.star, star:true},
