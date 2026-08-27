@@ -4205,7 +4205,9 @@ function pagosCard(){
 //  todo lo que llevabas escrito.
 // ═══════════════════════════════════════════════════════════
 const ANUN = { grupo:'TODOS', producto:'AUTO PRO ROCKET', filtro:'',
+               email:'', nombre:'', cabecera:'SNIPER PORTAL',
                asunto:'', texto:'', boton:true };
+let ANUN_BUSCA = null;   // resultados de buscar un cliente
 let ANUN_TOTAL = null, ANUN_ENVIANDO = false, ANUN_RESULTADO = null;
 
 const ANUN_PRODUCTOS = ['AUTO PRO ROCKET','SNIPER MANAGER','SNIPER CONNECT','SNIPER OPEN NY',
@@ -4219,6 +4221,11 @@ function anunGuarda(campo, valor){ ANUN[campo] = valor; }
 function anunCambia(campo, valor){
   ANUN[campo] = valor;
   ANUN_TOTAL = null; ANUN_RESULTADO = null;
+  if (campo === 'grupo'){ ANUN_BUSCA = null; ANUN.email=''; ANUN.nombre=''; }
+  // al elegir un producto, la cabecera se pone sola con su nombre
+  if (campo === 'producto') ANUN.cabecera = valor;
+  // si ya hay una persona elegida, el total es 1
+  if (ANUN.grupo === 'UNO' && ANUN.email) ANUN_TOTAL = 1;
   renderKeep();
 }
 
@@ -4236,11 +4243,39 @@ function anuncioPage(){
 
           <div class="mfield"><label>Grupo</label>
             <select onchange="anunCambia('grupo',this.value)">
-              <option value="TODOS" ${!esProd?'selected':''}>Todos los clientes aprobados</option>
-              <option value="PRODUCTO" ${esProd?'selected':''}>Solo los de un producto</option>
+              <option value="TODOS"    ${ANUN.grupo==='TODOS'?'selected':''}>Todos los clientes aprobados</option>
+              <option value="PRODUCTO" ${ANUN.grupo==='PRODUCTO'?'selected':''}>Solo los de un producto</option>
+              <option value="UNO"      ${ANUN.grupo==='UNO'?'selected':''}>Una sola persona</option>
             </select></div>
 
-          ${esProd ? `
+          ${ANUN.grupo==='UNO' ? `
+          <div class="mfield"><label>Buscar por nombre o correo</label>
+            <input type="text" id="anBuscar" placeholder="Escribe y pulsa Enter"
+              onkeydown="if(event.key==='Enter')anuncioBuscar()"
+              value="${escapeHtml(ANUN.busqueda||'')}"></div>
+          <button class="btn-ghost" style="width:100%;margin-bottom:12px"
+            onclick="anuncioBuscar()">${sv(I.search||I.users,15)} Buscar</button>
+
+          ${ANUN.email ? `<div style="background:rgba(255,107,44,.1);
+            border:1px solid rgba(255,107,44,.3);border-radius:10px;padding:12px 14px;margin-bottom:12px">
+            <div style="font-size:13.5px;color:var(--text);font-weight:500">${escapeHtml(ANUN.nombre||'')}</div>
+            <div style="font-size:12px;color:var(--fire-soft);font-family:var(--mono)">${escapeHtml(ANUN.email)}</div>
+            <button class="cta-b" style="margin-top:9px;padding:5px 10px;font-size:11px"
+              onclick="anunCambia('email','');ANUN.nombre=''">Cambiar</button>
+          </div>` : ''}
+
+          ${ANUN_BUSCA ? (ANUN_BUSCA.length ? `<div style="max-height:200px;overflow-y:auto;
+            border:1px solid var(--line);border-radius:10px;margin-bottom:12px">
+            ${ANUN_BUSCA.map(c=>`<div style="padding:10px 13px;border-bottom:1px solid var(--line-soft);
+              cursor:pointer" onclick="anuncioElegir('${escapeHtml(c.email)}','${escapeHtml(c.nombre||'')}')">
+              <div style="font-size:13px;color:var(--text)">${escapeHtml(c.nombre||'(sin nombre)')}
+                ${c.aprobado!=='SI'?'<span style="font-size:10px;color:var(--fire-soft);margin-left:5px">pendiente</span>':''}</div>
+              <div style="font-size:11.5px;color:var(--text-faint);font-family:var(--mono)">${escapeHtml(c.email)}</div>
+            </div>`).join('')}</div>`
+            : '<div class="login-err show" style="margin-bottom:12px">No encontré a nadie.</div>') : ''}
+          ` : ''}
+
+          ${ANUN.grupo==='PRODUCTO' ? `
           <div class="mfield"><label>Producto</label>
             <select onchange="anunCambia('producto',this.value)">
               ${ANUN_PRODUCTOS.map(p=>`<option ${p===ANUN.producto?'selected':''}>${p}</option>`).join('')}
@@ -4253,8 +4288,8 @@ function anuncioPage(){
               <option value="YA"  ${ANUN.filtro==='YA' ?'selected':''}>Solo los que YA actualizaron</option>
             </select></div>` : ''}
 
-          <button class="btn-ghost" style="width:100%" onclick="anuncioMirar()">
-            ${sv(I.users,15)} Ver a cuántos va</button>
+          ${ANUN.grupo==='UNO' ? '' : `<button class="btn-ghost" style="width:100%" onclick="anuncioMirar()">
+            ${sv(I.users,15)} Ver a cuántos va</button>`}
 
           ${ANUN_TOTAL===null ? '' : `<div style="background:var(--bg-2);border-radius:10px;
             padding:14px 15px;margin-top:14px;text-align:center">
@@ -4273,6 +4308,15 @@ function anuncioPage(){
       <div class="card"><div class="card-top">
           <div class="card-name">${sv(I.mail,15)} El mensaje</div></div>
         <div style="padding:18px 20px">
+
+          <div class="mfield"><label>Cabecera del correo</label>
+            <select onchange="anunGuarda('cabecera',this.value)">
+              <option value="SNIPER PORTAL" ${ANUN.cabecera==='SNIPER PORTAL'?'selected':''}>SNIPER PORTAL</option>
+              ${ANUN_PRODUCTOS.map(p=>`<option ${p===ANUN.cabecera?'selected':''}>${p}</option>`).join('')}
+            </select></div>
+          <div style="font-size:11.5px;color:var(--text-faint);margin:-8px 0 14px;line-height:1.6">
+            Es el título naranja que sale arriba del correo.
+          </div>
 
           <div class="mfield"><label>Asunto</label>
             <input type="text" id="anAsunto" maxlength="120" value="${escapeHtml(ANUN.asunto)}"
@@ -4298,10 +4342,14 @@ function anuncioPage(){
 
           <button class="btn-add" style="width:100%" onclick="anuncioEnviar()"
             ${(ANUN_TOTAL===null||ANUN_ENVIANDO||ANUN_TOTAL>280||!ANUN_TOTAL)?'disabled':''}>
-            ${ANUN_ENVIANDO?'Enviando...':`${sv(I.send,15)} Enviar${ANUN_TOTAL?' a '+ANUN_TOTAL:''}`}</button>
+            ${ANUN_ENVIANDO?'Enviando...':`${sv(I.send,15)} Enviar${
+              ANUN.grupo==='UNO' && ANUN.nombre ? ' a '+escapeHtml(ANUN.nombre)
+              : (ANUN_TOTAL?' a '+ANUN_TOTAL:'')}`}</button>
 
           ${ANUN_TOTAL===null?`<div style="font-size:11.5px;color:var(--text-faint);
-            margin-top:10px;text-align:center">Mira primero a cuántos va</div>`:''}
+            margin-top:10px;text-align:center">${ANUN.grupo==='UNO'
+              ? 'Busca y elige a la persona primero'
+              : 'Mira primero a cuántos va'}</div>`:''}
 
           ${ANUN_RESULTADO||''}
         </div>
@@ -4313,9 +4361,27 @@ function anuncioPage(){
       Nadie ve los correos de los demás.</span></div>`;
 }
 
+// Buscar un cliente por nombre o correo
+async function anuncioBuscar(){
+  const txt = (document.getElementById('anBuscar')?.value || '').trim();
+  ANUN.busqueda = txt;
+  if (txt.length < 2){ toast('Escribe al menos 2 letras'); return; }
+  const r = await rwFetch('/admin/anuncio/buscar?q=' + encodeURIComponent(txt), null, 'GET');
+  ANUN_BUSCA = r.ok ? r.clientes : [];
+  renderKeep();
+}
+
+// Elegir a quien de la lista
+function anuncioElegir(email, nombre){
+  ANUN.email = email; ANUN.nombre = nombre;
+  ANUN_BUSCA = null; ANUN_TOTAL = 1; ANUN_RESULTADO = null;
+  renderKeep();
+}
+
 function anuncioDatos(){
   return {
     grupo: ANUN.grupo,
+    email: ANUN.grupo==='UNO' ? ANUN.email : '',
     producto: ANUN.grupo==='PRODUCTO' ? ANUN.producto : '',
     solo_sin_migrar: ANUN.filtro==='SIN' ? 'SI' : 'NO',
     solo_migrados:   ANUN.filtro==='YA'  ? 'SI' : 'NO'
@@ -4343,15 +4409,17 @@ async function anuncioEnviar(){
   if (!ANUN.asunto.trim()){ toast('Falta el asunto'); return; }
   if (ANUN.texto.trim().length < 10){ toast('El mensaje es muy corto'); return; }
 
+  const aQuien = (ANUN.grupo==='UNO' && ANUN.nombre)
+    ? `a <b>${escapeHtml(ANUN.nombre)}</b><br><span style="color:var(--text-faint);font-size:12px">${escapeHtml(ANUN.email)}</span>`
+    : `a <b>${ANUN_TOTAL}</b> ${ANUN_TOTAL===1?'persona':'personas'}`;
   if (!await confirmar(
-    `Vas a enviar este correo a <b>${ANUN_TOTAL}</b> ${ANUN_TOTAL===1?'persona':'personas'}.<br><br>` +
-    `<b>${escapeHtml(ANUN.asunto)}</b><br><br>No se puede deshacer.`,
-    'Enviar anuncio', 'Enviar', false)) return;
+    `Vas a enviar este correo ${aQuien}.<br><br><b>${escapeHtml(ANUN.asunto)}</b><br><br>No se puede deshacer.`,
+    'Enviar correo', 'Enviar', false)) return;
 
   ANUN_ENVIANDO = true; renderKeep();
   const r = await rwFetch('/admin/anuncio/enviar', {
     ...anuncioDatos(), asunto: ANUN.asunto, texto: ANUN.texto,
-    boton: ANUN.boton ? 'SI' : 'NO', titulo: 'SNIPER PORTAL', confirmar: 'SI'
+    boton: ANUN.boton ? 'SI' : 'NO', titulo: ANUN.cabecera || 'SNIPER PORTAL', confirmar: 'SI'
   });
   ANUN_ENVIANDO = false;
 
