@@ -4374,6 +4374,30 @@ async function anuncioEnviar(){
 }
 
 
+// Interruptor para abrir "Mi balance" a los clientes de AUTO PRO.
+// Mientras este apagado, solo lo ves tu.
+function balanceCard(){
+  const on = BAL_ACCESO ? !!BAL_ACCESO.abierto : false;
+  return `<div class="card"><div class="card-top">
+      <div class="card-name">${sv(I.chart,15)} Mi balance</div>
+      <div class="card-cat">CONTABILIDAD PRIVADA DE CADA CLIENTE</div></div>
+    <div style="padding:18px 20px">
+      <div class="pay-toggle">
+        <div style="flex:1;min-width:0">
+          <div class="pay-tg-name">Abierto a los clientes</div>
+          <div class="pay-tg-hint ${on?'on':''}">${on
+            ? '✓ Lo ven los clientes con AUTO PRO ROCKET'
+            : '○ Apagado · solo lo ves tú'}</div>
+        </div>
+        <button class="switch ${on?'on':''}" onclick="toggleBalance(${on?0:1})"><span></span></button>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text-faint);line-height:1.6">
+        Cada cliente lleva ahí lo que invierte y lo que retira.
+        Los datos son suyos: <b>tú no puedes verlos</b>, ni ellos los de otro.
+      </div>
+    </div></div>`;
+}
+
 async function toggleBalance(activar){
   const r = await rwFetch('/admin/balance/activar', { activo: activar? 'SI':'NO' });
   if (r.ok){
