@@ -4528,11 +4528,15 @@ function statsCard(){
     </div></div>`;
 }
 async function saveStats(){
-  const clientes=(document.getElementById('stCli')||{}).value||'';
+  // OJO con los nombres: el servidor espera 'traders' y 'herramientas'.
+  // Antes se mandaba 'clientes' y 'productos' y no se guardaba nada:
+  // solo los años funcionaban, porque ese nombre si coincidia.
+  const traders=(document.getElementById('stCli')||{}).value||'';
   const anios=(document.getElementById('stAn')||{}).value||'';
-  const productos=(document.getElementById('stPr')||{}).value||'';
+  const herramientas=(document.getElementById('stPr')||{}).value||'';
   const b=document.getElementById('stSave'); if(b)b.textContent='Guardando...';
-  try{ await apiCall({action:'setstats',email:SESS.email,pass:SESS.pass,clientes,anios,productos}); }catch(e){}
+  try{ await apiCall({action:'setstats',email:SESS.email,pass:SESS.pass,
+                      traders,anios,herramientas}); }catch(e){}
   SRV_STATS=null;
   if(b)b.textContent='Guardado ✓';
   setTimeout(()=>{const x=document.getElementById('stSave');if(x)x.textContent='Guardar números';},1400);
