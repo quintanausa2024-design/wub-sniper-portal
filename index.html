@@ -4222,10 +4222,12 @@ function anuncioCard(){
           <select id="anProducto" onchange="ANUN_TOTAL=null;renderKeep()">
             ${licProds.map(p=>`<option>${p}</option>`).join('')}
           </select></div>
-        <label style="display:flex;align-items:center;gap:9px;margin:-6px 0 14px;cursor:pointer">
-          <input type="checkbox" class="bal-chk" id="anSinMigrar" onchange="ANUN_TOTAL=null;renderKeep()">
-          <span style="font-size:12.5px;color:var(--text-dim)">Solo a los que no han actualizado</span>
-        </label>
+        <div class="mfield"><label>¿Quiénes de ese producto?</label>
+          <select id="anFiltro" onchange="ANUN_TOTAL=null;renderKeep()">
+            <option value="">Todos los que lo tienen</option>
+            <option value="SIN">Solo los que NO han actualizado</option>
+            <option value="YA">Solo los que YA actualizaron</option>
+          </select></div>
       </div>
 
       <div class="mfield"><label>Asunto</label>
@@ -4276,10 +4278,12 @@ function anuncioCambioGrupo(){
 
 function anuncioDatos(){
   const grupo = document.getElementById('anGrupo').value;
+  const filtro = document.getElementById('anFiltro')?.value || '';
   return {
     grupo,
     producto: grupo==='PRODUCTO' ? document.getElementById('anProducto').value : '',
-    solo_sin_migrar: document.getElementById('anSinMigrar')?.checked ? 'SI' : 'NO'
+    solo_sin_migrar: filtro==='SIN' ? 'SI' : 'NO',
+    solo_migrados:   filtro==='YA'  ? 'SI' : 'NO'
   };
 }
 
