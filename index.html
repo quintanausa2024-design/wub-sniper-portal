@@ -4128,7 +4128,9 @@ async function anuncioEnviar(){
 }
 
 function balanceCard(){
+  if (BAL_ACCESO === null && !BAL_CARGANDO) cargarBalance();
   const on = BAL_ACCESO ? !!BAL_ACCESO.abierto : false;
+  const cargando = BAL_ACCESO === null;
   return `<div class="card"><div class="card-top">
       <div class="card-name">${sv(I.chart,15)} Mi balance</div>
       <div class="card-cat">CONTABILIDAD PRIVADA DE CADA CLIENTE</div></div>
@@ -4136,11 +4138,13 @@ function balanceCard(){
       <div class="pay-toggle">
         <div style="flex:1;min-width:0">
           <div class="pay-tg-name">Abierto a los clientes</div>
-          <div class="pay-tg-hint ${on?'on':''}">${on
-            ? '✓ Lo ven los clientes con AUTO PRO ROCKET'
-            : '○ Apagado · solo lo ves tú'}</div>
+          <div class="pay-tg-hint ${on?'on':''}">${cargando
+            ? 'Comprobando...'
+            : (on ? '✓ Lo ven los clientes con AUTO PRO ROCKET'
+                  : '○ Apagado · solo lo ves tú')}</div>
         </div>
-        <button class="switch ${on?'on':''}" onclick="toggleBalance(${on?0:1})"><span></span></button>
+        <button class="switch ${on?'on':''}" ${cargando?'disabled style="opacity:.4"':''}
+          onclick="toggleBalance(${on?0:1})"><span></span></button>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--text-faint);line-height:1.6">
         Cada cliente lleva ahí lo que invierte y lo que retira.
@@ -4152,7 +4156,8 @@ function balanceCard(){
 async function toggleBalance(activar){
   const r = await rwFetch('/admin/balance/activar', { activo: activar? 'SI':'NO' });
   if (r.ok){
-    if (BAL_ACCESO) BAL_ACCESO.abierto = r.activo;
+    if (!BAL_ACCESO) BAL_ACCESO = { puede:true, es_admin:true };
+    BAL_ACCESO.abierto = r.activo;
     renderKeep();
     toast(r.activo ? 'Abierto a los clientes con AUTO PRO' : 'Apagado · ahora solo lo ves tú');
   } else toast('No se pudo cambiar.');
