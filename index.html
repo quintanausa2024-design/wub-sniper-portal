@@ -5816,7 +5816,8 @@ function delLic(pi,hwid){
     const d=ALL_LICS&&ALL_LICS[pi];
     let borrado=null;
     if(d&&d.licencias){ borrado=d.licencias.find(x=>x.hwid===hwid); d.licencias=d.licencias.filter(x=>x.hwid!==hwid); refrescarTablaLic(); actualizarTotalesLic(); }
-    try{ const r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid});
+    try{ const r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,
+                                        hwid,producto:api.name});
       if(r&&r.ok===false&&borrado&&d){ d.licencias.push(borrado); refrescarTablaLic(); actualizarTotalesLic(); toast('No se pudo borrar'); }
     }catch(e){ if(borrado&&d){ d.licencias.push(borrado); refrescarTablaLic(); actualizarTotalesLic(); toast('Sin conexión'); } }
   });
