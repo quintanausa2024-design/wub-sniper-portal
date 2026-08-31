@@ -1407,6 +1407,7 @@ const LICENSE_APIS = [
   { name:"SNIPER OPEN NY", url:"https://script.google.com/macros/s/AKfycbwuYDyxAntFuJpGVt4UzROC4QfFzVpiIade1u26i23Wm-xThLvMBXS-gz5rZSVc_GdTaw/exec", pcs:true, del:true },
   { name:"SNIPER MANAGER", url:"https://script.google.com/macros/s/AKfycbxeUOuoJ20nAYeF0FkAaRFXWD1gd8YJoDlplHx0gsgMIv3lxL9UMF71WgtXT33yQCvT/exec", pcs:false, del:true },
   { name:"SNIPER COPY ONLINE", url:"https://script.google.com/macros/s/AKfycbzutAp7OLzFWHQUhNHujcpAWAUNEbY0oQJ5L5I-qIyzqLutK0e30XA7u0pu6ljhrXAt/exec", pcs:true, del:true },
+  { name:"SNIPER AUTOLOGIN", url:"", pcs:true, del:true },
 ];
 
 let view='login',tab='auth_login',authMsg='',profileMsg='',profileErr='';
@@ -3904,7 +3905,7 @@ let ANUN_TOTAL = null, ANUN_ENVIANDO = false, ANUN_RESULTADO = null;
 
 const ANUN_PRODUCTOS = ['AUTO PRO ROCKET','SNIPER MANAGER','SNIPER CONNECT','SNIPER OPEN NY',
   'SNIPER COPY ONLINE','REPLICADOR NT8 Y TOSTEP','ESTRATEGIA NT8 VS TS Y NT8 VS NT8',
-  'SNIPEROCKET HISTORIAL'];
+  'SNIPEROCKET HISTORIAL','SNIPER AUTOLOGIN'];
 
 function anunGuarda(campo, valor){ ANUN[campo] = valor; }
 
@@ -5521,8 +5522,8 @@ let LIC_TS='', LIC_ERRORES='';
 async function licCall(url,params){
   if (RAILWAY_ON && params && String(params.action||'').indexOf('portal_') === 0) {
     try {
-      const api = LICENSE_APIS.find(x => x.url === url);
-      const producto = api ? api.name : '';
+      const api = url ? LICENSE_APIS.find(x => x.url === url) : null;
+      const producto = api ? api.name : (params.producto || '');
       if (!await rwAsegurarSesion()) return { ok:false, error:'NO_ADMIN' };
 
       if (params.action === 'portal_set') {
@@ -5686,7 +5687,8 @@ async function setLic(pi,hwid,valor,maxpcs){
   const l=d&&d.licencias&&d.licencias.find(x=>x.hwid===hwid);
   if(!l)return;
   l._guardando=true; refrescarTablaLic();
-  const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor};
+  const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid,valor,
+                producto:api.name};
   if(maxpcs)params.maxpcs=maxpcs;
   try{
     const r=await licCall(api.url,params);
@@ -5730,7 +5732,8 @@ function aprobarTodasLic(){
     renderKeep();
     for(const {l,pi} of pend){
       const api=LICENSE_APIS[pi];
-      const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid,valor:'SI'};
+      const params={action:'portal_set',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid,valor:'SI',
+                    producto:api.name};
       if(api.pcs)params.maxpcs=(l.maxpcs&&l.maxpcs>0)?l.maxpcs:1;
       try{ await licCall(api.url,params); }catch(e){}
     }
@@ -5756,7 +5759,8 @@ function borrarTodasLicPend(){
 
       let r=null;
       for(let intento=0;intento<2;intento++){
-        r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,hwid:l.hwid});
+        r=await licCall(api.url,{action:'portal_delete',padmin:SESS.email,ppass:SESS.pass,
+                                 hwid:l.hwid,producto:api.name});
         if(r && (r.ok || r.error==='NO_ENCONTRADO')) break;
         await new Promise(res=>setTimeout(res,600));   // esperar antes de reintentar
       }
