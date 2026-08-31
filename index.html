@@ -5918,7 +5918,7 @@ function adminLicensesPage(){
       <button class="search-x" id="licX2" style="${licQuery?'':'display:none'}" onclick="licQuery='';document.getElementById('licsearch2').value='';filtrarLicProd()" title="Limpiar">✕</button></div></div>
     <button class="btn-ghost" onclick="actualizarLicSuave()">${sv(I.refresh,15)} Actualizar</button></div>`;
   const api=apis[LIC_SEL], d=ALL_LICS[LIC_SEL];
-  if(!api.url||api.url.startsWith('PEGA_AQUI'))
+  if(api.url && api.url.startsWith('PEGA_AQUI'))
     return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>Falta conectar este producto</h3><p>Pega la URL del Apps Script de "${api.name}".</p></div>`;
   if(!d||d.error)
     return head+toolbar+`<div class="empty-state"><div class="empty-ic">${sv(I.lock,28)}</div><h3>${d&&d.error==='NO_ADMIN'?'Acceso no válido':'No se pudo conectar'}</h3><p>${d&&d.error==='NO_ADMIN'?'Revisa la contraseña del portal en el script (PORTAL_ADMIN_PASS).':'Verifica la URL y que el deploy esté como "Cualquiera".'}</p></div>`;
