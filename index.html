@@ -1068,6 +1068,49 @@
     gap:14px;align-items:start}
   @media(max-width:700px){.perfil-fila{grid-template-columns:1fr}}
 
+  @keyframes entraCarta{
+    from{opacity:0;transform:translateY(14px)}
+    to{opacity:1;transform:none}
+  }
+  .disc-card,.cta,.card,.prod-row{
+    animation:entraCarta .34s cubic-bezier(.22,.9,.3,1) backwards}
+  .disc-grid>*:nth-child(1),.cta-grid>*:nth-child(1){animation-delay:.02s}
+  .disc-grid>*:nth-child(2),.cta-grid>*:nth-child(2){animation-delay:.05s}
+  .disc-grid>*:nth-child(3),.cta-grid>*:nth-child(3){animation-delay:.08s}
+  .disc-grid>*:nth-child(4),.cta-grid>*:nth-child(4){animation-delay:.11s}
+  .disc-grid>*:nth-child(5),.cta-grid>*:nth-child(5){animation-delay:.14s}
+  .disc-grid>*:nth-child(6),.cta-grid>*:nth-child(6){animation-delay:.17s}
+  .disc-grid>*:nth-child(n+7),.cta-grid>*:nth-child(n+7){animation-delay:.2s}
+
+  @keyframes subeCifra{
+    from{opacity:0;transform:translateY(9px) scale(.96)}
+    to{opacity:1;transform:none}
+  }
+  .bal-card .v,.stat .v{animation:subeCifra .45s cubic-bezier(.2,.9,.25,1) backwards .1s}
+
+  .btn-primary,.btn-add,.btn-ghost,.disc-go,.cta-b,.bal-rb{
+    transition:transform .12s cubic-bezier(.3,1.4,.5,1), box-shadow .18s, border-color .16s, background .16s}
+  .btn-primary:active,.btn-add:active,.disc-go:active{transform:scale(.97)}
+  .btn-ghost:active,.cta-b:active,.bal-rb:active{transform:scale(.975)}
+
+  .nav button{position:relative}
+  .nav button::after{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);
+    width:3px;height:0;background:var(--fire);border-radius:0 3px 3px 0;
+    transition:height .22s cubic-bezier(.3,1,.4,1)}
+  .nav button:hover::after{height:55%}
+  .nav button.on::after{height:100%}
+
+  @keyframes copiado{
+    0%{background:rgba(29,158,117,.35)}
+    100%{background:transparent}
+  }
+  .copiado{animation:copiado .7s ease}
+
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  }
+
   .nav-sep{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--text-faint);
     padding:14px 16px 6px;opacity:.7}
 
@@ -2993,7 +3036,14 @@ async function loadDiscounts(){
 }
 function copyCode(code,btn){
   try{ navigator.clipboard.writeText(code); }catch(e){}
-  if(btn){const o=btn.innerHTML;btn.innerHTML='✓ '+(LANG==='en'?'Copied':'Copiado');setTimeout(()=>{try{btn.innerHTML=o;}catch(e){}},1500);}
+  if(btn){
+    const o=btn.innerHTML;
+    btn.innerHTML='✓ '+(LANG==='en'?'Copied':'Copiado');
+    const fila = btn.closest('.disc-code') || btn.parentElement;
+    if(fila){ fila.classList.add('copiado');
+      setTimeout(()=>{ try{ fila.classList.remove('copiado'); }catch(e){} }, 750); }
+    setTimeout(()=>{try{btn.innerHTML=o;}catch(e){}},1500);
+  }
 }
 function discCard(d,isEn){
   const init=(d.empresa||'?').trim().charAt(0).toUpperCase();
@@ -3718,8 +3768,27 @@ function discountsPage(){
     <p>${isEn?'Prop firms I work with and exclusive discount codes. Tap to copy the code.':'Prop firms con las que trabajo y códigos de descuento exclusivos. Toca para copiar el código.'}</p></div>`;
   if(!DISCOUNTS.length)
     return head+`<div class="empty-state"><div class="empty-ic">${sv(I.tag,28)}</div><h3>${isEn?'Nothing here yet':'Aún no hay nada aquí'}</h3><p>${isEn?'Check back soon.':'Pronto verás aquí cuentas de fondeo y códigos exclusivos.'}</p></div>`;
-  const fondeo=DISCOUNTS.filter(d=>d.tipo==='FONDEO');
-  const descs =DISCOUNTS.filter(d=>d.tipo!=='FONDEO');
+  const NOTA_BASE = 4, VOTOS_BASE = 3;
+
+  const ordenarPorNota = (lista) => {
+    const v = VALORACIONES || { medias:{} };
+    return lista.map((d, i) => {
+      const dato = v.medias[d.id] || { media:0, votos:0 };
+      const peso = dato.votos > 0
+        ? (dato.media * dato.votos + NOTA_BASE * VOTOS_BASE) / (dato.votos + VOTOS_BASE)
+        : 0;
+      return { d, i, peso, votos:dato.votos };
+    }).sort((a, b) => {
+      if (a.votos === 0 && b.votos === 0) return a.i - b.i;   // sin votos: como estaban
+      if (a.votos === 0) return 1;                            // sin votos, al final
+      if (b.votos === 0) return -1;
+      if (b.peso !== a.peso) return b.peso - a.peso;
+      return b.votos - a.votos;
+    }).map(x => x.d);
+  };
+
+  const fondeo=ordenarPorNota(DISCOUNTS.filter(d=>d.tipo==='FONDEO'));
+  const descs =ordenarPorNota(DISCOUNTS.filter(d=>d.tipo!=='FONDEO'));
   let out=head;
   if(fondeo.length) out+=`<div class="sec-h">🎯 ${isEn?'Funded accounts (prop firms)':'Cuentas de fondeo (prop firms)'}
       <span>${isEn?'Direct access to open your account':'Acceso directo para abrir tu cuenta'}</span></div>
